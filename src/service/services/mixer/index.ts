@@ -98,24 +98,15 @@ export class MixerHandler implements Service {
             });
             fullChatMessage = fullChatMessage.trim();
 
-            let cactusPacket: CactusMessagePacket;
-            if (target !== undefined) {
-                cactusPacket = {
-                    type: "message",
-                    text: fullChatMessage,
-                    action: meta.me !== undefined,
-                    user: packet.user_name,
-                    role: packet.user_roles[0],
-                    target: target
-                }
-            } else {
-                cactusPacket = {
+            let cactusPacket: CactusMessagePacket = {
                     type: "message",
                     text: fullChatMessage,
                     action: meta.me !== undefined,
                     user: packet.user_name,
                     role: packet.user_roles[0]
-                }
+                };
+            if (target !== undefined) {
+                cactusPacket.target = target
             }
             return cactusPacket;
         }
