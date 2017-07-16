@@ -100,7 +100,14 @@ export class ServiceHandler {
                 throw new Error("Attempetd to use service that doesn't exist.");
             }
             // Connect to the channel
-            await this.connectChannel(channel.channel, service);
+            const connected = await this.connectChannel(channel.channel, service);
+            if (connected === ConnectionTristate.FAILED) {
+                console.log("Failed to authenticate!");
+            } else if (connected === ConnectionTristate.FALSE) {
+                console.log("Unable to connect to service.");
+            } else if (connected === ConnectionTristate.TRUE) {
+                console.log("Connected.");
+            }
         });
     }
 }
