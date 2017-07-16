@@ -1,5 +1,9 @@
 import { Service, ServiceStatus } from "../../service";
 import { ChatSocket, IChatMessage, IUserUpdate } from "mixer-chat";
+import { Subject } from "rxjs";
+
+import { Carina } from "carina";
+import * as ws from "ws";
 import * as httpm from "typed-rest-client/HttpClient";
 
 interface MixerChatResponse {
@@ -35,7 +39,13 @@ export class MixerHandler implements Service {
         Authorization: "Bearer"
     }
 
+    public events: Subject<CactusEventPacket>;
+    private carina: Carina;
+
     public async connect(): Promise<boolean> {
+        // Start up carina connection
+        Carina.WebSocket = ws;
+        this.carina = new Carina({ isBot: true }).open();
         return true;
     }
 
@@ -70,6 +80,70 @@ export class MixerHandler implements Service {
             console.log(update);
         });
         return this.chat.isConnected();
+    }
+
+    /**
+     * Setup all the carina events.
+     *
+     * @private
+     * @param {number} id the id of the channel to subscribe to
+     * @memberof MixerHandler
+     */
+    private async setupCarinaEvents(id: number) {
+        this.carina.subscribe<MixerFollowPacket>(`channel:${id}:followed`, async data => {
+            const packet: CactusEventPacket = {
+                type: "event",
+                kind: "follow",
+                streak: 0,
+                success: data.following,
+                user: data.username
+            };
+            this.events.next(packet);
+        });
+
+        this.carina.subscribe<MixerHostedPacket>(`channel:${id}:hosted`, async data => {
+            const packet: CactusEventPacket = {
+                type: "event",
+                kind: "host",
+                streak: 0,
+                success: true,
+                user: data.hoster.token
+            };
+            this.events.next(packet);
+        });
+
+        this.carina.subscribe<MixerHostedPacket>(`channel:${id}:unhosted`, async data => {
+            const packet: CactusEventPacket = {
+                type: "event",
+                kind: "host",
+                streak: 0,
+                success: false,
+                user: data.hoster.token
+            };
+            this.events.next(packet);
+        });
+
+        this.carina.subscribe<MixerSubscribePacket>(`channel:${id}:subscribed`, async data => {
+            const packet: CactusEventPacket = {
+                type: "event",
+                kind: "subscribe",
+                streak: 0,
+                success: true,
+                user: data.username
+            };
+            this.events.next(packet);
+        });
+
+        this.carina.subscribe<MixerResubscribePacket>(`channel:${id}:resubShared`, async data => {
+            const packet: CactusEventPacket = {
+                type: "event",
+                kind: "subscribe",
+                streak: data.totalMonths,
+                success: true,
+                user: data.username
+            };
+            this.events.next(packet);
+        });
     }
 
     public async disconnect(): Promise<boolean> {

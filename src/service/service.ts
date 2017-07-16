@@ -1,4 +1,6 @@
 
+import { Subject } from "rxjs";
+
 /**
  * Authentication info for a named bot.
  *
@@ -36,7 +38,21 @@ export enum ServiceStatus {
  */
 export interface Service {  // TODO: This should probably be turned into an abstract class.
 
-    status: ServiceStatus
+    /**
+     * The current status of the service handler.
+     *
+     * @type {ServiceStatus}
+     * @memberof Service
+     */
+    status: ServiceStatus;
+
+    /**
+     * Events from any sort of service event system
+     *
+     * @type {Subject<CactusEventPacket>}
+     * @memberof Service
+     */
+    events: Subject<CactusEventPacket>;
 
     /**
      * Inital connection to the server.

@@ -45,3 +45,41 @@ interface CactusEventPacket extends CactusPacket {
     success: boolean;
     streak: number;
 }
+
+interface MixerUserPacket {
+    id: number;
+    verified: number;
+    avatarUrl: string;
+    username: string;
+}
+
+interface MixerChannelPacket {
+    id: number;
+    userId: number;
+    token: string;
+    partnered: boolean;
+    name: string;
+    audience: "family" | "teen" | "18+";
+    viewersTotal: number;
+    viewersCurrent: number;
+    numFollowers: number;
+}
+
+interface MixerFollowPacket extends MixerUserPacket {
+    following: boolean;
+}
+
+interface MixerHostedPacket {
+    hosterId: number;
+    hoster: MixerChannelPacket;
+}
+
+interface MixerSubscribePacket extends MixerUserPacket {
+
+}
+
+interface MixerResubscribePacket extends MixerSubscribePacket {
+    since: string;
+    until: string;
+    totalMonths: number;
+}

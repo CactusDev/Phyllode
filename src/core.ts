@@ -19,6 +19,7 @@ export class Core {
      * @memberof Core
      */
     public async start() {
+        console.log("Attempting to connect to channels...");
         this.serviceHandler.connectAllChannels();
     }
 }

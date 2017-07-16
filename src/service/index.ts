@@ -9,7 +9,7 @@ interface ServiceMapping {
 const channels = [
     {
         channel: 17887,
-        service: "Mixer"  // Should this be an id?
+        service: "Mixer"
     }
 ]
 
@@ -103,11 +103,16 @@ export class ServiceHandler {
             const connected = await this.connectChannel(channel.channel, service);
             if (connected === ConnectionTristate.FAILED) {
                 console.log("Failed to authenticate!");
+                return;
             } else if (connected === ConnectionTristate.FALSE) {
                 console.log("Unable to connect to service.");
-            } else if (connected === ConnectionTristate.TRUE) {
-                console.log("Connected.");
+                return;
             }
+            console.log("Connected.");
+            // Event observable
+            console.log("Attempting to listen for events...");
+            
+            console.log("Listening for events!");
         });
     }
 }
