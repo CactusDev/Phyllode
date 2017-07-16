@@ -5,7 +5,7 @@
  * @interface CactusPacket
  */
 interface CactusPacket {
-    type: string;
+    type: "message" | "ban" | "event";
 }
 
 /**
@@ -17,7 +17,7 @@ interface CactusPacket {
 interface CactusMessagePacket extends CactusPacket {
     text: string;
     user: string;
-    role: "Banned" | "User" | "Subscriber" | "Moderator" | "Owner";
+    role: "banned" | "user" | "subscriber" | "moderator" | "owner";
     action: boolean;
     target?: boolean;
 }

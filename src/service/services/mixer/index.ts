@@ -197,7 +197,7 @@ export class MixerHandler implements Service {
                     text: fullChatMessage,
                     action: meta.me !== undefined,
                     user: packet.user_name,
-                    role: packet.user_roles[0]
+                    role: packet.user_roles[0].toLowerCase()
                 };
             if (meta.whisper !== undefined) {
                 cactusPacket.target = true
@@ -209,7 +209,7 @@ export class MixerHandler implements Service {
             text: "Error!",
             action: false,
             user: "",
-            role: "User"
+            role: "user"
         };
     }
 
