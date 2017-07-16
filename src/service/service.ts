@@ -56,7 +56,7 @@ export interface Service {  // TODO: This should probably be turned into an abst
      * @returns {Promise<boolean>} authentication status
      * @memberof Service
      */
-    authenticate(channel: string | number): Promise<boolean>;
+    authenticate(channel: string | number, botId: number): Promise<boolean>;
 
     /**
      * Disconnect from the service
@@ -65,4 +65,13 @@ export interface Service {  // TODO: This should probably be turned into an abst
      * @memberof Service
      */
     disconnect(): Promise<boolean>;
+
+    /**
+     * Convert a service packet into a Cactus formatted packet
+     *
+     * @param {*} packet the packet from the service
+     * @returns {Promise<CactusPacket>} the packet in the CactusBot format
+     * @memberof Service
+     */
+    convert(packet: any): Promise<CactusPacket>;
 }

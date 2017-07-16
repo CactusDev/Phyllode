@@ -25,33 +25,37 @@ export class MixerHandler implements Service {
 
     private base = "https://mixer.com/api/v1";
     private headers = {
-        Authorization: "Bearer TODO AUTHENTICATION HANDLER"
+        Authorization: "Bearer"
     }
 
     public async connect(): Promise<boolean> {
-        // TODO: This shouldn't be a static ip being used for all the chat
-        // that's being used
         return true;
     }
 
-    public async authenticate(channelRaw: string | number): Promise<boolean> {
+    public async authenticate(channelRaw: string | number, botId: number): Promise<boolean> {
+        let channelId;
         if (<any>channelRaw instanceof String) {
-            // We don't allow this right now. In the future, this should get the ID from the
-            // api. But for now this will do.
-            return false;
+            const nameResult = await this.httpc.get(`${this.base}/channel/${channelRaw}`);
+            if (nameResult.message.statusCode !== 200) {
+                return false;
+            }
+            channelId = JSON.parse(await nameResult.readBody()).id;
+        } else {
+            channelId = <number>channelRaw;
         }
-        const channel = <number>channelRaw
         // TODO: Authentication handler
-        const result = await this.httpc.get(`${this.base}/chats/${channel}`, this.headers);
+        const result = await this.httpc.get(`${this.base}/chats/${channelId}`, this.headers);
         const body: MixerChatResponse = JSON.parse(await result.readBody());
         this.chat = new ChatSocket(body.endpoints).boot();
 
-        const isAuthed = await this.chat.auth(channel, 25873, body.authkey);
+        const isAuthed = await this.chat.auth(channelId, botId, body.authkey);
         if (!isAuthed) {
             return false;
         }
         this.chat.on("ChatMessage", async message => {
-            console.log(message);
+            console.log("original " + JSON.stringify(message));
+            let converted: CactusMessagePacket = <CactusMessagePacket>await this.convert(message);
+            console.log(converted);
         });
         this.chat.on("UserUpdate", async update => {
             console.log(update);
@@ -61,6 +65,49 @@ export class MixerHandler implements Service {
 
     public async disconnect(): Promise<boolean> {
         return true; // TODO
+    }
+
+    public async convert(packet: any): Promise<CactusPacket> {
+        if (packet.message !== undefined) {
+            // Message packet
+            const message = packet.message.message;
+            const meta = packet.message.meta;
+            if (message.length < 1) {
+                // This is bad, and a Mixer bug.
+                throw new Error("No message");
+            }
+            let fullChatMessage = "";
+            let target = undefined;
+            // Parse each piece of the message
+            message.forEach(async (msg: {type: string, data: string, text: string, username?: string}) => {
+                if (msg.type === "tag") {
+                    target = msg.username;
+                }
+                fullChatMessage += ` ${msg.text}`;
+            });
+            fullChatMessage = fullChatMessage.trim();
+            let cactusPacket: CactusMessagePacket;
+
+            // TODO: Can this be better?
+            if (target !== undefined) {
+                cactusPacket = {
+                    text: fullChatMessage,
+                    action: meta.me !== undefined,
+                    user: packet.user_name,
+                    role: packet.user_roles[0],
+                    target: target
+                }
+            } else {
+                cactusPacket = {
+                    text: fullChatMessage,
+                    action: meta.me !== undefined,
+                    user: packet.user_name,
+                    role: packet.user_roles[0]
+                }
+            }
+            return cactusPacket;
+        }
+        return {};
     }
 
     public get status(): ServiceStatus {

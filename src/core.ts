@@ -3,7 +3,7 @@ import { Injectable } from "@angular/core";
 
 /**
  * Start all the Core services.
- * 
+ *
  * @export
  * @class Core
  */
@@ -15,7 +15,7 @@ export class Core {
 
     /**
      * Start the app.
-     * 
+     *
      * @memberof Core
      */
     public async start() {

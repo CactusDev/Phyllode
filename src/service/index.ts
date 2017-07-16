@@ -61,7 +61,7 @@ export class ServiceHandler {
             return ConnectionTristate.FALSE;
         }
         service.setStatus(ServiceStatus.AUTHENTICATING);
-        const authenticated = await service.authenticate(channel);
+        const authenticated = await service.authenticate(channel, 25873);
         if (!authenticated) {
             return ConnectionTristate.FAILED;
         }
