@@ -9,6 +9,13 @@ interface MixerChatResponse {
     endpoints: string[];
 }
 
+interface MixerChatMessage {
+    type: string;
+    data: string;
+    text: string;
+    username?: string;
+}
+
 /**
  * Handle the Mixer service.
  *
@@ -43,8 +50,11 @@ export class MixerHandler implements Service {
         } else {
             channelId = <number>channelRaw;
         }
-        // TODO: Authentication handler
         const result = await this.httpc.get(`${this.base}/chats/${channelId}`, this.headers);
+        if (result.message.statusCode !== 200) {
+            // This is bad
+            return false;
+        }
         const body: MixerChatResponse = JSON.parse(await result.readBody());
         this.chat = new ChatSocket(body.endpoints).boot();
 
@@ -53,24 +63,26 @@ export class MixerHandler implements Service {
             return false;
         }
         this.chat.on("ChatMessage", async message => {
-            let converted: CactusMessagePacket = <CactusMessagePacket>await this.convert(message);
+            let converted = await this.convert(message);
             console.log(converted);
         });
         this.chat.on("UserUpdate", async update => {
             console.log(update);
-        })
-        return true; // This is bad /shrug
+        });
+        return this.chat.isConnected();
     }
 
     public async disconnect(): Promise<boolean> {
-        return true; // TODO
+        this.chat.close();
+        // Just assume that it was closed.
+        return true;
     }
 
-    public async convert(packet: any): Promise<CactusPacket> {
+    public async convert(packet: any): Promise<CactusMessagePacket> {
         if (packet.message !== undefined) {
-            // Message packet
             const message = packet.message.message;
             const meta = packet.message.meta;
+
             if (message.length < 1) {
                 // This is bad, and a Mixer bug.
                 throw new Error("No message");
@@ -78,16 +90,15 @@ export class MixerHandler implements Service {
             let fullChatMessage = "";
             let target = undefined;
             // Parse each piece of the message
-            message.forEach(async (msg: {type: string, data: string, text: string, username?: string}) => {
+            message.forEach(async (msg: MixerChatMessage) => {
                 if (msg.type === "tag") {
                     target = msg.username;
                 }
                 fullChatMessage += ` ${msg.text}`;
             });
             fullChatMessage = fullChatMessage.trim();
-            let cactusPacket: CactusMessagePacket;
 
-            // TODO: Can this be better?
+            let cactusPacket: CactusMessagePacket;
             if (target !== undefined) {
                 cactusPacket = {
                     type: "message",
@@ -109,12 +120,16 @@ export class MixerHandler implements Service {
             return cactusPacket;
         }
         return {
-            type: "error"
+            type: "message",
+            text: "Error!",
+            action: false,
+            user: "",
+            role: "User"
         };
     }
 
     public get status(): ServiceStatus {
-        return this._status; // TODO
+        return this._status;
     }
 
     public set status(status: ServiceStatus) {

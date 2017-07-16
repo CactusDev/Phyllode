@@ -1,6 +1,10 @@
 import { MixerHandler } from "./services/mixer";
 import { Service, ServiceStatus } from "./service";
 
+interface ServiceMapping {
+    [name: string]: any  // How can this be not-any?
+}
+
 // THIS IS ONLY TEMP DATA UNTIL WE HAVE A MODEL IN STONE
 const channels = [
     {
@@ -8,6 +12,10 @@ const channels = [
         service: "Mixer"  // Should this be an id?
     }
 ]
+
+const services: ServiceMapping = {
+    mixer: MixerHandler
+};
 
 /**
  * Channel is a channel on a service that is currently being tracked.
@@ -85,12 +93,8 @@ export class ServiceHandler {
         await this.loadAllChannels();
 
         channels.forEach(async channel => {
-            // TODO: How do we make this not suck?
-            let service: Service = undefined;
-            if (channel.service === "Mixer") {
-                service = new MixerHandler();
-            }
-
+            const name: string = channel.service.toLowerCase();
+            const service = new services[name]();
             // Make sure it's a valid service
             if (service === undefined) {
                 throw new Error("Attempetd to use service that doesn't exist.");
