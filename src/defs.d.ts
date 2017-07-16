@@ -22,6 +22,10 @@ interface CactusMessagePacket extends CactusPacket {
     target?: boolean;
 }
 
+interface Emojis {
+    [name: string]: string
+}
+
 /**
  * User banned packet
  *

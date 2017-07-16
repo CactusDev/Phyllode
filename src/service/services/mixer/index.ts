@@ -1,7 +1,9 @@
-import { concat } from 'rxjs/operator/concat';
+import { objectify } from 'tslint/lib/utils';
 import { Service, ServiceStatus } from "../../service";
 import { ChatSocket, IChatMessage, IUserUpdate } from "mixer-chat";
 import { Subject } from "rxjs";
+
+import { emojis } from "./emoji";
 
 import { Carina } from "carina";
 import * as ws from 'ws';
@@ -45,7 +47,17 @@ export class MixerHandler implements Service {
     public events: Subject<CactusEventPacket>;
     private carina: Carina;
 
+    private emojiNames: Array<string> = [];
+    private emojiValues: Array<string> = [];
+
     public async connect(): Promise<boolean> {
+        // Make sure the emoji mappings file exists
+
+        // This should probably be moved in the base service class once it's an abstract class
+        this.emojiNames = Object.keys(emojis);
+        for (let emoji of this.emojiNames) {
+            this.emojiValues.push(emojis[emoji]);
+        }
         // Start up carina connection
         Carina.WebSocket = ws;
         this.carina = new Carina({ isBot: true }).open();
@@ -81,7 +93,6 @@ export class MixerHandler implements Service {
             if (converted.user === "CactusBotDev") {  // HACK: This needs to be the actual bot user
                 return;
             }
-            console.log(converted);
             this.sendMessage(converted);
         });
 
@@ -172,7 +183,12 @@ export class MixerHandler implements Service {
             let target = undefined;
             // Parse each piece of the message
             message.forEach(async (msg: MixerChatMessage) => {
-                fullChatMessage += ` ${msg.text}`;
+                const trimmed = msg.text.trim();
+                if (this.emojiNames.find(e => e === trimmed) !== undefined) {
+                    fullChatMessage += ` ${emojis[msg.text]}`
+                } else {
+                    fullChatMessage += ` ${trimmed}`;
+                }
             });
             fullChatMessage = fullChatMessage.trim();
 
@@ -203,8 +219,24 @@ export class MixerHandler implements Service {
         if (packet.action) {
             message += "/me ";
         }
-        message += packet.text;
+
+        packet.text.split(" ").forEach(async text => {
+            if (text in this.emojiValues) {
+                message += await this.findEmoji(text);
+            } else {
+                message += text;
+            }
+        });
         return message;
+    }
+
+    private async findEmoji(name: string) {
+        for (let emoji in emojis) {
+            if (emoji === name) {
+                return emoji;
+            }
+        }
+        return "";
     }
 
     public async sendMessage(message: CactusMessagePacket) {
