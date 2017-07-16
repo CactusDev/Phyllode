@@ -1,4 +1,3 @@
-import { objectify } from 'tslint/lib/utils';
 import { Service, ServiceStatus } from "../../service";
 import { ChatSocket, IChatMessage, IUserUpdate } from "mixer-chat";
 import { Subject } from "rxjs";
@@ -6,8 +5,8 @@ import { Subject } from "rxjs";
 import { emojis } from "./emoji";
 
 import { Carina } from "carina";
-import * as ws from 'ws';
-import * as httpm from 'typed-rest-client/HttpClient';
+import * as ws from "ws";
+import * as httpm from "typed-rest-client/HttpClient";
 
 interface MixerChatResponse {
     roles: string[];
@@ -50,6 +49,8 @@ export class MixerHandler implements Service {
     private emojiNames: Array<string> = [];
     private emojiValues: Array<string> = [];
 
+    private botName = "";
+
     public async connect(): Promise<boolean> {
         // Make sure the emoji mappings file exists
 
@@ -76,6 +77,13 @@ export class MixerHandler implements Service {
             channelId = <number>channelRaw;
         }
         await this.setupCarinaEvents(channelId);
+
+        const userResult = await this.httpc.get(`${this.base}/users/current`, this.headers);
+        if (userResult.message.statusCode !== 200) {
+            return false;
+        }
+        this.botName = JSON.parse(await userResult.readBody()).username;
+
         const result = await this.httpc.get(`${this.base}/chats/${channelId}`, this.headers);
         if (result.message.statusCode !== 200) {
             // This is bad
@@ -90,15 +98,13 @@ export class MixerHandler implements Service {
         }
         this.chat.on("ChatMessage", async message => {
             let converted = await this.convert(message);
-            if (converted.user === "CactusBotDev") {  // HACK: This needs to be the actual bot user
+            if (converted.user === this.botName) {
                 return;
             }
             this.sendMessage(converted);
         });
 
-        this.chat.on("error", async error => {
-            console.error(error);
-        });
+        this.chat.on("error", console.error);
         return this.chat.isConnected();
     }
 
@@ -204,13 +210,7 @@ export class MixerHandler implements Service {
             }
             return cactusPacket;
         }
-        return {
-            type: "message",
-            text: "Error!",
-            action: false,
-            user: "",
-            role: "user"
-        };
+        return null;
     }
 
     public async invert(packet: CactusMessagePacket): Promise<string> {
