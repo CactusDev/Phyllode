@@ -66,7 +66,6 @@ export class MixerHandler implements Service {
     }
 
     public async authenticate(channelRaw: string | number, botId: number): Promise<boolean> {
-        console.log("A");
         let channelId;
         if (<any>channelRaw instanceof String) {
             const nameResult = await this.httpc.get(`${this.base}/channel/${channelRaw}`);
@@ -77,23 +76,19 @@ export class MixerHandler implements Service {
         } else {
             channelId = <number>channelRaw;
         }
-        console.log("B");
         await this.setupCarinaEvents(channelId);
-        console.log("C");
 
         const userResult = await this.httpc.get(`${this.base}/users/current`, this.headers);
         if (userResult.message.statusCode !== 200) {
             return false;
         }
         this.botName = JSON.parse(await userResult.readBody()).username;
-        console.log("D");
 
         const result = await this.httpc.get(`${this.base}/chats/${channelId}`, this.headers);
         if (result.message.statusCode !== 200) {
             // This is bad
             return false;
         }
-        console.log("E");
         const body: MixerChatResponse = JSON.parse(await result.readBody());
         this.chat = new ChatSocket(body.endpoints).boot();
 
