@@ -4,7 +4,9 @@
  * 
  * @interface CactusPacket
  */
-interface CactusPacket {}
+interface CactusPacket {
+    type: string;
+}
 
 /**
  * Message packet

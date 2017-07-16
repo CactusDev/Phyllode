@@ -53,7 +53,6 @@ export class MixerHandler implements Service {
             return false;
         }
         this.chat.on("ChatMessage", async message => {
-            console.log("original " + JSON.stringify(message));
             let converted: CactusMessagePacket = <CactusMessagePacket>await this.convert(message);
             console.log(converted);
         });
@@ -91,6 +90,7 @@ export class MixerHandler implements Service {
             // TODO: Can this be better?
             if (target !== undefined) {
                 cactusPacket = {
+                    type: "message",
                     text: fullChatMessage,
                     action: meta.me !== undefined,
                     user: packet.user_name,
@@ -99,6 +99,7 @@ export class MixerHandler implements Service {
                 }
             } else {
                 cactusPacket = {
+                    type: "message",
                     text: fullChatMessage,
                     action: meta.me !== undefined,
                     user: packet.user_name,
@@ -107,14 +108,16 @@ export class MixerHandler implements Service {
             }
             return cactusPacket;
         }
-        return {};
+        return {
+            type: "error"
+        };
     }
 
     public get status(): ServiceStatus {
         return this._status; // TODO
     }
 
-    public setStatus(status: ServiceStatus) {
+    public set status(status: ServiceStatus) {
         this._status = status;
     }
 }

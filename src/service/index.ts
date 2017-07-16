@@ -55,17 +55,17 @@ export class ServiceHandler {
      * @returns {Promise<boolean>} if the connection was successful.
      */
     public async connectChannel(channel: string | number, service: Service): Promise<ConnectionTristate> {
-        service.setStatus(ServiceStatus.CONNECTING);
+        service.status = ServiceStatus.CONNECTING;
         const connected = await service.connect();
         if (!connected) {
             return ConnectionTristate.FALSE;
         }
-        service.setStatus(ServiceStatus.AUTHENTICATING);
+        service.status = ServiceStatus.AUTHENTICATING;
         const authenticated = await service.authenticate(channel, 25873);
         if (!authenticated) {
             return ConnectionTristate.FAILED;
         }
-        service.setStatus(ServiceStatus.READY);
+        service.status = ServiceStatus.READY;
 
         if (this.channels[channel] === undefined) {
             this.channels[channel] = [service];

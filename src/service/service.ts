@@ -37,7 +37,6 @@ export enum ServiceStatus {
 export interface Service {  // TODO: This should probably be turned into an abstract class.
 
     status: ServiceStatus
-    setStatus(status: ServiceStatus): void;
 
     /**
      * Inital connection to the server.
