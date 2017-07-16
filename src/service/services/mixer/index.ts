@@ -50,6 +50,8 @@ export class MixerHandler implements Service {
     private emojiNames: Array<string> = [];
     private emojiValues: Array<string> = [];
 
+    private botName = "";
+
     public async connect(): Promise<boolean> {
         // Make sure the emoji mappings file exists
 
@@ -76,11 +78,18 @@ export class MixerHandler implements Service {
             channelId = <number>channelRaw;
         }
         await this.setupCarinaEvents(channelId);
+
+        const userResult = await this.httpc.get(`${this.base}/users/current`);
+        if (userResult.message.statusCode !== 200) {
+            return false;
+        }
+
         const result = await this.httpc.get(`${this.base}/chats/${channelId}`, this.headers);
         if (result.message.statusCode !== 200) {
             // This is bad
             return false;
         }
+        this.botName = JSON.parse(await result.readBody()).username;
         const body: MixerChatResponse = JSON.parse(await result.readBody());
         this.chat = new ChatSocket(body.endpoints).boot();
 
@@ -90,7 +99,7 @@ export class MixerHandler implements Service {
         }
         this.chat.on("ChatMessage", async message => {
             let converted = await this.convert(message);
-            if (converted.user === "CactusBotDev") {  // HACK: This needs to be the actual bot user
+            if (converted.user === this.botName) {
                 return;
             }
             this.sendMessage(converted);
@@ -204,13 +213,7 @@ export class MixerHandler implements Service {
             }
             return cactusPacket;
         }
-        return {
-            type: "message",
-            text: "Error!",
-            action: false,
-            user: "",
-            role: "user"
-        };
+        return null;
     }
 
     public async invert(packet: CactusMessagePacket): Promise<string> {
