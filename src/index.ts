@@ -1,15 +1,19 @@
+import "reflect-metadata";
 
 import { ReflectiveInjector } from "@angular/core";
 import { Core } from "./core";
+import { ServiceHandler } from "./service";
 
 const injector = ReflectiveInjector.resolveAndCreate([
     {
-        provide: Core,
+        provide: ServiceHandler,
+        deps: [],
         useFactory: () => {
-            const core = new Core();
-            return core;
+            const serviceHandler = new ServiceHandler();
+            return serviceHandler;
         }
-    }
+    },
+    Core
 ]);
 
 const core: Core = injector.get(Core);

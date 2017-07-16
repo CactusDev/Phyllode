@@ -1,21 +1,36 @@
-import { Service, ServiceStatus } from '../../service';
+import { Service, ServiceStatus } from "../../service";
+import { ChatSocket, IChatMessage, IUserUpdate } from "mixer-chat";
+import * as httpm from "typed-rest-client/HttpClient";
 
-const { Client, OAuthProvider, DefaultRequestRunner } = require("beam-client-node");
+interface MixerChatResponse {
+    roles: string[];
+    authkey: string;
+    permissions: string[];
+    endpoints: string[];
+}
 
 /**
  * Handle the Mixer service.
- * 
+ *
  * @export
  * @class MixerHandler
  * @implements {Service}
  */
 export class MixerHandler implements Service {
 
-    private client = new Client(new DefaultRequestRunner());
+    private chat: ChatSocket;
     protected _status: ServiceStatus = ServiceStatus.AUTHENTICATING;
 
+    private httpc: httpm.HttpClient = new httpm.HttpClient("aerophyl");
+
+    private base = "https://mixer.com/api/v1";
+    private headers = {
+        Authorization: "Bearer TODO AUTHENTICATION HANDLER"
+    }
+
     public async connect(): Promise<boolean> {
-        // I don't think we need this?
+        // TODO: This shouldn't be a static ip being used for all the chat
+        // that's being used
         return true;
     }
 
@@ -27,14 +42,20 @@ export class MixerHandler implements Service {
         }
         const channel = <number>channelRaw
         // TODO: Authentication handler
-        this.client.use(new OAuthProvider(this.client, {
-            clientId: "",
-            secret: ""
-        }))
-        .attempt()
-            .then(() => this.client.chat.join(channel))
-            .then((res: any) => console.log("Connected!"))
-            .catch(console.error);
+        const result = await this.httpc.get(`${this.base}/chats/${channel}`, this.headers);
+        const body: MixerChatResponse = JSON.parse(await result.readBody());
+        this.chat = new ChatSocket(body.endpoints).boot();
+
+        const isAuthed = await this.chat.auth(channel, 25873, body.authkey);
+        if (!isAuthed) {
+            return false;
+        }
+        this.chat.on("ChatMessage", async message => {
+            console.log(message);
+        });
+        this.chat.on("UserUpdate", async update => {
+            console.log(update);
+        })
         return true; // This is bad /shrug
     }
 
@@ -44,5 +65,9 @@ export class MixerHandler implements Service {
 
     public get status(): ServiceStatus {
         return this._status; // TODO
+    }
+
+    public setStatus(status: ServiceStatus) {
+        this._status = status;
     }
 }

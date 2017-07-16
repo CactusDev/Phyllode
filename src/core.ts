@@ -1,3 +1,5 @@
+import { ServiceHandler } from "./service";
+import { Injectable } from "@angular/core";
 
 /**
  * Start all the Core services.
@@ -5,10 +7,10 @@
  * @export
  * @class Core
  */
+@Injectable()
 export class Core {
 
-    constructor() {
-
+    constructor(private serviceHandler: ServiceHandler) {
     }
 
     /**
@@ -17,6 +19,6 @@ export class Core {
      * @memberof Core
      */
     public async start() {
-
+        this.serviceHandler.connectAllChannels();
     }
 }

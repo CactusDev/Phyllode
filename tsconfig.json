@@ -1,26 +1,21 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "moduleResolution": "node",
     "target": "es6",
     "noImplicitAny": true,
     "removeComments": true,
     "preserveConstEnums": true,
     "sourceMap": true,
-    "outDir": "js",
+    "outDir": "dist",
+    "rootDir": "src",
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "typeRoots": [
-      "node_modules/@types"
-    ],"types": [
-      "node"
-    ]
+    "emitDecoratorMetadata": true
   },
   "include": [
-    "./src/**/*"
+    "./src/**/*.ts"
   ],
   "exclude": [
-    "js",
-    "node_modules"
+    "node_modules",
+    "typings"
   ]
 }
