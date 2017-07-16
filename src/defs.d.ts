@@ -19,7 +19,7 @@ interface CactusMessagePacket extends CactusPacket {
     user: string;
     role: "Banned" | "User" | "Subscriber" | "Moderator" | "Owner";
     action: boolean;
-    target?: string;
+    target?: boolean;
 }
 
 /**
@@ -43,7 +43,7 @@ interface CactusEventPacket extends CactusPacket {
     kind: string;
     user: string;
     success: boolean;
-    streak: number;
+    streak?: number;
 }
 
 interface MixerUserPacket {

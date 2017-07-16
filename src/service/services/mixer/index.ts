@@ -1,10 +1,11 @@
+import { concat } from 'rxjs/operator/concat';
 import { Service, ServiceStatus } from "../../service";
 import { ChatSocket, IChatMessage, IUserUpdate } from "mixer-chat";
 import { Subject } from "rxjs";
 
 import { Carina } from "carina";
-import * as ws from "ws";
-import * as httpm from "typed-rest-client/HttpClient";
+import * as ws from 'ws';
+import * as httpm from 'typed-rest-client/HttpClient';
 
 interface MixerChatResponse {
     roles: string[];
@@ -31,6 +32,8 @@ export class MixerHandler implements Service {
 
     private chat: ChatSocket;
     protected _status: ServiceStatus = ServiceStatus.AUTHENTICATING;
+
+    private packetId = 0;
 
     private httpc: httpm.HttpClient = new httpm.HttpClient("aerophyl");
 
@@ -60,6 +63,7 @@ export class MixerHandler implements Service {
         } else {
             channelId = <number>channelRaw;
         }
+        await this.setupCarinaEvents(channelId);
         const result = await this.httpc.get(`${this.base}/chats/${channelId}`, this.headers);
         if (result.message.statusCode !== 200) {
             // This is bad
@@ -74,10 +78,15 @@ export class MixerHandler implements Service {
         }
         this.chat.on("ChatMessage", async message => {
             let converted = await this.convert(message);
+            if (converted.user === "CactusBotDev") {  // HACK: This needs to be the actual bot user
+                return;
+            }
             console.log(converted);
+            this.sendMessage(converted);
         });
-        this.chat.on("UserUpdate", async update => {
-            console.log(update);
+
+        this.chat.on("error", async error => {
+            console.error(error);
         });
         return this.chat.isConnected();
     }
@@ -90,11 +99,11 @@ export class MixerHandler implements Service {
      * @memberof MixerHandler
      */
     private async setupCarinaEvents(id: number) {
+        this.carina.on("error", console.error);
         this.carina.subscribe<MixerFollowPacket>(`channel:${id}:followed`, async data => {
             const packet: CactusEventPacket = {
                 type: "event",
                 kind: "follow",
-                streak: 0,
                 success: data.following,
                 user: data.username
             };
@@ -105,7 +114,6 @@ export class MixerHandler implements Service {
             const packet: CactusEventPacket = {
                 type: "event",
                 kind: "host",
-                streak: 0,
                 success: true,
                 user: data.hoster.token
             };
@@ -116,7 +124,6 @@ export class MixerHandler implements Service {
             const packet: CactusEventPacket = {
                 type: "event",
                 kind: "host",
-                streak: 0,
                 success: false,
                 user: data.hoster.token
             };
@@ -127,7 +134,7 @@ export class MixerHandler implements Service {
             const packet: CactusEventPacket = {
                 type: "event",
                 kind: "subscribe",
-                streak: 0,
+                streak: 1,
                 success: true,
                 user: data.username
             };
@@ -165,9 +172,6 @@ export class MixerHandler implements Service {
             let target = undefined;
             // Parse each piece of the message
             message.forEach(async (msg: MixerChatMessage) => {
-                if (msg.type === "tag") {
-                    target = msg.username;
-                }
                 fullChatMessage += ` ${msg.text}`;
             });
             fullChatMessage = fullChatMessage.trim();
@@ -179,8 +183,8 @@ export class MixerHandler implements Service {
                     user: packet.user_name,
                     role: packet.user_roles[0]
                 };
-            if (target !== undefined) {
-                cactusPacket.target = target
+            if (meta.whisper !== undefined) {
+                cactusPacket.target = true
             }
             return cactusPacket;
         }
@@ -191,6 +195,40 @@ export class MixerHandler implements Service {
             user: "",
             role: "User"
         };
+    }
+
+    public async invert(packet: CactusMessagePacket): Promise<string> {
+        let message = "";
+
+        if (packet.action) {
+            message += "/me ";
+        }
+        message += packet.text;
+        return message;
+    }
+
+    public async sendMessage(message: CactusMessagePacket) {
+        if (!this.chat.isConnected()) {
+            throw new Error("Not connected to chat.");
+        }
+
+        const finalMessage = await this.invert(message);
+
+        let method = "msg"
+        let args = []
+        if (message.target) {
+            method = "whisper";
+            args.push(message.user);
+        }
+        args.push(finalMessage);
+        const packet = {
+            type: "method",
+            method: method,
+            arguments: args,
+            id: this.packetId
+        };
+        this.packetId++;
+        this.chat.send(packet);
     }
 
     public get status(): ServiceStatus {

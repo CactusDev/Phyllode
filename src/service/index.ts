@@ -111,7 +111,7 @@ export class ServiceHandler {
             console.log("Connected.");
             // Event observable
             console.log("Attempting to listen for events...");
-            
+
             console.log("Listening for events!");
         });
     }

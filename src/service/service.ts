@@ -89,4 +89,21 @@ export interface Service {  // TODO: This should probably be turned into an abst
      * @memberof Service
      */
     convert(packet: any): Promise<CactusPacket>;
+
+    /**
+     * Convert from a CactusPacket back into a service packet
+     *
+     * @param {CactusPacket} packet the packet to convert
+     * @returns {Promise<string>} the service packet
+     * @memberof Service
+     */
+    invert(packet: CactusMessagePacket): Promise<string>;
+
+    /**
+     * Send a mesasge to the service
+     *
+     * @param {string} message the message to send
+     * @memberof Service
+     */
+    sendMessage(message: CactusMessagePacket): void;
 }
