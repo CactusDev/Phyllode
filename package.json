@@ -1,0 +1,27 @@
+{
+  "name": "aerophyl",
+  "version": "1.0.0",
+  "description": "Translates service-packets into the CactusBot format for use by the handler system",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "mocha tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CactusDev/Aerophyl.git"
+  },
+  "author": "CactusDev",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/CactusDev/Aerophyl/issues"
+  },
+  "homepage": "https://github.com/CactusDev/Aerophyl#readme",
+  "dependencies": {
+    "@angular/core": "^4.3.0",
+    "@types/node": "^8.0.13",
+    "beam-client-node": "^0.13.0",
+    "reflect-metadata": "^0.1.8",
+    "tslint": "^5.5.0",
+    "typescript": "^2.4.1"
+  }
+}
