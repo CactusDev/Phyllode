@@ -94,7 +94,7 @@ export class ServiceHandler {
 
         channels.forEach(async channel => {
             const name: string = channel.service.toLowerCase();
-            const service = new services[name]();
+            const service: Service = new services[name]();
             // Make sure it's a valid service
             if (service === undefined) {
                 throw new Error("Attempetd to use service that doesn't exist.");
@@ -111,7 +111,13 @@ export class ServiceHandler {
             console.log("Connected.");
             // Event observable
             console.log("Attempting to listen for events...");
-
+            service.events.subscribe(
+                (event: CactusEventPacket) => {
+                    console.log("Got event: " + JSON.stringify(event));
+                },
+                (error) => console.error,
+                () => console.log("Done")
+            );
             console.log("Listening for events!");
         });
     }

@@ -43,7 +43,7 @@ export class MixerHandler implements Service {
         Authorization: "Bearer"
     }
 
-    public events: Subject<CactusEventPacket>;
+    public events: Subject<CactusEventPacket> = new Subject();
     private carina: Carina;
 
     private emojiNames: Array<string> = [];
@@ -222,12 +222,12 @@ export class MixerHandler implements Service {
 
         packet.text.split(" ").forEach(async text => {
             if (text in this.emojiValues) {
-                message += await this.findEmoji(text);
+                message += ` ${await this.findEmoji(text)}`;
             } else {
-                message += text;
+                message += ` ${text}`;
             }
         });
-        return message;
+        return message.trim();
     }
 
     private async findEmoji(name: string) {
