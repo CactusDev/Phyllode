@@ -1,4 +1,3 @@
-import { objectify } from 'tslint/lib/utils';
 import { Service, ServiceStatus } from "../../service";
 import { ChatSocket, IChatMessage, IUserUpdate } from "mixer-chat";
 import { Subject } from "rxjs";
@@ -6,8 +5,8 @@ import { Subject } from "rxjs";
 import { emojis } from "./emoji";
 
 import { Carina } from "carina";
-import * as ws from 'ws';
-import * as httpm from 'typed-rest-client/HttpClient';
+import * as ws from "ws";
+import * as httpm from "typed-rest-client/HttpClient";
 
 interface MixerChatResponse {
     roles: string[];
@@ -67,6 +66,7 @@ export class MixerHandler implements Service {
     }
 
     public async authenticate(channelRaw: string | number, botId: number): Promise<boolean> {
+        console.log("A");
         let channelId;
         if (<any>channelRaw instanceof String) {
             const nameResult = await this.httpc.get(`${this.base}/channel/${channelRaw}`);
@@ -77,19 +77,23 @@ export class MixerHandler implements Service {
         } else {
             channelId = <number>channelRaw;
         }
+        console.log("B");
         await this.setupCarinaEvents(channelId);
+        console.log("C");
 
-        const userResult = await this.httpc.get(`${this.base}/users/current`);
+        const userResult = await this.httpc.get(`${this.base}/users/current`, this.headers);
         if (userResult.message.statusCode !== 200) {
             return false;
         }
+        this.botName = JSON.parse(await userResult.readBody()).username;
+        console.log("D");
 
         const result = await this.httpc.get(`${this.base}/chats/${channelId}`, this.headers);
         if (result.message.statusCode !== 200) {
             // This is bad
             return false;
         }
-        this.botName = JSON.parse(await result.readBody()).username;
+        console.log("E");
         const body: MixerChatResponse = JSON.parse(await result.readBody());
         this.chat = new ChatSocket(body.endpoints).boot();
 
@@ -105,9 +109,7 @@ export class MixerHandler implements Service {
             this.sendMessage(converted);
         });
 
-        this.chat.on("error", async error => {
-            console.error(error);
-        });
+        this.chat.on("error", console.error);
         return this.chat.isConnected();
     }
 
