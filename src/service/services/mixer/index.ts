@@ -29,7 +29,7 @@ interface MixerChatMessage {
  * @class MixerHandler
  * @implements {Service}
  */
-export class MixerHandler implements Service {
+export class MixerHandler extends Service {
 
     private chat: ChatSocket;
     protected _status: ServiceStatus = ServiceStatus.AUTHENTICATING;
