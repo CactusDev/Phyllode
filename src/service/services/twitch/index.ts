@@ -8,11 +8,13 @@ export class TwitchHandler extends Service {
     private caps = ":twitch.tv/membership twitch.tv/commands twitch.tv/tags";
 
     private channel = "";
+    private oauth = "";
 
-    public async connect(): Promise<boolean> {
+    public async connect(oauthKey: string, refresh?: string, expiry?: string): Promise<boolean> {
         if (this.status === ServiceStatus.READY) {
             return;
         }
+        this.oauth = oauthKey;
         this.socket = new WebSocket("wss://irc-ws.chat.twitch.tv");
         this.socket.on("open", async () => {
             this.socket.on("message", async (message: string) => {
@@ -37,11 +39,11 @@ export class TwitchHandler extends Service {
         return true;
     }
 
-    public async authenticate(channel: string | number, botId: number): Promise<boolean> {
+    public async authenticate(channel: string | number, botId: string | number): Promise<boolean> {
         this.channel = (<string>channel).toLowerCase();
         await this.socket.send(`CAP REQ ${this.caps}`);
-        await this.socket.send(`PASS ${""}`); // TODO Auth stuff
-        await this.socket.send(`NICK ${"CactusBotDev"}`); // TODO Auth stuff
+        await this.socket.send(`PASS oauth:${this.oauth.trim()}`);
+        await this.socket.send(`NICK ${botId}`); // TODO Auth stuff
         await this.socket.send(`JOIN #${this.channel}`);
         return true;
     }

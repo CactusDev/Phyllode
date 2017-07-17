@@ -4,12 +4,19 @@ import { ReflectiveInjector } from "@angular/core";
 import { Core } from "./core";
 import { ServiceHandler } from "./service";
 
+import * as nconf from "config";
+import { Config } from "./config";
+
 const injector = ReflectiveInjector.resolveAndCreate([
     {
+        provide: Config,
+        useValue: nconf
+    },
+    {
         provide: ServiceHandler,
-        deps: [],
-        useFactory: () => {
-            const serviceHandler = new ServiceHandler();
+        deps: [Config],
+        useFactory: (config: Config) => {
+            const serviceHandler = new ServiceHandler(config);
             return serviceHandler;
         }
     },

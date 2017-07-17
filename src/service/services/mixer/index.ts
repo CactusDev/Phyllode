@@ -46,12 +46,13 @@ export class MixerHandler extends Service {
     public events: Subject<CactusEventPacket> = new Subject();
     private carina: Carina;
 
-    private emojiNames: Array<string> = [];
-    private emojiValues: Array<string> = [];
+    private emojiNames: string[] = [];
+    private emojiValues: string[] = [];
 
     private botName = "";
 
-    public async connect(): Promise<boolean> {
+    public async connect(oauthKey: string, refresh?: string, expiry?: string): Promise<boolean> {
+        this.headers.Authorization = `Bearer ${oauthKey}`
         // Make sure the emoji mappings file exists
 
         // This should probably be moved in the base service class once it's an abstract class
