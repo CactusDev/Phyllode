@@ -30,13 +30,17 @@ export enum ServiceStatus {
     CONNECTING,  AUTHENTICATING, READY
 }
 
+export interface MessageOptions {
+    prefix?: string;
+}
+
 /**
  * Base services that other services implement
  *
  * @export
  * @interface Service
  */
-export interface Service {  // TODO: This should probably be turned into an abstract class.
+export abstract class Service {  // TODO: This should probably be turned into an abstract class.
 
     /**
      * The current status of the service handler.
@@ -44,7 +48,9 @@ export interface Service {  // TODO: This should probably be turned into an abst
      * @type {ServiceStatus}
      * @memberof Service
      */
-    status: ServiceStatus;
+    protected _status: ServiceStatus;
+
+    public status: ServiceStatus;
 
     /**
      * Events from any sort of service event system
@@ -52,7 +58,7 @@ export interface Service {  // TODO: This should probably be turned into an abst
      * @type {Subject<CactusEventPacket>}
      * @memberof Service
      */
-    events: Subject<CactusEventPacket>;
+    public events: Subject<CactusEventPacket> = new Subject();
 
     /**
      * Inital connection to the server.
@@ -62,7 +68,7 @@ export interface Service {  // TODO: This should probably be turned into an abst
      * @returns {Promise<boolean>} connection status
      * @memberof Service
      */
-    connect(): Promise<boolean>;
+    public abstract async connect(): Promise<boolean>;
 
     /**
      * Authenticate this service instance with the service.
@@ -71,7 +77,7 @@ export interface Service {  // TODO: This should probably be turned into an abst
      * @returns {Promise<boolean>} authentication status
      * @memberof Service
      */
-    authenticate(channel: string | number, botId: number): Promise<boolean>;
+    public abstract async authenticate(channel: string | number, botId: number): Promise<boolean>;
 
     /**
      * Disconnect from the service
@@ -79,7 +85,7 @@ export interface Service {  // TODO: This should probably be turned into an abst
      * @returns {Promise<boolean>} if the disconnection was clean
      * @memberof Service
      */
-    disconnect(): Promise<boolean>;
+    public abstract async disconnect(): Promise<boolean>;
 
     /**
      * Convert a service packet into a Cactus formatted packet
@@ -88,7 +94,7 @@ export interface Service {  // TODO: This should probably be turned into an abst
      * @returns {Promise<CactusPacket>} the packet in the CactusBot format
      * @memberof Service
      */
-    convert(packet: any): Promise<CactusPacket>;
+    public abstract async convert(packet: any): Promise<CactusPacket>;
 
     /**
      * Convert from a CactusPacket back into a service packet
@@ -97,7 +103,7 @@ export interface Service {  // TODO: This should probably be turned into an abst
      * @returns {Promise<string>} the service packet
      * @memberof Service
      */
-    invert(packet: CactusMessagePacket): Promise<string>;
+    public abstract async invert(packet: CactusMessagePacket): Promise<string>;
 
     /**
      * Send a mesasge to the service
@@ -105,5 +111,5 @@ export interface Service {  // TODO: This should probably be turned into an abst
      * @param {string} message the message to send
      * @memberof Service
      */
-    sendMessage(message: CactusMessagePacket): void;
+    public abstract async sendMessage(message: CactusMessagePacket, options?: MessageOptions): Promise<void>;
 }

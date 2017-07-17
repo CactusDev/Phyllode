@@ -1,4 +1,4 @@
-import { MixerHandler } from "./services/mixer";
+import { MixerHandler, TwitchHandler } from "./services";
 import { Service, ServiceStatus } from "./service";
 
 interface ServiceMapping {
@@ -10,11 +10,16 @@ const channels = [
     {
         channel: 17887,
         service: "Mixer"
+    },
+    {
+        channel: "Innectic",
+        service: "Twitch"
     }
 ]
 
 const services: ServiceMapping = {
-    mixer: MixerHandler
+    mixer: MixerHandler,
+    twitch: TwitchHandler
 };
 
 /**
