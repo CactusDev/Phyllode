@@ -1,0 +1,6 @@
+core:
+  api_url: "https://cactus.exoz.one/api/"
+  authentication:
+    - cactusbotdev:
+        twitch: ""
+        mixer: ""

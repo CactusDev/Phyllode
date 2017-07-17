@@ -68,7 +68,7 @@ export abstract class Service {  // TODO: This should probably be turned into an
      * @returns {Promise<boolean>} connection status
      * @memberof Service
      */
-    public abstract async connect(): Promise<boolean>;
+    public abstract async connect(oauthKey: string, refresh?: string, expiry?: string): Promise<boolean>;
 
     /**
      * Authenticate this service instance with the service.
@@ -77,7 +77,7 @@ export abstract class Service {  // TODO: This should probably be turned into an
      * @returns {Promise<boolean>} authentication status
      * @memberof Service
      */
-    public abstract async authenticate(channel: string | number, botId: number): Promise<boolean>;
+    public abstract async authenticate(channel: string | number, botId: string | number): Promise<boolean>;
 
     /**
      * Disconnect from the service

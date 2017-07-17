@@ -1,5 +1,7 @@
+
 import { MixerHandler, TwitchHandler } from "./services";
 import { Service, ServiceStatus } from "./service";
+import { Config } from "../config";
 
 interface ServiceMapping {
     [name: string]: any  // How can this be not-any?
@@ -9,11 +11,13 @@ interface ServiceMapping {
 const channels = [
     {
         channel: 17887,
-        service: "Mixer"
+        service: "Mixer",
+        botUser: 25873
     },
     {
         channel: "Innectic",
-        service: "Twitch"
+        service: "Twitch",
+        botUser: "cactusbotdev"
     }
 ]
 
@@ -51,12 +55,11 @@ export class ServiceHandler {
 
     private channels: Channels = {};
 
-    constructor() {
-
+    constructor(private config: Config) {
     }
 
     private async loadAllChannels() {
-        // This does nothing right now. This needs a database to exist before
+        // This does nothing right now. This needs an api to exist before
         // anything can really happen here.
     }
 
@@ -67,25 +70,26 @@ export class ServiceHandler {
      * @param service the type of service to be handled.
      * @returns {Promise<boolean>} if the connection was successful.
      */
-    public async connectChannel(channel: string | number, service: Service): Promise<ConnectionTristate> {
+    public async connectChannel(channel: any, service: Service, name: string): Promise<ConnectionTristate> {
         service.status = ServiceStatus.CONNECTING;
-        const connected = await service.connect();
+        const authInfo: {[service: string]: string} = this.config.core.authentication.cactusbotdev;
+        const connected = await service.connect(authInfo[name.toLowerCase()]);
         if (!connected) {
             return ConnectionTristate.FALSE;
         }
         service.status = ServiceStatus.AUTHENTICATING;
-        const authenticated = await service.authenticate(channel, 25873);
+        const authenticated = await service.authenticate(channel.channel, channel.botUser);
         if (!authenticated) {
             return ConnectionTristate.FAILED;
         }
         service.status = ServiceStatus.READY;
 
-        if (this.channels[channel] === undefined) {
-            this.channels[channel] = [service];
+        if (this.channels[channel.channel] === undefined) {
+            this.channels[channel.channel] = [service];
         } else {
-            this.channels[channel].push(service);
+            this.channels[channel.channel].push(service);
         }
-        console.log(`Connected to channel ${channel}.`);
+        console.log(`Connected to channel ${channel.channel}.`);
         return ConnectionTristate.TRUE;
     }
 
@@ -105,7 +109,7 @@ export class ServiceHandler {
                 throw new Error("Attempetd to use service that doesn't exist.");
             }
             // Connect to the channel
-            const connected = await this.connectChannel(channel.channel, service);
+            const connected = await this.connectChannel(channel, service, name);
             if (connected === ConnectionTristate.FAILED) {
                 console.log("Failed to authenticate!");
                 return;
