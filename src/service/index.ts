@@ -7,10 +7,10 @@ interface ServiceMapping {
 
 // THIS IS ONLY TEMP DATA UNTIL WE HAVE A MODEL IN STONE
 const channels = [
-    // {
-    //     channel: 17887,
-    //     service: "Mixer"
-    // },
+    {
+        channel: 17887,
+        service: "Mixer"
+    },
     {
         channel: "Innectic",
         service: "Twitch"

@@ -74,7 +74,10 @@ export class TwitchHandler extends Service {
                 parts[1] = parts[1].substring(1);
             }
         }
-        message = parts[1].replace("\r", "").replace("\n", "");
+
+        if (parts.length > 1) {
+            message = parts[1].replace("\r", "").replace("\n", "");
+        }
 
         if (parts[0].includes("!")) {
             user = parts[0].substring(parts[0].indexOf("!" + 1), parts[0].indexOf("@"));

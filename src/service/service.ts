@@ -58,7 +58,7 @@ export abstract class Service {  // TODO: This should probably be turned into an
      * @type {Subject<CactusEventPacket>}
      * @memberof Service
      */
-    public events: Subject<CactusEventPacket>;
+    public events: Subject<CactusEventPacket> = new Subject();
 
     /**
      * Inital connection to the server.
