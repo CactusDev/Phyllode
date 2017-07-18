@@ -1,4 +1,5 @@
 import { Service, ServiceStatus, MessageOptions } from "../../service";
+import { emojis } from "./emoji";
 
 import * as WebSocket from "ws";
 
@@ -10,9 +11,16 @@ export class TwitchHandler extends Service {
     private channel = "";
     private oauth = "";
 
+    private emojiNames: string[] = [];
+    private emojiValues: string[] = [];
+
     public async connect(oauthKey: string, refresh?: string, expiry?: string): Promise<boolean> {
         if (this.status === ServiceStatus.READY) {
             return;
+        }
+        this.emojiNames = Object.keys(emojis);
+        for (let emoji of this.emojiNames) {
+            this.emojiValues.push(emojis[emoji]);
         }
         this.oauth = oauthKey;
         this.socket = new WebSocket("wss://irc-ws.chat.twitch.tv");
@@ -25,6 +33,7 @@ export class TwitchHandler extends Service {
                 const packet = await this.convert(message);
                 if (packet.user) {
                     if (packet.user.toLowerCase() !== "cactusbotdev") {
+                        console.log(JSON.stringify(packet));
                         this.sendMessage(packet);
                     }
                 }
@@ -92,12 +101,33 @@ export class TwitchHandler extends Service {
         }
 
         eventCode = parts[0].split(" ")[1];
+
+        let messageComponents: CactusMessageComponent[] = [];
+
+        message.split(" ").forEach(async part => {
+            const trimmed = part.trim();
+            console.log("Emote " + trimmed);
+            console.log(this.emojiNames.indexOf(trimmed) > -1);
+            if (this.emojiNames.indexOf(trimmed) > -1) {
+                console.log("Found");
+                messageComponents.push({
+                    type: "emoji",
+                    data: part
+                });
+            } else {
+                messageComponents.push({
+                    type: "text",
+                    data: part
+                });
+            }
+        });
+
         return {
             type: "message",
             action: false,
             role: "user",  // TODO: This should pull from the parsed information
             user: user,
-            text: message
+            text: messageComponents
         }
     }
 
@@ -109,7 +139,11 @@ export class TwitchHandler extends Service {
             message += "PRIVMSG "
         }
 
-        message += `#${this.channel} :${packet.text}`;
+        let chatMessage = "";
+        packet.text.forEach(async msg => {
+            chatMessage += ` ${msg.data}`;
+        });
+        message += `#${this.channel} :${chatMessage}`;
         return message;
     }
 
