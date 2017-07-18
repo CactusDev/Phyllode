@@ -5,6 +5,7 @@ import * as WebSocket from "ws";
 
 // tslint:disable-next-line
 const MESSAGE_REGEX = /;display-name=([a-zA-Z0-9][\w]{3,24});.+;mod=(0|1);.+;subscriber=(0|1);.+;user-id=(\d+);.+ PRIVMSG #([a-zA-Z0-9][\w]{3,24}) :(.+)/;
+const ACTION_REGEX = /ACTION/;
 
 export class TwitchHandler extends Service {
 
@@ -88,34 +89,31 @@ export class TwitchHandler extends Service {
 
         message.split(" ").forEach(async part => {
             const trimmed = part.trim();
+            let type: "emoji" | "text" = "text";
             if (this.emojiNames.indexOf(trimmed) > -1) {
-                messageComponents.push({
-                    type: "emoji",
-                    data: part
-                });
-            } else {
-                messageComponents.push({
-                    type: "text",
-                    data: part
-                });
+                type = "emoji";
             }
+            messageComponents.push({
+                type: type,
+                data: part
+            });
         });
 
         let role: "banned" | "user" | "subscriber" | "moderator" | "owner" = "user";
-
-        if (mod) {
-            role = "moderator"
-        } else if (sub) {
-            role = "subscriber";
-        }
-
         if (name.toLowerCase() === channel.toLowerCase()) {
             role = "owner";
+        } else {
+            if (mod) {
+                role = "moderator"
+            } else if (sub) {
+                role = "subscriber";
+            }
         }
+        const isAction = ACTION_REGEX.test(message);
 
         return {
             type: "message",
-            action: false,
+            action: isAction,
             role: role,
             user: name,
             text: messageComponents
@@ -123,18 +121,21 @@ export class TwitchHandler extends Service {
     }
 
     public async invert(packet: CactusMessagePacket): Promise<string> {
-        let message = "";
-        if (packet.action) {
-            message += "ACTION "
-        } else {
-            message += "PRIVMSG "
-        }
-
+        let messages = packet.text;
+        let message = "PRIVMSG ";
         let chatMessage = "";
-        packet.text.forEach(async msg => {
-            chatMessage += ` ${msg.data}`;
+
+        message += `#${this.channel} :`
+        if (packet.action) {
+            message += "/me "
+            delete messages[0];
+        }
+        messages.forEach(async msg => {
+            if (msg !== null) {
+                chatMessage += ` ${msg.data.replace("\u0001", "")}`;
+            }
         });
-        message += `#${this.channel} :${chatMessage}`;
+        message += `${chatMessage.trim()}`;
         return message;
     }
 
