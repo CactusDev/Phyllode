@@ -66,6 +66,31 @@ interface CactusEventPacket extends CactusPacket {
 }
 
 /**
+ * Response from the Mixer service chat socket
+ * 
+ * @interface MixerChatResponse
+ */
+interface MixerChatResponse {
+    roles: string[];
+    authkey: string;
+    permissions: string[];
+    endpoints: string[];
+}
+
+/**
+ * A chat message from the mixer service
+ * 
+ * @interface MixerChatMessage
+ */
+interface MixerChatMessage {
+    type: string;
+    data: string;
+    text: string;
+    username?: string;
+}
+
+
+/**
  * User packet from the Mixer service
  * 
  * @interface MixerUserPacket

@@ -8,20 +8,6 @@ import { Carina } from "carina";
 import * as ws from "ws";
 import * as httpm from "typed-rest-client/HttpClient";
 
-interface MixerChatResponse {
-    roles: string[];
-    authkey: string;
-    permissions: string[];
-    endpoints: string[];
-}
-
-interface MixerChatMessage {
-    type: string;
-    data: string;
-    text: string;
-    username?: string;
-}
-
 /**
  * Handle the Mixer service.
  *
