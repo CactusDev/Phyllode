@@ -8,6 +8,11 @@ interface CactusPacket {
     type: "message" | "ban" | "event";
 }
 
+interface CactusMessageComponent {
+    type: "text" | "emoji" | "url";
+    data: string;
+}
+
 /**
  * Message packet
  *
@@ -15,7 +20,7 @@ interface CactusPacket {
  * @extends {CactusPacket}
  */
 interface CactusMessagePacket extends CactusPacket {
-    text: string;
+    text: CactusMessageComponent[];
     user: string;
     role: "banned" | "user" | "subscriber" | "moderator" | "owner";
     action: boolean;

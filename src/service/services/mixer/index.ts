@@ -186,22 +186,28 @@ export class MixerHandler extends Service {
                 // This is bad, and a Mixer bug.
                 throw new Error("No message");
             }
-            let fullChatMessage = "";
+            let messageComponents: CactusMessageComponent[] = []
             let target = undefined;
+
             // Parse each piece of the message
             message.forEach(async (msg: MixerChatMessage) => {
                 const trimmed = msg.text.trim();
-                if (this.emojiNames.find(e => e === trimmed) !== undefined) {
-                    fullChatMessage += ` ${emojis[msg.text]}`
+                if (this.emojiNames.indexOf(trimmed) > -1) {
+                    messageComponents.push({
+                        type: "emoji",
+                        data: msg.text
+                    });
                 } else {
-                    fullChatMessage += ` ${trimmed}`;
+                    messageComponents.push({
+                        type: "text",
+                        data: msg.text
+                    });
                 }
             });
-            fullChatMessage = fullChatMessage.trim();
 
             let cactusPacket: CactusMessagePacket = {
                     type: "message",
-                    text: fullChatMessage,
+                    text: messageComponents,
                     action: meta.me !== undefined,
                     user: packet.user_name,
                     role: packet.user_roles[0].toLowerCase()
@@ -221,11 +227,11 @@ export class MixerHandler extends Service {
             message += "/me ";
         }
 
-        packet.text.split(" ").forEach(async text => {
-            if (text in this.emojiValues) {
-                message += ` ${await this.findEmoji(text)}`;
+        packet.text.forEach(async messagePacket => {
+            if (messagePacket.data in this.emojiValues) {
+                message += ` ${await this.findEmoji(messagePacket.data)}`;
             } else {
-                message += ` ${text}`;
+                message += ` ${messagePacket.data}`;
             }
         });
         return message.trim();
