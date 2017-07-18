@@ -187,22 +187,18 @@ export class MixerHandler extends Service {
                 throw new Error("No message");
             }
             let messageComponents: CactusMessageComponent[] = []
-            let target = undefined;
 
             // Parse each piece of the message
             message.forEach(async (msg: MixerChatMessage) => {
                 const trimmed = msg.text.trim();
+                let type: "text" | "emoji" | "url" = "text";
                 if (this.emojiNames.indexOf(trimmed) > -1) {
-                    messageComponents.push({
-                        type: "emoji",
-                        data: msg.text
-                    });
-                } else {
-                    messageComponents.push({
-                        type: "text",
-                        data: msg.text
-                    });
+                    type = "emoji";
                 }
+                messageComponents.push({
+                    type: type,
+                    data: msg.text
+                });
             });
 
             let cactusPacket: CactusMessagePacket = {
@@ -252,9 +248,9 @@ export class MixerHandler extends Service {
         }
 
         const finalMessage = await this.invert(message);
-
         let method = "msg"
         let args = []
+
         if (message.target) {
             method = "whisper";
             args.push(message.user);
