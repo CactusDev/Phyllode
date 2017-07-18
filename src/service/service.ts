@@ -30,17 +30,13 @@ export enum ServiceStatus {
     CONNECTING,  AUTHENTICATING, READY
 }
 
-export interface MessageOptions {
-    prefix?: string;
-}
-
 /**
  * Base services that other services implement
  *
  * @export
  * @interface Service
  */
-export abstract class Service {  // TODO: This should probably be turned into an abstract class.
+export abstract class Service {
 
     /**
      * The current status of the service handler.
@@ -111,5 +107,5 @@ export abstract class Service {  // TODO: This should probably be turned into an
      * @param {string} message the message to send
      * @memberof Service
      */
-    public abstract async sendMessage(message: CactusMessagePacket, options?: MessageOptions): Promise<void>;
+    public abstract async sendMessage(message: CactusMessagePacket): Promise<void>;
 }

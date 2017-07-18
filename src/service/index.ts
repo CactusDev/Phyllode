@@ -73,11 +73,15 @@ export class ServiceHandler {
     public async connectChannel(channel: any, service: Service, name: string): Promise<ConnectionTristate> {
         service.status = ServiceStatus.CONNECTING;
         const authInfo: {[service: string]: string} = this.config.core.authentication.cactusbotdev;
+
+        // Attempt to connect to the service
         const connected = await service.connect(authInfo[name.toLowerCase()]);
         if (!connected) {
             return ConnectionTristate.FALSE;
         }
         service.status = ServiceStatus.AUTHENTICATING;
+
+        // Attempt to authenticate
         const authenticated = await service.authenticate(channel.channel, channel.botUser);
         if (!authenticated) {
             return ConnectionTristate.FAILED;
@@ -118,7 +122,7 @@ export class ServiceHandler {
                 return;
             }
             console.log("Connected.");
-            // Event observable
+            // Listen for event packets
             console.log("Attempting to listen for events...");
             service.events.subscribe(
                 (event: CactusEventPacket) => {
