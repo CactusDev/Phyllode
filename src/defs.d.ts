@@ -8,6 +8,11 @@ interface CactusPacket {
     type: "message" | "ban" | "event";
 }
 
+/**
+ * A component containing a message segment
+ * 
+ * @interface CactusMessageComponent
+ */
 interface CactusMessageComponent {
     type: "text" | "emoji" | "url";
     data: string;
@@ -27,6 +32,11 @@ interface CactusMessagePacket extends CactusPacket {
     target?: boolean;
 }
 
+/**
+ * Emoji mappings for service emoji mapping files
+ * 
+ * @interface Emojis
+ */
 interface Emojis {
     [name: string]: string
 }
@@ -55,6 +65,11 @@ interface CactusEventPacket extends CactusPacket {
     streak?: number;
 }
 
+/**
+ * User packet from the Mixer service
+ * 
+ * @interface MixerUserPacket
+ */
 interface MixerUserPacket {
     id: number;
     verified: number;
@@ -62,6 +77,11 @@ interface MixerUserPacket {
     username: string;
 }
 
+/**
+ * Channel packet from the Mixer service
+ * 
+ * @interface MixerChannelPacket
+ */
 interface MixerChannelPacket {
     id: number;
     userId: number;
@@ -74,19 +94,48 @@ interface MixerChannelPacket {
     numFollowers: number;
 }
 
+/**
+ * Follow packet from the Mixer service
+ * 
+ * Sent when a user follows
+ * 
+ * @interface MixerFollowPacket
+ * @extends {MixerUserPacket}
+ */
 interface MixerFollowPacket extends MixerUserPacket {
     following: boolean;
 }
 
+/**
+ * Hosted packet from the Mixer service
+ * 
+ * @interface MixerHostedPacket
+ */
 interface MixerHostedPacket {
     hosterId: number;
     hoster: MixerChannelPacket;
 }
 
+/**
+ * Subscription packet from the Mixer service
+ * 
+ * Send when a user subscribes
+ * 
+ * @interface MixerSubscribePacket
+ * @extends {MixerUserPacket}
+ */
 interface MixerSubscribePacket extends MixerUserPacket {
 
 }
 
+/**
+ * Resubscribe packet from the Mixer service
+ * 
+ * Sent when a user resubs.
+ * 
+ * @interface MixerResubscribePacket
+ * @extends {MixerSubscribePacket}
+ */
 interface MixerResubscribePacket extends MixerSubscribePacket {
     since: string;
     until: string;

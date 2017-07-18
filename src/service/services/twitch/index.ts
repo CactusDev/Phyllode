@@ -1,7 +1,10 @@
-import { Service, ServiceStatus, MessageOptions } from "../../service";
+import { Service, ServiceStatus } from "../../service";
 import { emojis } from "./emoji";
 
 import * as WebSocket from "ws";
+
+// tslint:disable-next-line
+const MESSAGE_REGEX = /;display-name=([a-zA-Z0-9][\w]{3,24});.+;mod=(0|1);.+;subscriber=(0|1);.+;user-id=(\d+);.+ PRIVMSG #([a-zA-Z0-9][\w]{3,24}) :(.+)/;
 
 export class TwitchHandler extends Service {
 
@@ -31,9 +34,11 @@ export class TwitchHandler extends Service {
                     return;
                 }
                 const packet = await this.convert(message);
+                if (!packet) {
+                    return;
+                }
                 if (packet.user) {
                     if (packet.user.toLowerCase() !== "cactusbotdev") {
-                        console.log(JSON.stringify(packet));
                         this.sendMessage(packet);
                     }
                 }
@@ -65,51 +70,25 @@ export class TwitchHandler extends Service {
     }
 
     public async convert(packet: any): Promise<CactusMessagePacket> {
-        let tags: {[key: string]: string} = {};
-        let parts: string[] = packet.split(" :", 3);
-        let user, channel, eventCode = "";
-        let message = "";
-
-        if (parts[0].startsWith("@")) {
-            parts[0].substring(1).split(";").forEach(tagPart => {
-                let value = tagPart.split("=");
-                if (value.length > 0) {
-                    tags[value[0]] = value.length === 1 ? "" : value[1];
-                }
-            });
-            parts[0] = parts[1];
-            if (parts.length > 2) {
-                parts[1] = parts[2];
-            }
+        const groups = MESSAGE_REGEX.exec(packet);
+        if (!groups) {
+            return null;
         }
-        if (parts[0].startsWith(" ")) {
-            if (parts[1].startsWith(" ")) {
-                parts[1] = parts[1].substring(1);
-            }
+        if (groups.length < 6) {
+            return null;
         }
-
-        if (parts.length > 1) {
-            message = parts[1].replace("\r", "").replace("\n", "");
-        }
-
-        if (parts[0].includes("!")) {
-            user = parts[0].substring(parts[0].indexOf("!" + 1), parts[0].indexOf("@")).split("!")[0];
-        }
-
-        if (parts[0].includes("#")) {
-            channel = parts[0].substring(parts[0].indexOf("#" + 1));
-        }
-
-        eventCode = parts[0].split(" ")[1];
+        const name = groups[1];
+        const mod = groups[2];
+        const sub = groups[3];
+        const userId = groups[4];
+        const channel = groups[5];
+        const message = groups[6];
 
         let messageComponents: CactusMessageComponent[] = [];
 
         message.split(" ").forEach(async part => {
             const trimmed = part.trim();
-            console.log("Emote " + trimmed);
-            console.log(this.emojiNames.indexOf(trimmed) > -1);
             if (this.emojiNames.indexOf(trimmed) > -1) {
-                console.log("Found");
                 messageComponents.push({
                     type: "emoji",
                     data: part
@@ -122,11 +101,23 @@ export class TwitchHandler extends Service {
             }
         });
 
+        let role: "banned" | "user" | "subscriber" | "moderator" | "owner" = "user";
+
+        if (mod) {
+            role = "moderator"
+        } else if (sub) {
+            role = "subscriber";
+        }
+
+        if (name.toLowerCase() === channel.toLowerCase()) {
+            role = "owner";
+        }
+
         return {
             type: "message",
             action: false,
-            role: "user",  // TODO: This should pull from the parsed information
-            user: user,
+            role: role,
+            user: name,
             text: messageComponents
         }
     }
@@ -147,13 +138,7 @@ export class TwitchHandler extends Service {
         return message;
     }
 
-    public async sendMessage(message: CactusMessagePacket, options?: MessageOptions) {
-        let prefix = "PRIVMSG";
-        if (options) {
-            if (options.prefix) {
-                prefix = options.prefix;
-            }
-        }
+    public async sendMessage(message: CactusMessagePacket) {
         this.socket.send(await this.invert(message));
     }
 
