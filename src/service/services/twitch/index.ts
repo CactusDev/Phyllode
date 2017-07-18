@@ -23,8 +23,10 @@ export class TwitchHandler extends Service {
                     return;
                 }
                 const packet = await this.convert(message);
-                if (packet.user === "innectic!innectic") {
-                    this.sendMessage(packet);
+                if (packet.user) {
+                    if (packet.user.toLowerCase() !== "cactusbotdev") {
+                        this.sendMessage(packet);
+                    }
                 }
             });
 
@@ -32,7 +34,7 @@ export class TwitchHandler extends Service {
                 console.log("Disconnected. " + message);
             });
         });
-        this.socket.on("error", (err) => console.error);
+        this.socket.on("error", async (err) => console.error);
         await new Promise<any>((resolve, reject) => {
             setTimeout(() => resolve(), 1000);
         });
@@ -43,7 +45,7 @@ export class TwitchHandler extends Service {
         this.channel = (<string>channel).toLowerCase();
         await this.socket.send(`CAP REQ ${this.caps}`);
         await this.socket.send(`PASS oauth:${this.oauth.trim()}`);
-        await this.socket.send(`NICK ${botId}`); // TODO Auth stuff
+        await this.socket.send(`NICK ${botId}`);
         await this.socket.send(`JOIN #${this.channel}`);
         return true;
     }
@@ -82,7 +84,7 @@ export class TwitchHandler extends Service {
         }
 
         if (parts[0].includes("!")) {
-            user = parts[0].substring(parts[0].indexOf("!" + 1), parts[0].indexOf("@"));
+            user = parts[0].substring(parts[0].indexOf("!" + 1), parts[0].indexOf("@")).split("!")[0];
         }
 
         if (parts[0].includes("#")) {
