@@ -20,8 +20,6 @@ export class MixerHandler extends Service {
     private chat: ChatSocket;
     protected _status: ServiceStatus = ServiceStatus.AUTHENTICATING;
 
-    private packetId = 0;
-
     private httpc: httpm.HttpClient = new httpm.HttpClient("aerophyl");
 
     private base = "https://mixer.com/api/v1";
@@ -53,7 +51,7 @@ export class MixerHandler extends Service {
     }
 
     public async authenticate(channelRaw: string | number, botId: number): Promise<boolean> {
-        let channelId;
+        let channelId: number;
         if (<any>channelRaw instanceof String) {
             const nameResult = await this.httpc.get(`${this.base}/channel/${channelRaw}`);
             if (nameResult.message.statusCode !== 200) {
@@ -84,14 +82,12 @@ export class MixerHandler extends Service {
             return false;
         }
         this.chat.on("ChatMessage", async message => {
-            let start = Date.now();
             let converted = await this.convert(message);
             if (converted.user === this.botName) {
                 return;
             }
             let finished = await this.cereus.parseServiceMessage(converted);
-            let done = Date.now();
-            console.log("Finished backend parse time " + (done - start));
+            await this.sendMessage(finished);
             console.log("Finished " + JSON.stringify(finished));
         });
 
@@ -182,6 +178,7 @@ export class MixerHandler extends Service {
             message.forEach(async (msg: MixerChatMessage) => {
                 const trimmed = msg.text.trim();
                 let type: "text" | "emoji" | "url" = "text";
+
                 if (this.emojiNames.indexOf(trimmed) > -1) {
                     type = "emoji";
                 }
@@ -246,14 +243,7 @@ export class MixerHandler extends Service {
             args.push(message.user);
         }
         args.push(finalMessage);
-        const packet = {
-            type: "method",
-            method: method,
-            arguments: args,
-            id: this.packetId
-        };
-        this.packetId++;
-        this.chat.send(packet);
+        this.chat.call(method, args);
     }
 
     public get status(): ServiceStatus {
