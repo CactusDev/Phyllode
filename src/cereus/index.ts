@@ -21,23 +21,21 @@ export class Cereus {
 
     public async parseServiceMessage(messagePacket: CactusMessagePacket): Promise<CactusMessagePacket> {
         const messagePackets = messagePacket.text;
-        const shouldParse = messagePackets.map(packet => packet.data).join(" ").includes("%");
+        const shouldParse = messagePackets.some(e => e.data.includes("%"));
 
         // Does this packet-set actually need to be parsed?
         // Packets that don't contain a variable, don't need to be parsed twice.
         // Besides, we only want to parse packets with variables.
         if (!shouldParse) {
-            console.log("Not attempting to parse " + shouldParse);
             return messagePacket;
         }
 
-        for (let i = 0; i < messagePacket.text.length; i++) {
-            const packet = messagePacket.text[i];
+        messagePacket.text.forEach(async packet => {
+            // const packet = messagePacket.text[i];
             // We only care about components that can contain a variable, the text type.
             if (packet.type !== "text") {
-                continue;
+                return;
             }
-            console.log("Is text");
             const message = packet.data;
 
             let current = "";
@@ -56,11 +54,8 @@ export class Cereus {
                         let split = current.split("|");
                         let ready: any = [];
                         if (split && split.length > 0) {
-                            const name = split[0];
-                            delete split[0];
-                            ready.push(name);
-                            ready[1] = [];
-                            split.filter(e => e !== null).forEach(e => ready[1].push(e));
+                            ready.push(split[0]);
+                            ready[1] = split.slice(0);
                         } else {
                             ready = [current, []];
                         }
@@ -89,7 +84,7 @@ export class Cereus {
             }
             // Now that we're done, set all the packets to the new ones.
             messagePacket.text = packets;
-        }
+        });
         return messagePacket;
     }
 

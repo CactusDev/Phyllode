@@ -84,12 +84,15 @@ export class MixerHandler extends Service {
             return false;
         }
         this.chat.on("ChatMessage", async message => {
+            let start = Date.now();
             let converted = await this.convert(message);
             if (converted.user === this.botName) {
                 return;
             }
-            console.log("This is how we do it " + JSON.stringify(await this.cereus.parseServiceMessage(converted)));
-            // this.sendMessage(converted);
+            let finished = await this.cereus.parseServiceMessage(converted);
+            let done = Date.now();
+            console.log("Finished backend parse time " + (done - start));
+            console.log("Finished " + JSON.stringify(finished));
         });
 
         this.chat.on("error", console.error);
