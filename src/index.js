@@ -1,6 +1,4 @@
-"use strict";
-exports.__esModule = true;
-require("reflect-metadata");
+// import "reflect-metadata";
 // import { ReflectiveInjector } from "@angular/core";
 // import { Core } from "./core";
 // import { ServiceHandler } from "./service";
@@ -24,14 +22,11 @@ require("reflect-metadata");
 // const core: Core = injector.get(Core);
 // core.start()
 //     .catch(console.error);
-var message = "!command add +testing This command has been run %COUNT|reverse% times!";
 var current = "";
 var inVariable = false;
-var last = {
-    type: "text",
-    data: ""
-};
+// let last = "text";
 var packets = [];
+var message = "!command add +testing This command has been run %COUNT% times!";
 var _loop_1 = function (i) {
     var char = message[i];
     if (char === " ") {
@@ -58,7 +53,7 @@ var _loop_1 = function (i) {
                 type: "variable",
                 data: ready_1
             };
-            last = now;
+            // last = now.type;
             packets.push(now);
             current = "";
         }
@@ -80,17 +75,10 @@ var _loop_1 = function (i) {
         if (i === message.length - 1) {
             packets.push(now);
         }
-        last = now;
+        // last = now.type;
     }
 };
 for (var i = 0; i < message.length; i++) {
     _loop_1(i);
 }
-var final = {
-    type: "message",
-    action: false,
-    role: "moderator",
-    text: packets,
-    user: "2Cubed"
-};
-console.log(JSON.stringify(final));
+console.log(JSON.stringify(packets));

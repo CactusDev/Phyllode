@@ -19,70 +19,78 @@ export class Cereus {
 
     }
 
-    private async parseServiceMessage(message: string, context: CactusContext): Promise<CactusMessagePacket> {
-        let current = "";
-        let inVariable = false;
-        let last: CactusMessageComponent = {
-            type: "text",
-            data: ""
-        };
+    public async parseServiceMessage(messagePacket: CactusMessagePacket): Promise<CactusMessagePacket> {
+        const messagePackets = messagePacket.text;
+        const shouldParse = messagePackets.map(packet => packet.data).join(" ").includes("%");
 
-        let packets: CactusMessageComponent[] = [];
+        // Does this packet-set actually need to be parsed?
+        // Packets that don't contain a variable, don't need to be parsed twice.
+        // Besides, we only want to parse packets with variables.
+        if (!shouldParse) {
+            console.log("Not attempting to parse " + shouldParse);
+            return messagePacket;
+        }
 
-        for (let i = 0; i < message.length; i++) {
-            const char = message[i];
-            if (char === " ") {
-                inVariable = false;
-                current += " ";
-            } else if (char === "%") {
-                if (inVariable) {
-                    inVariable = false;
-                    let modifiers: string[] = [];
-                    let split = current.split("|");
-                    let ready: any = [];
-                    if (split && split.length > 0) {
-                        const name = split[0];
-                        delete split[0];
-                        ready.push(name);
-                        ready[1] = [];
-                        split.filter(e => e !== null).forEach(e => ready[1].push(e));
-                    } else {
-                        ready = [current, []];
-                    }
-                    const now: CactusMessageComponent = {
-                        type: "variable",
-                        data: ready
-                    };
-                    last = now;
-                    packets.push(now);
-                    current = "";
-                } else {
-                    inVariable = true;
-                    packets.push({
-                        type: "text",
-                        data: current
-                    });
-                    current = "";
-                }
-            } else {
-                current += char;
-                const now: CactusMessageComponent = {
-                    type: "text",
-                    data: current
-                }
-                if (i === message.length - 1) {
-                    packets.push(now);
-                }
-                last = now;
+        for (let i = 0; i < messagePacket.text.length; i++) {
+            const packet = messagePacket.text[i];
+            // We only care about components that can contain a variable, the text type.
+            if (packet.type !== "text") {
+                continue;
             }
+            console.log("Is text");
+            const message = packet.data;
+
+            let current = "";
+            let inVariable = false;
+            let packets: CactusMessageComponent[] = [];
+
+            for (let pos = 0; pos < message.length; pos++) {
+                const char = message[pos];
+                if (char === " ") {
+                    inVariable = false;
+                    current += " ";
+                } else if (char === "%") {
+                    if (inVariable) {
+                        inVariable = false;
+                        let modifiers: string[] = [];
+                        let split = current.split("|");
+                        let ready: any = [];
+                        if (split && split.length > 0) {
+                            const name = split[0];
+                            delete split[0];
+                            ready.push(name);
+                            ready[1] = [];
+                            split.filter(e => e !== null).forEach(e => ready[1].push(e));
+                        } else {
+                            ready = [current, []];
+                        }
+                        packets.push({
+                            type: "variable",
+                            data: ready
+                        });
+                        current = "";
+                    } else {
+                        inVariable = true;
+                        packets.push({
+                            type: "text",
+                            data: current
+                        });
+                        current = "";
+                    }
+                } else {
+                    current += char;
+                    if (pos === message.length - 1) {
+                        packets.push({
+                            type: "text",
+                            data: current
+                        });
+                    }
+                }
+            }
+            // Now that we're done, set all the packets to the new ones.
+            messagePacket.text = packets;
         }
-        return {
-            type: "message",
-            action: context.action.enabled,
-            role: context.role,
-            user: context.user,
-            text: packets
-        }
+        return messagePacket;
     }
 
     /**

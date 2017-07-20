@@ -1,3 +1,4 @@
+import { Cereus } from "../cereus";
 
 import { MixerHandler, TwitchHandler } from "./services";
 import { Service, ServiceStatus } from "./service";
@@ -13,12 +14,12 @@ const channels = [
         channel: 17887,
         service: "Mixer",
         botUser: 25873
-    },
-    {
-        channel: "Innectic",
-        service: "Twitch",
-        botUser: "cactusbotdev"
     }
+    // {
+    //     channel: "Innectic",
+    //     service: "Twitch",
+    //     botUser: "cactusbotdev"
+    // }
 ]
 
 const services: ServiceMapping = {
@@ -104,10 +105,11 @@ export class ServiceHandler {
      */
     public async connectAllChannels() {
         await this.loadAllChannels();
+        const cereus = new Cereus(this);
 
         channels.forEach(async channel => {
             const name: string = channel.service.toLowerCase();
-            const service: Service = new services[name]();
+            const service: Service = new services[name](cereus);
             // Make sure it's a valid service
             if (service === undefined) {
                 throw new Error("Attempetd to use service that doesn't exist.");
@@ -137,9 +139,6 @@ export class ServiceHandler {
 
     public async sendServiceMessage(channel: string, service: string, message: CactusMessagePacket) {
         this.channels[channel].forEach(async channelService => {
-            // if (channelService.serviceType === service) {
-                
-            // }
         });
     }
 }

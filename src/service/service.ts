@@ -1,5 +1,6 @@
 
 import { Subject } from "rxjs";
+import { Cereus } from "../cereus";
 
 /**
  * Authentication info for a named bot.
@@ -65,6 +66,10 @@ export abstract class Service {
      * @memberof Service
      */
     public events: Subject<CactusEventPacket> = new Subject();
+
+    constructor(protected cereus: Cereus) {
+
+    }
 
     /**
      * Inital connection to the server.

@@ -88,7 +88,8 @@ export class MixerHandler extends Service {
             if (converted.user === this.botName) {
                 return;
             }
-            this.sendMessage(converted);
+            console.log("This is how we do it " + JSON.stringify(await this.cereus.parseServiceMessage(converted)));
+            // this.sendMessage(converted);
         });
 
         this.chat.on("error", console.error);
