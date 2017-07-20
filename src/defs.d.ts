@@ -14,8 +14,21 @@ interface CactusPacket {
  * @interface CactusMessageComponent
  */
 interface CactusMessageComponent {
-    type: "text" | "emoji" | "url";
+    type: "text" | "emoji" | "url" | "variable";
     data: string;
+}
+
+interface CactusContext {
+    action: {
+        enabled: boolean;
+        prefix: string
+    };
+    target: {
+        enabled: boolean;
+        prefix: string;
+    };
+    role: "banned" | "user" | "subscriber" | "moderator" | "owner";
+    user: string;
 }
 
 /**

@@ -49,6 +49,16 @@ export abstract class Service {
     public status: ServiceStatus;
 
     /**
+     * Name of the service.
+     *
+     * Fufilled from the `Service` annotation.
+     *
+     * @type {string}
+     * @memberof Service
+     */
+    public serviceName: string;
+
+    /**
      * Events from any sort of service event system
      *
      * @type {Subject<CactusEventPacket>}

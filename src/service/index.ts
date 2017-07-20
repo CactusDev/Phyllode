@@ -134,4 +134,12 @@ export class ServiceHandler {
             console.log("Listening for events!");
         });
     }
+
+    public async sendServiceMessage(channel: string, service: string, message: CactusMessagePacket) {
+        this.channels[channel].forEach(async channelService => {
+            // if (channelService.serviceType === service) {
+                
+            // }
+        });
+    }
 }
