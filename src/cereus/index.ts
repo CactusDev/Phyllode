@@ -96,14 +96,14 @@ export class Cereus {
     public async boot() {
         messages.subscribe(
             // Actual packets
-            async (packet: CactusMessagePacket) => {
+            async (packet) => {
                 const response = await this.httpc.post("http://151.80.89.161:5023/response", JSON.stringify(packet));
                 const message: CactusMessagePacket[] = JSON.parse(await response.readBody());
                 console.log("Response from cereus: " + JSON.stringify(message));
                 // this.serviceHandler.sendServiceMessage()
             },
             // Errors
-            (error: any) => console.error,
+            (error) => console.error,
             // Done
             () => {
                 console.log("Done");

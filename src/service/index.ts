@@ -5,11 +5,17 @@ import { Service, ServiceStatus } from "./service";
 import { Config } from "../config";
 
 interface ServiceMapping {
-    [name: string]: any  // How can this be not-any?
+    [name: string]: typeof Service
+}
+
+interface IChannel {
+    channel: string | number;
+    service: "Mixer" | "Twitch";
+    botUser: string | number;
 }
 
 // THIS IS ONLY TEMP DATA UNTIL WE HAVE A MODEL IN STONE
-const channels = [
+const channels: IChannel[] = [
     {
         channel: 17887,
         service: "Mixer",
@@ -71,7 +77,7 @@ export class ServiceHandler {
      * @param service the type of service to be handled.
      * @returns {Promise<boolean>} if the connection was successful.
      */
-    public async connectChannel(channel: any, service: Service, name: string): Promise<ConnectionTristate> {
+    public async connectChannel(channel: IChannel, service: Service, name: string): Promise<ConnectionTristate> {
         service.status = ServiceStatus.CONNECTING;
         const authInfo: {[service: string]: string} = this.config.core.authentication.cactusbotdev;
 
@@ -109,10 +115,12 @@ export class ServiceHandler {
 
         channels.forEach(async channel => {
             const name: string = channel.service.toLowerCase();
-            const service: Service = new services[name](cereus);
+            // This line is the reason I don't sleep at night.
+            // well, one of them.
+            const service: Service = new (services[name].bind(this, cereus));
             // Make sure it's a valid service
             if (service === undefined) {
-                throw new Error("Attempetd to use service that doesn't exist.");
+                throw new Error("Attempted to use service that doesn't exist.");
             }
             // Connect to the channel
             const connected = await this.connectChannel(channel, service, name);
@@ -128,6 +136,7 @@ export class ServiceHandler {
             console.log("Attempting to listen for events...");
             service.events.subscribe(
                 (event: CactusEventPacket) => {
+                    // TODO: Do something with the event packets
                     console.log("Got event: " + JSON.stringify(event));
                 },
                 (error) => console.error,
