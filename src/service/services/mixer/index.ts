@@ -1,6 +1,5 @@
 import { Service, ServiceStatus } from "../../service";
 import { ChatSocket } from "mixer-chat";
-import { Subject } from "rxjs";
 
 import { emojis } from "./emoji";
 
@@ -31,19 +30,19 @@ export class MixerHandler extends Service {
     }
 
     private reversedEmoji: Emojis = {};
-    
+
     private carina: Carina;
 
     private botName = "";
 
     public async connect(oauthKey: string, refresh?: string, expiry?: string): Promise<boolean> {
         this.headers.Authorization = `Bearer ${oauthKey}`
-	// Emoji stuff
-	for (let k of Object.keys(emojis)) {
-	    const v = emojis[k];
-	    this.reversedEmoji[v] = k;
-	}
-	
+        // Emoji stuff
+        for (let k of Object.keys(emojis)) {
+            const v = emojis[k];
+            this.reversedEmoji[v] = k;
+        }
+
         // Start up carina connection
         Carina.WebSocket = ws;
         this.carina = new Carina({ isBot: true }).open();
@@ -61,15 +60,14 @@ export class MixerHandler extends Service {
         } else {
             channelId = <number>channelRaw;
         }
-	await this.setupCarinaEvents(channelId);
+        await this.setupCarinaEvents(channelId);
 
-	const userResult = await this.httpc.get(`${this.base}/users/current`, this.headers);
+        const userResult = await this.httpc.get(`${this.base}/users/current`, this.headers);
         if (userResult.message.statusCode !== 200) {
-	    console.log("Got a " + userResult.message.statusCode);
             return false;
         }
-	this.botName = JSON.parse(await userResult.readBody()).username;
-	
+        this.botName = JSON.parse(await userResult.readBody()).username;
+
         const result = await this.httpc.get(`${this.base}/chats/${channelId}`, this.headers);
         if (result.message.statusCode !== 200) {
             // This is bad
@@ -80,7 +78,7 @@ export class MixerHandler extends Service {
 
         const isAuthed = await this.chat.auth(channelId, botId, body.authkey);
         if (!isAuthed) {
-	    return false;
+            return false;
         }
         this.chat.on("ChatMessage", async message => {
             let converted = await this.convert(message);
