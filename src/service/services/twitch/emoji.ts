@@ -122,5 +122,4 @@ export const emojis: Emojis = {
   "}:)": "😈",
   "}:]": "😈",
   "Kappa": "custom_sarcasm",
-  "custom_sarcasm": "Kappa"
 }

@@ -11,24 +11,22 @@ const ACTION_REGEX = /ACTION/;
 
 export class TwitchHandler extends Service {
 
-    // private caps = ":twitch.tv/membership twitch.tv/commands twitch.tv/tags";
-
     private instance: any;
     
     private channel = "";
     private oauth = "";
 
-    private emojiNames: string[] = [];
-    private emojiValues: string[] = [];
-
+    private reversedEmoji: Emojis = {};
+    
     public async connect(oauthKey: string, refresh?: string, expiry?: string): Promise<boolean> {
         if (this.status === ServiceStatus.READY) {
             return;
         }
-        this.emojiNames = Object.keys(emojis);
-        for (let emoji of this.emojiNames) {
-            this.emojiValues.push(emojis[emoji]);
-        }
+	
+	for (let k of Object.keys(emojis)) {
+	    const v = emojis[k];
+	    this.reversedEmoji[v] = k;
+	}
         this.oauth = oauthKey;
 	return true;
     }
@@ -96,13 +94,12 @@ export class TwitchHandler extends Service {
 
 	const finished: CactusMessageComponent[] = [];
 	const segments: any[] = message.split(" ");
-	console.log("It's segment time " + JSON.stringify(segments));
 	for (let rawSegment of segments) {
 	    const segment = rawSegment.trim();
 	    let segmentType: "text" | "emoji" = "text";
 	    let segmentData: any;
 	    // XXX: Why must this be casted to any?
-	    if ((<any>this.emojiNames).includes(segment)) {
+	    if (emojis[segment] !== undefined) {
 		segmentType = "emoji";
 		segmentData = emojis[segment];
 	    } else {
@@ -122,7 +119,6 @@ export class TwitchHandler extends Service {
 	} else if (messageType === "whisper") {
 	    isTarget = true;
 	}
-	// TODO: Action parsing, and target parsing.
 	const finalMessagePacket: CactusMessagePacket = {
 	    "type": "message",
 	    user: state["display-name"],
@@ -148,7 +144,8 @@ export class TwitchHandler extends Service {
         messages.forEach(async msg => {
             if (msg !== null) {
 		if (msg["type"] === "emoji") {
-		    chatMessage += ` ${emojis[msg.data.trim()]}`;
+		    console.log(this.reversedEmoji["custom_sarcasm"])
+		    chatMessage += ` ${this.reversedEmoji[msg.data]}`;
 		} else {
 		    // HACK: Only kind of a hack, but for some reason all the ACTIONs tain this.
 		    //       Can the replace be removed?
