@@ -30,22 +30,20 @@ export class MixerHandler extends Service {
         Authorization: "Bearer"
     }
 
+    private reversedEmoji: Emojis = {};
+    
     private carina: Carina;
-
-    private emojiNames: string[] = [];
-    private emojiValues: string[] = [];
 
     private botName = "";
 
     public async connect(oauthKey: string, refresh?: string, expiry?: string): Promise<boolean> {
         this.headers.Authorization = `Bearer ${oauthKey}`
-        // Make sure the emoji mappings file exists
-
-        // This should probably be moved in the base service class once it's an abstract class
-        this.emojiNames = Object.keys(emojis);
-        for (let emoji of this.emojiNames) {
-            this.emojiValues.push(emojis[emoji]);
-        }
+	// Emoji stuff
+	for (let k of Object.keys(emojis)) {
+	    const v = emojis[k];
+	    this.reversedEmoji[v] = k;
+	}
+	
         // Start up carina connection
         Carina.WebSocket = ws;
         this.carina = new Carina({ isBot: true }).open();
@@ -63,14 +61,15 @@ export class MixerHandler extends Service {
         } else {
             channelId = <number>channelRaw;
         }
-        await this.setupCarinaEvents(channelId);
+	await this.setupCarinaEvents(channelId);
 
-        const userResult = await this.httpc.get(`${this.base}/users/current`, this.headers);
+	const userResult = await this.httpc.get(`${this.base}/users/current`, this.headers);
         if (userResult.message.statusCode !== 200) {
+	    console.log("Got a " + userResult.message.statusCode);
             return false;
         }
-        this.botName = JSON.parse(await userResult.readBody()).username;
-
+	this.botName = JSON.parse(await userResult.readBody()).username;
+	
         const result = await this.httpc.get(`${this.base}/chats/${channelId}`, this.headers);
         if (result.message.statusCode !== 200) {
             // This is bad
@@ -81,7 +80,7 @@ export class MixerHandler extends Service {
 
         const isAuthed = await this.chat.auth(channelId, botId, body.authkey);
         if (!isAuthed) {
-            return false;
+	    return false;
         }
         this.chat.on("ChatMessage", async message => {
             let converted = await this.convert(message);
@@ -123,7 +122,7 @@ export class MixerHandler extends Service {
                 const trimmed = msg.text.trim();
                 let type: "text" | "emoji" | "url" = "text";
 
-                if (this.emojiNames.indexOf(trimmed) > -1) {
+                if (emojis[trimmed] !== undefined) {
                     type = "emoji";
                 }
                 messageComponents.push({
@@ -161,7 +160,6 @@ export class MixerHandler extends Service {
             } else {
                 message += ` ${messagePacket.data}`;
             }
-            console.log("The message is currently " + message);
         }
         return message.trim();
     }

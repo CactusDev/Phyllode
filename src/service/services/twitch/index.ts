@@ -3,143 +3,164 @@ import { emojis } from "./emoji";
 
 import * as WebSocket from "ws";
 
+const tmi = require("tmi.js");
+
 // tslint:disable-next-line
 const MESSAGE_REGEX = /;display-name=([a-zA-Z0-9][\w]{3,24});.+;mod=(0|1);.+;subscriber=(0|1);.+;user-id=(\d+);.+ PRIVMSG #([a-zA-Z0-9][\w]{3,24}) :(.+)/;
 const ACTION_REGEX = /ACTION/;
 
 export class TwitchHandler extends Service {
 
-    private socket: WebSocket = null;
-    private caps = ":twitch.tv/membership twitch.tv/commands twitch.tv/tags";
-
+    private instance: any;
+    
     private channel = "";
     private oauth = "";
 
-    private emojiNames: string[] = [];
-    private emojiValues: string[] = [];
-
+    private reversedEmoji: Emojis = {};
+    
     public async connect(oauthKey: string, refresh?: string, expiry?: string): Promise<boolean> {
         if (this.status === ServiceStatus.READY) {
             return;
         }
-        this.emojiNames = Object.keys(emojis);
-        for (let emoji of this.emojiNames) {
-            this.emojiValues.push(emojis[emoji]);
-        }
+	
+	for (let k of Object.keys(emojis)) {
+	    const v = emojis[k];
+	    this.reversedEmoji[v] = k;
+	}
         this.oauth = oauthKey;
-        this.socket = new WebSocket("wss://irc-ws.chat.twitch.tv");
-        this.socket.on("open", async () => {
-            this.socket.on("message", async (message: string) => {
-                if (message.startsWith("PING")) {
-                    this.socket.send(message.replace("PING", "PONG"));
-                    return;
-                }
-                const packet = await this.convert(message);
-                if (!packet) {
-                    return;
-                }
-                if (packet.user) {
-                    if (packet.user.toLowerCase() !== "cactusbotdev") {
-                        this.sendMessage(packet);
-                    }
-                }
-            });
-
-            this.socket.on("close", async (code, message) => {
-                console.log("Disconnected. " + message);
-            });
-        });
-        this.socket.on("error", async (err) => console.error);
-        await new Promise<any>((resolve, reject) => {
-            setTimeout(() => resolve(), 1000);
-        });
-        return true;
+	return true;
     }
 
     public async authenticate(channel: string | number, botId: string | number): Promise<boolean> {
         this.channel = (<string>channel).toLowerCase();
-        await this.socket.send(`CAP REQ ${this.caps}`);
-        await this.socket.send(`PASS oauth:${this.oauth.trim()}`);
-        await this.socket.send(`NICK ${botId}`);
-        await this.socket.send(`JOIN #${this.channel}`);
-        return true;
+
+	// TODO: Support for multiple channels from the one handler.
+	//       This shouldn't be too hard, probably just an observable
+	//       that's hosted from this file, then we just watch that
+	//       Probably would need some sort of an identifier
+	//       in the service annotation or something saying that
+	//       this handler can support multiple from one instance,
+	//       so that we don't keep creating more.
+	const connectionOptions = {
+	    options: {
+		debug: true  // XXX: This shouldn't stay, but it's useful for debugging
+	    },
+	    connection: {
+		reconnect: true
+	    },
+	    identity: {
+		username: botId,
+		password: `oauth:${this.oauth}`
+	    },
+	    channels: [channel]  // TODO: See the above todo.
+	}
+
+	this.instance = new tmi.client(connectionOptions);
+	this.instance.connect();
+
+	this.instance.on("message", async (channel: string, state: any, message: string, self: boolean) => {
+	    // Make sure that this message didn't come from us.
+	    if (self) {
+		return;
+	    }
+	    // Now that we know it's not us, then we can start parsing.
+	    const response = await this.convert([message, state]);
+	    this.sendMessage(response);
+	});
+	return true;
     }
 
     public async disconnect(): Promise<boolean> {
-        this.socket.close();
         return true;
     }
 
-    public async convert(packet: any): Promise<CactusMessagePacket> {
-        const groups = MESSAGE_REGEX.exec(packet);
-        if (!groups) {
-            return null;
-        }
-        if (groups.length < 6) {
-            return null;
-        }
-        const name = groups[1];
-        const mod = groups[2];
-        const sub = groups[3];
-        const channel = groups[5];
-        const message = groups[6];
+    public async convert(packet: any): Promise<CactusMessagePacket> {   
+	// XXX: Is there a way to make this not gross? Maybe some-sort of an internal `Context` thing?
+	const message: any = packet[0];
+	const state: any = packet[1];
 
-        let messageComponents: CactusMessageComponent[] = [];
+	const isMod = state.mod;
+	const isBroadcaster = state.badges.broadcaster && state.badges.broadcaster === "1";  // Why in tarnation is that a string?!
+	const isSub = state.subscriber;
+	
+	let role: "banned" | "user" | "subscriber" | "moderator" | "owner" = "user";
+	if (isSub) {
+	    role = "subscriber";
+	} else if (isMod) {
+	    role = "moderator";
+	} else if (isBroadcaster) {
+	    role = "owner";
+	}
 
-        message.split(" ").forEach(async part => {
-            const trimmed = part.trim();
-            let type: "emoji" | "text" = "text";
-            if (this.emojiNames.indexOf(trimmed) > -1) {
-                type = "emoji";
-            }
-            messageComponents.push({
-                type: type,
-                data: part
-            });
-        });
+	const finished: CactusMessageComponent[] = [];
+	const segments: any[] = message.split(" ");
+	for (let rawSegment of segments) {
+	    const segment = rawSegment.trim();
+	    let segmentType: "text" | "emoji" = "text";
+	    let segmentData: any;
+	    // XXX: Why must this be casted to any?
+	    if (emojis[segment] !== undefined) {
+		segmentType = "emoji";
+		segmentData = emojis[segment];
+	    } else {
+		segmentData = segment;
+	    }
+	    finished.push({
+		"type": segmentType,
+		data: segmentData
+	    });
+	}
+	let isAction = false;
+	let isTarget = false;
+	const messageType = state["message-type"]
 
-        let role: "banned" | "user" | "subscriber" | "moderator" | "owner" = "user";
-        if (name.toLowerCase() === channel.toLowerCase()) {
-            role = "owner";
-        } else {
-            if (mod) {
-                role = "moderator"
-            } else if (sub) {
-                role = "subscriber";
-            }
-        }
-        const isAction = ACTION_REGEX.test(message);
-
-        return {
-            type: "message",
-            action: isAction,
-            role: role,
-            user: name,
-            text: messageComponents
-        }
+	if (messageType === "action") {
+	    isAction = true;
+	} else if (messageType === "whisper") {
+	    isTarget = true;
+	}
+	const finalMessagePacket: CactusMessagePacket = {
+	    "type": "message",
+	    user: state["display-name"],
+	    role: role,
+	    text: finished,
+	    action: isAction
+	};
+	if (isTarget) {
+	    finalMessagePacket.target = isTarget;
+	}
+	return finalMessagePacket;
     }
 
     public async invert(packet: CactusMessagePacket): Promise<string> {
+	// This needs something related to the contexts too. (See the todo below, and one of the many above)
         let messages = packet.text;
-        let message = "PRIVMSG ";
         let chatMessage = "";
 
-        message += `#${this.channel} :`
-        if (packet.action) {
-            message += "/me "
-            delete messages[0];
-        }
+	if (packet.action) {
+	    chatMessage += "/me ";
+	}
+
         messages.forEach(async msg => {
             if (msg !== null) {
-                chatMessage += ` ${msg.data.replace("\u0001", "")}`;
+		if (msg["type"] === "emoji") {
+		    console.log(this.reversedEmoji["custom_sarcasm"])
+		    chatMessage += ` ${this.reversedEmoji[msg.data]}`;
+		} else {
+		    // HACK: Only kind of a hack, but for some reason all the ACTIONs tain this.
+		    //       Can the replace be removed?
+		    chatMessage += ` ${msg.data.replace("\u0001", "")}`;
+		}
             }
         });
-        message += `${chatMessage.trim()}`;
-        return message;
+        return chatMessage.trim();
     }
 
     public async sendMessage(message: CactusMessagePacket) {
-        this.socket.send(await this.invert(message));
+	// To make this work between channels, we would need some way to pass around the channels. Maybe an optional parameter for `Context`?
+	// (See an above todo for more context information)
+	const inverted = await this.invert(message);
+	this.instance.say(this.channel, inverted);
     }
 
     public get status(): ServiceStatus {
