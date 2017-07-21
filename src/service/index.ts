@@ -65,11 +65,6 @@ export class ServiceHandler {
     constructor(private config: Config) {
     }
 
-    private async loadAllChannels() {
-        // This does nothing right now. This needs an api to exist before
-        // anything can really happen here.
-    }
-
     /**
      * Connect to a new channel.
      *
@@ -148,6 +143,13 @@ export class ServiceHandler {
 
     public async sendServiceMessage(channel: string, service: string, message: CactusMessagePacket) {
         this.channels[channel].forEach(async channelService => {
+            if (channelService.serviceName.toLowerCase() === service) {
+                channelService.sendMessage(message);
+            }
         });
+    }
+    private async loadAllChannels() {
+        // This does nothing right now. This needs an api to exist before
+        // anything can really happen here.
     }
 }

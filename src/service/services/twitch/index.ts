@@ -81,7 +81,6 @@ export class TwitchHandler extends Service {
         const name = groups[1];
         const mod = groups[2];
         const sub = groups[3];
-        const userId = groups[4];
         const channel = groups[5];
         const message = groups[6];
 

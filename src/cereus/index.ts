@@ -50,7 +50,6 @@ export class Cereus {
                 } else if (char === "%") {
                     if (inVariable) {
                         inVariable = false;
-                        let modifiers: string[] = [];
                         let split = current.split("|");
                         let ready: any = [];
                         if (split && split.length > 0) {

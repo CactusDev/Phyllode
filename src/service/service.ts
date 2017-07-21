@@ -39,14 +39,6 @@ export enum ServiceStatus {
  */
 export abstract class Service {
 
-    /**
-     * The current status of the service handler.
-     *
-     * @type {ServiceStatus}
-     * @memberof Service
-     */
-    protected _status: ServiceStatus;
-
     public status: ServiceStatus;
 
     /**
@@ -66,6 +58,16 @@ export abstract class Service {
      * @memberof Service
      */
     public events: Subject<CactusEventPacket> = new Subject();
+
+
+    /**
+     * The current status of the service handler.
+     *
+     * @type {ServiceStatus}
+     * @memberof Service
+     */
+    protected _status: ServiceStatus;
+
 
     constructor(protected cereus: Cereus) {
 

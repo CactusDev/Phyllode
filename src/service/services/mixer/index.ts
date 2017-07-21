@@ -1,5 +1,5 @@
 import { Service, ServiceStatus } from "../../service";
-import { ChatSocket, IChatMessage, IUserUpdate } from "mixer-chat";
+import { ChatSocket } from "mixer-chat";
 import { Subject } from "rxjs";
 
 import { emojis } from "./emoji";
@@ -17,9 +17,10 @@ import * as httpm from "typed-rest-client/HttpClient";
  */
 export class MixerHandler extends Service {
 
-    private chat: ChatSocket;
+    public events: Subject<CactusEventPacket> = new Subject();
     protected _status: ServiceStatus = ServiceStatus.AUTHENTICATING;
 
+    private chat: ChatSocket;
     private httpc: httpm.HttpClient = new httpm.HttpClient("aerophyl");
 
     private base = "https://mixer.com/api/v1";
@@ -27,7 +28,6 @@ export class MixerHandler extends Service {
         Authorization: "Bearer"
     }
 
-    public events: Subject<CactusEventPacket> = new Subject();
     private carina: Carina;
 
     private emojiNames: string[] = [];
@@ -95,68 +95,6 @@ export class MixerHandler extends Service {
         return this.chat.isConnected();
     }
 
-    /**
-     * Setup all the carina events.
-     *
-     * @private
-     * @param {number} id the id of the channel to subscribe to
-     * @memberof MixerHandler
-     */
-    private async setupCarinaEvents(id: number) {
-        this.carina.on("error", console.error);
-        this.carina.subscribe<MixerFollowPacket>(`channel:${id}:followed`, async data => {
-            const packet: CactusEventPacket = {
-                type: "event",
-                kind: "follow",
-                success: data.following,
-                user: data.username
-            };
-            this.events.next(packet);
-        });
-
-        this.carina.subscribe<MixerHostedPacket>(`channel:${id}:hosted`, async data => {
-            const packet: CactusEventPacket = {
-                type: "event",
-                kind: "host",
-                success: true,
-                user: data.hoster.token
-            };
-            this.events.next(packet);
-        });
-
-        this.carina.subscribe<MixerHostedPacket>(`channel:${id}:unhosted`, async data => {
-            const packet: CactusEventPacket = {
-                type: "event",
-                kind: "host",
-                success: false,
-                user: data.hoster.token
-            };
-            this.events.next(packet);
-        });
-
-        this.carina.subscribe<MixerSubscribePacket>(`channel:${id}:subscribed`, async data => {
-            const packet: CactusEventPacket = {
-                type: "event",
-                kind: "subscribe",
-                streak: 1,
-                success: true,
-                user: data.username
-            };
-            this.events.next(packet);
-        });
-
-        this.carina.subscribe<MixerResubscribePacket>(`channel:${id}:resubShared`, async data => {
-            const packet: CactusEventPacket = {
-                type: "event",
-                kind: "subscribe",
-                streak: data.totalMonths,
-                success: true,
-                user: data.username
-            };
-            this.events.next(packet);
-        });
-    }
-
     public async disconnect(): Promise<boolean> {
         this.chat.close();
         // Just assume that it was closed.
@@ -220,15 +158,6 @@ export class MixerHandler extends Service {
         return message.trim();
     }
 
-    private async findEmoji(name: string) {
-        for (let emoji in emojis) {
-            if (emoji === name) {
-                return emoji;
-            }
-        }
-        return "";
-    }
-
     public async sendMessage(message: CactusMessagePacket) {
         if (!this.chat.isConnected()) {
             throw new Error("Not connected to chat.");
@@ -253,4 +182,76 @@ export class MixerHandler extends Service {
     public set status(status: ServiceStatus) {
         this._status = status;
     }
+
+        /**
+     * Setup all the carina events.
+     *
+     * @private
+     * @param {number} id the id of the channel to subscribe to
+     * @memberof MixerHandler
+     */
+    private async setupCarinaEvents(id: number) {
+        this.carina.on("error", console.error);
+        this.carina.subscribe<MixerFollowPacket>(`channel:${id}:followed`, async data => {
+            const packet: CactusEventPacket = {
+                type: "event",
+                kind: "follow",
+                success: data.following,
+                user: data.username
+            };
+            this.events.next(packet);
+        });
+
+        this.carina.subscribe<MixerHostedPacket>(`channel:${id}:hosted`, async data => {
+            const packet: CactusEventPacket = {
+                type: "event",
+                kind: "host",
+                success: true,
+                user: data.hoster.token
+            };
+            this.events.next(packet);
+        });
+
+        this.carina.subscribe<MixerHostedPacket>(`channel:${id}:unhosted`, async data => {
+            const packet: CactusEventPacket = {
+                type: "event",
+                kind: "host",
+                success: false,
+                user: data.hoster.token
+            };
+            this.events.next(packet);
+        });
+
+        this.carina.subscribe<MixerSubscribePacket>(`channel:${id}:subscribed`, async data => {
+            const packet: CactusEventPacket = {
+                type: "event",
+                kind: "subscribe",
+                streak: 1,
+                success: true,
+                user: data.username
+            };
+            this.events.next(packet);
+        });
+
+        this.carina.subscribe<MixerResubscribePacket>(`channel:${id}:resubShared`, async data => {
+            const packet: CactusEventPacket = {
+                type: "event",
+                kind: "subscribe",
+                streak: data.totalMonths,
+                success: true,
+                user: data.username
+            };
+            this.events.next(packet);
+        });
+    }
+
+    private async findEmoji(name: string) {
+        for (let emoji in emojis) {
+            if (emoji === name) {
+                return emoji;
+            }
+        }
+        return "";
+    }
+
 }
