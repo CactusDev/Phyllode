@@ -8,6 +8,8 @@ import { Carina } from "carina";
 import * as ws from "ws";
 import * as httpm from "typed-rest-client/HttpClient";
 
+import { Service as ServiceAnnotation } from "../../service.annotation";
+
 /**
  * Handle the Mixer service.
  *
@@ -15,9 +17,9 @@ import * as httpm from "typed-rest-client/HttpClient";
  * @class MixerHandler
  * @implements {Service}
  */
+@ServiceAnnotation("Mixer")
 export class MixerHandler extends Service {
 
-    public events: Subject<CactusEventPacket> = new Subject();
     protected _status: ServiceStatus = ServiceStatus.AUTHENTICATING;
 
     private chat: ChatSocket;
@@ -87,8 +89,12 @@ export class MixerHandler extends Service {
                 return;
             }
             let finished = await this.cereus.parseServiceMessage(converted);
-            await this.sendMessage(finished);
-            console.log("Finished " + JSON.stringify(finished));
+            const response = await this.cereus.handle(await this.cereus.parseServiceMessage(finished));
+            if (!response) {
+                console.error("Mixer MessageHandler: Got no response from cereus? " + JSON.stringify(finished));
+                return;
+            }
+            this.sendMessage(response);
         });
 
         this.chat.on("error", console.error);
@@ -148,13 +154,15 @@ export class MixerHandler extends Service {
             message += "/me ";
         }
 
-        packet.text.forEach(async messagePacket => {
-            if (messagePacket.data in this.emojiValues) {
-                message += ` ${await this.findEmoji(messagePacket.data)}`;
+        for (let messagePacket of packet.text) {
+            if (messagePacket.type === "emoji") {
+                const emoji = await this.getEmoji(messagePacket.data.trim());
+                message += ` :${emoji}`;
             } else {
                 message += ` ${messagePacket.data}`;
             }
-        });
+            console.log("The message is currently " + message);
+        }
         return message.trim();
     }
 
@@ -164,6 +172,7 @@ export class MixerHandler extends Service {
         }
 
         const finalMessage = await this.invert(message);
+        console.log("The final message is " + finalMessage);
         let method = "msg"
         let args = []
 
@@ -197,7 +206,7 @@ export class MixerHandler extends Service {
                 type: "event",
                 kind: "follow",
                 success: data.following,
-                user: data.username
+                user: data.user.username
             };
             this.events.next(packet);
         });
@@ -245,13 +254,14 @@ export class MixerHandler extends Service {
         });
     }
 
-    private async findEmoji(name: string) {
+    private async getEmoji(name: string): Promise<string> {
         for (let emoji in emojis) {
             if (emoji === name) {
+                console.log("We found the emoji");
                 return emoji;
             }
         }
-        return "";
+        return "UNKNOWN";
     }
 
 }

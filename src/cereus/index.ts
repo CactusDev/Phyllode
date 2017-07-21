@@ -21,11 +21,11 @@ export class Cereus {
 
     public async parseServiceMessage(messagePacket: CactusMessagePacket): Promise<CactusMessagePacket> {
         const messagePackets = messagePacket.text;
-        const shouldParse = messagePackets.some(e => e.data.includes("%"));
 
         // Does this packet-set actually need to be parsed?
         // Packets that don't contain a variable, don't need to be parsed twice.
         // Besides, we only want to parse packets with variables.
+        const shouldParse = messagePackets.some(e => e.data.includes("%"));
         if (!shouldParse) {
             return messagePacket;
         }
@@ -88,25 +88,28 @@ export class Cereus {
     }
 
     /**
-     * Boot the message watcher
+     * Send a service packet to Cereus, and then give the response back.
      *
+     * @param {(CactusEventPacket | CactusMessagePacket)} packet the packet to send.
+     * @returns {Promise<CactusMessagePacket>} the response from Cereus
      * @memberof Cereus
      */
-    public async boot() {
-        messages.subscribe(
-            // Actual packets
-            async (packet) => {
-                const response = await this.httpc.post("http://151.80.89.161:5023/response", JSON.stringify(packet));
-                const message: CactusMessagePacket[] = JSON.parse(await response.readBody());
-                console.log("Response from cereus: " + JSON.stringify(message));
-                // this.serviceHandler.sendServiceMessage()
-            },
-            // Errors
-            (error) => console.error,
-            // Done
-            () => {
-                console.log("Done");
-            }
-        )
+    public async handle(packet: CactusEventPacket | CactusMessagePacket): Promise<CactusMessagePacket> {
+        const response = await this.httpc.post("http://151.80.89.161:5023/response", JSON.stringify(packet));
+        if (response.message.statusCode !== 200) {
+            return null;
+        }
+        let message: CactusMessagePacket[];
+        try {
+            message = JSON.parse(await response.readBody());
+        } catch (e) {
+            console.error(e);
+            return null;
+        }
+        if (!message || message.length < 1) {
+            console.error("Didn't get a response from cereus. Packet: " + JSON.stringify(packet));
+            return null;
+        }
+        return message[0];  // XXX: Do we need all the responses?
     }
 }

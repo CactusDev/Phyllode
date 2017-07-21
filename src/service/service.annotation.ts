@@ -2,9 +2,6 @@ import { ServiceHandler } from ".";
 
 export function Service(name: string) {
     return (target: Function) => {
-        if (!(target instanceof ServiceHandler)) {
-            throw new Error("Invalid annotation target.");
-        }
         if (Reflect.hasMetadata("annotation:service:registration", target)) {
             throw new Error("Service already registered.");
         }

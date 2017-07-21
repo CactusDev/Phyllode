@@ -140,7 +140,8 @@ interface MixerChannelPacket {
  * @interface MixerFollowPacket
  * @extends {MixerUserPacket}
  */
-interface MixerFollowPacket extends MixerUserPacket {
+interface MixerFollowPacket {
+    user: MixerUserPacket;
     following: boolean;
 }
 

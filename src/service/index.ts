@@ -130,9 +130,13 @@ export class ServiceHandler {
             // Listen for event packets
             console.log("Attempting to listen for events...");
             service.events.subscribe(
-                (event: CactusEventPacket) => {
-                    // TODO: Do something with the event packets
-                    console.log("Got event: " + JSON.stringify(event));
+                async (event: CactusEventPacket) => {
+                    const response = await cereus.handle(event);
+                    if (!response && event.success) {
+                        console.error("No response from event handler.");
+                        return;
+                    }
+                    this.sendServiceMessage(channel.channel.toString(), channel.service, response);
                 },
                 (error) => console.error,
                 () => console.log("Done")
@@ -142,12 +146,10 @@ export class ServiceHandler {
     }
 
     public async sendServiceMessage(channel: string, service: string, message: CactusMessagePacket) {
-        this.channels[channel].forEach(async channelService => {
-            if (channelService.serviceName.toLowerCase() === service) {
-                channelService.sendMessage(message);
-            }
-        });
+        this.channels[channel].filter(e => e.serviceName.toLowerCase() === service.toLowerCase())
+            .forEach(async channelService => channelService.sendMessage(message));
     }
+
     private async loadAllChannels() {
         // This does nothing right now. This needs an api to exist before
         // anything can really happen here.
