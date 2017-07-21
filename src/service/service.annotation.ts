@@ -1,4 +1,3 @@
-import { ServiceHandler } from ".";
 
 export function Service(name: string) {
     return (target: Function) => {
