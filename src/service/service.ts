@@ -1,5 +1,6 @@
 
 import { Subject } from "rxjs";
+import { Cereus } from "../cereus";
 
 /**
  * Authentication info for a named bot.
@@ -38,15 +39,17 @@ export enum ServiceStatus {
  */
 export abstract class Service {
 
+    public status: ServiceStatus;
+
     /**
-     * The current status of the service handler.
+     * Name of the service.
      *
-     * @type {ServiceStatus}
+     * Fufilled from the `Service` annotation.
+     *
+     * @type {string}
      * @memberof Service
      */
-    protected _status: ServiceStatus;
-
-    public status: ServiceStatus;
+    public serviceName: string;
 
     /**
      * Events from any sort of service event system
@@ -55,6 +58,20 @@ export abstract class Service {
      * @memberof Service
      */
     public events: Subject<CactusEventPacket> = new Subject();
+
+
+    /**
+     * The current status of the service handler.
+     *
+     * @type {ServiceStatus}
+     * @memberof Service
+     */
+    protected _status: ServiceStatus;
+
+
+    constructor(protected cereus: Cereus) {
+
+    }
 
     /**
      * Inital connection to the server.

@@ -1,7 +1,8 @@
 export const emojis: Emojis = {
   ":spaceship": "🚀",
   ":127": "🔥",
-  ":cactus": "🌵",
+  ":cactus": "cactus",
+  "cactus": ":cactus",
   ":whoappa": "😲:",
   ":bacon": "🥓",
   ":beer": "🍺",

@@ -74,7 +74,7 @@ export class TwitchHandler extends Service {
         return true;
     }
 
-    public async convert(packet: any): Promise<CactusMessagePacket> {
+    public async convert(packet: any): Promise<CactusMessagePacket> {   
 	// XXX: Is there a way to make this not gross? Maybe some-sort of an internal `Context` thing?
 	const message: any = packet[0];
 	const state: any = packet[1];

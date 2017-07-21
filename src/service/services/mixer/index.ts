@@ -1,5 +1,5 @@
 import { Service, ServiceStatus } from "../../service";
-import { ChatSocket, IChatMessage, IUserUpdate } from "mixer-chat";
+import { ChatSocket } from "mixer-chat";
 import { Subject } from "rxjs";
 
 import { emojis } from "./emoji";
@@ -8,6 +8,8 @@ import { Carina } from "carina";
 import * as ws from "ws";
 import * as httpm from "typed-rest-client/HttpClient";
 
+import { Service as ServiceAnnotation } from "../../service.annotation";
+
 /**
  * Handle the Mixer service.
  *
@@ -15,13 +17,12 @@ import * as httpm from "typed-rest-client/HttpClient";
  * @class MixerHandler
  * @implements {Service}
  */
+@ServiceAnnotation("Mixer")
 export class MixerHandler extends Service {
 
-    private chat: ChatSocket;
     protected _status: ServiceStatus = ServiceStatus.AUTHENTICATING;
 
-    private packetId = 0;
-
+    private chat: ChatSocket;
     private httpc: httpm.HttpClient = new httpm.HttpClient("aerophyl");
 
     private base = "https://mixer.com/api/v1";
@@ -31,7 +32,6 @@ export class MixerHandler extends Service {
 
     private reversedEmoji: Emojis = {};
     
-    public events: Subject<CactusEventPacket> = new Subject();
     private carina: Carina;
 
     private botName = "";
@@ -51,7 +51,7 @@ export class MixerHandler extends Service {
     }
 
     public async authenticate(channelRaw: string | number, botId: number): Promise<boolean> {
-        let channelId;
+        let channelId: number;
         if (<any>channelRaw instanceof String) {
             const nameResult = await this.httpc.get(`${this.base}/channel/${channelRaw}`);
             if (nameResult.message.statusCode !== 200) {
@@ -87,14 +87,110 @@ export class MixerHandler extends Service {
             if (converted.user === this.botName) {
                 return;
             }
-            this.sendMessage(converted);
+            let finished = await this.cereus.parseServiceMessage(converted);
+            const response = await this.cereus.handle(await this.cereus.parseServiceMessage(finished));
+            if (!response) {
+                console.error("Mixer MessageHandler: Got no response from cereus? " + JSON.stringify(finished));
+                return;
+            }
+            this.sendMessage(response);
         });
 
         this.chat.on("error", console.error);
         return this.chat.isConnected();
     }
 
-    /**
+    public async disconnect(): Promise<boolean> {
+        this.chat.close();
+        // Just assume that it was closed.
+        return true;
+    }
+
+    public async convert(packet: any): Promise<CactusMessagePacket> {
+        if (packet.message !== undefined) {
+            const message = packet.message.message;
+            const meta = packet.message.meta;
+
+            if (message.length < 1) {
+                // This is bad, and a Mixer bug.
+                throw new Error("No message");
+            }
+            let messageComponents: CactusMessageComponent[] = []
+
+            // Parse each piece of the message
+            message.forEach(async (msg: MixerChatMessage) => {
+                const trimmed = msg.text.trim();
+                let type: "text" | "emoji" | "url" = "text";
+
+                if (emojis[trimmed] !== undefined) {
+                    type = "emoji";
+                }
+                messageComponents.push({
+                    type: type,
+                    data: msg.text
+                });
+            });
+
+            let cactusPacket: CactusMessagePacket = {
+                    type: "message",
+                    text: messageComponents,
+                    action: meta.me !== undefined,
+                    user: packet.user_name,
+                    role: packet.user_roles[0].toLowerCase()
+                };
+            if (meta.whisper !== undefined) {
+                cactusPacket.target = true
+            }
+            return cactusPacket;
+        }
+        return null;
+    }
+
+    public async invert(packet: CactusMessagePacket): Promise<string> {
+        let message = "";
+
+        if (packet.action) {
+            message += "/me ";
+        }
+
+        for (let messagePacket of packet.text) {
+            if (messagePacket.type === "emoji") {
+                const emoji = await this.getEmoji(messagePacket.data.trim());
+                message += ` :${emoji}`;
+            } else {
+                message += ` ${messagePacket.data}`;
+            }
+        }
+        return message.trim();
+    }
+
+    public async sendMessage(message: CactusMessagePacket) {
+        if (!this.chat.isConnected()) {
+            throw new Error("Not connected to chat.");
+        }
+
+        const finalMessage = await this.invert(message);
+        console.log("The final message is " + finalMessage);
+        let method = "msg"
+        let args = []
+
+        if (message.target) {
+            method = "whisper";
+            args.push(message.user);
+        }
+        args.push(finalMessage);
+        this.chat.call(method, args);
+    }
+
+    public get status(): ServiceStatus {
+        return this._status;
+    }
+
+    public set status(status: ServiceStatus) {
+        this._status = status;
+    }
+
+        /**
      * Setup all the carina events.
      *
      * @private
@@ -108,7 +204,7 @@ export class MixerHandler extends Service {
                 type: "event",
                 kind: "follow",
                 success: data.following,
-                user: data.username
+                user: data.user.username
             };
             this.events.next(packet);
         });
@@ -156,98 +252,14 @@ export class MixerHandler extends Service {
         });
     }
 
-    public async disconnect(): Promise<boolean> {
-        this.chat.close();
-        // Just assume that it was closed.
-        return true;
-    }
-
-    public async convert(packet: any): Promise<CactusMessagePacket> {
-        if (packet.message !== undefined) {
-            const message = packet.message.message;
-            const meta = packet.message.meta;
-
-            if (message.length < 1) {
-                // This is bad, and a Mixer bug.
-                throw new Error("No message");
+    private async getEmoji(name: string): Promise<string> {
+        for (let emoji in emojis) {
+            if (emoji === name) {
+                console.log("We found the emoji");
+                return emoji;
             }
-            let messageComponents: CactusMessageComponent[] = []
-
-            // Parse each piece of the message
-            message.forEach(async (msg: MixerChatMessage) => {
-                const trimmed = msg.text.trim();
-                let type: "text" | "emoji" | "url" = "text";
-                if (emojis[trimmed] !== undefined) {
-                    type = "emoji";
-                }
-                messageComponents.push({
-                    type: type,
-                    data: msg.text
-                });
-            });
-
-            let cactusPacket: CactusMessagePacket = {
-                    type: "message",
-                    text: messageComponents,
-                    action: meta.me !== undefined,
-                    user: packet.user_name,
-                    role: packet.user_roles[0].toLowerCase()
-                };
-            if (meta.whisper !== undefined) {
-                cactusPacket.target = true
-            }
-            return cactusPacket;
         }
-        return null;
+        return "UNKNOWN";
     }
 
-    public async invert(packet: CactusMessagePacket): Promise<string> {
-        let message = "";
-
-        if (packet.action) {
-            message += "/me ";
-        }
-
-        packet.text.forEach(async messagePacket => {
-	    const emoji = this.reversedEmoji[messagePacket.data];
-            if (emoji !== undefined) {
-                message += ` ${emoji}`;
-            } else {
-                message += ` ${messagePacket.data}`;
-            }
-        });
-        return message.trim();
-    }
-
-    public async sendMessage(message: CactusMessagePacket) {
-        if (!this.chat.isConnected()) {
-            throw new Error("Not connected to chat.");
-        }
-
-        const finalMessage = await this.invert(message);
-        let method = "msg"
-        let args = []
-
-        if (message.target) {
-            method = "whisper";
-            args.push(message.user);
-        }
-        args.push(finalMessage);
-        const packet = {
-            type: "method",
-            method: method,
-            arguments: args,
-            id: this.packetId
-        };
-        this.packetId++;
-        this.chat.send(packet);
-    }
-
-    public get status(): ServiceStatus {
-        return this._status;
-    }
-
-    public set status(status: ServiceStatus) {
-        this._status = status;
-    }
 }

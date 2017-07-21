@@ -1,7 +1,7 @@
 
 /**
  * Base cactus packet type
- * 
+ *
  * @interface CactusPacket
  */
 interface CactusPacket {
@@ -10,12 +10,25 @@ interface CactusPacket {
 
 /**
  * A component containing a message segment
- * 
+ *
  * @interface CactusMessageComponent
  */
 interface CactusMessageComponent {
-    type: "text" | "emoji" | "url";
+    type: "text" | "emoji" | "url" | "variable";
     data: string;
+}
+
+interface CactusContext {
+    action: {
+        enabled: boolean;
+        prefix: string
+    };
+    target: {
+        enabled: boolean;
+        prefix: string;
+    };
+    role: "banned" | "user" | "subscriber" | "moderator" | "owner";
+    user: string;
 }
 
 /**
@@ -34,7 +47,7 @@ interface CactusMessagePacket extends CactusPacket {
 
 /**
  * Emoji mappings for service emoji mapping files
- * 
+ *
  * @interface Emojis
  */
 interface Emojis {
@@ -67,7 +80,7 @@ interface CactusEventPacket extends CactusPacket {
 
 /**
  * Response from the Mixer service chat socket
- * 
+ *
  * @interface MixerChatResponse
  */
 interface MixerChatResponse {
@@ -79,7 +92,7 @@ interface MixerChatResponse {
 
 /**
  * A chat message from the mixer service
- * 
+ *
  * @interface MixerChatMessage
  */
 interface MixerChatMessage {
@@ -92,7 +105,7 @@ interface MixerChatMessage {
 
 /**
  * User packet from the Mixer service
- * 
+ *
  * @interface MixerUserPacket
  */
 interface MixerUserPacket {
@@ -104,7 +117,7 @@ interface MixerUserPacket {
 
 /**
  * Channel packet from the Mixer service
- * 
+ *
  * @interface MixerChannelPacket
  */
 interface MixerChannelPacket {
@@ -121,19 +134,20 @@ interface MixerChannelPacket {
 
 /**
  * Follow packet from the Mixer service
- * 
+ *
  * Sent when a user follows
- * 
+ *
  * @interface MixerFollowPacket
  * @extends {MixerUserPacket}
  */
-interface MixerFollowPacket extends MixerUserPacket {
+interface MixerFollowPacket {
+    user: MixerUserPacket;
     following: boolean;
 }
 
 /**
  * Hosted packet from the Mixer service
- * 
+ *
  * @interface MixerHostedPacket
  */
 interface MixerHostedPacket {
@@ -143,9 +157,9 @@ interface MixerHostedPacket {
 
 /**
  * Subscription packet from the Mixer service
- * 
+ *
  * Send when a user subscribes
- * 
+ *
  * @interface MixerSubscribePacket
  * @extends {MixerUserPacket}
  */
@@ -155,9 +169,9 @@ interface MixerSubscribePacket extends MixerUserPacket {
 
 /**
  * Resubscribe packet from the Mixer service
- * 
+ *
  * Sent when a user resubs.
- * 
+ *
  * @interface MixerResubscribePacket
  * @extends {MixerSubscribePacket}
  */

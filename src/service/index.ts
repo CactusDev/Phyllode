@@ -1,14 +1,21 @@
+import { Cereus } from "../cereus";
 
 import { MixerHandler, TwitchHandler } from "./services";
 import { Service, ServiceStatus } from "./service";
 import { Config } from "../config";
 
 interface ServiceMapping {
-    [name: string]: any  // How can this be not-any?
+    [name: string]: typeof Service
+}
+
+interface IChannel {
+    channel: string | number;
+    service: "Mixer" | "Twitch";
+    botUser: string | number;
 }
 
 // THIS IS ONLY TEMP DATA UNTIL WE HAVE A MODEL IN STONE
-const channels = [
+const channels: IChannel[] = [
     {
         channel: 17887,
         service: "Mixer",
@@ -60,11 +67,6 @@ export class ServiceHandler {
     constructor(private config: Config) {
     }
 
-    private async loadAllChannels() {
-        // This does nothing right now. This needs an api to exist before
-        // anything can really happen here.
-    }
-
     /**
      * Connect to a new channel.
      *
@@ -72,7 +74,7 @@ export class ServiceHandler {
      * @param service the type of service to be handled.
      * @returns {Promise<boolean>} if the connection was successful.
      */
-    public async connectChannel(channel: any, service: Service, name: string): Promise<ConnectionTristate> {
+    public async connectChannel(channel: IChannel, service: Service, name: string): Promise<ConnectionTristate> {
         service.status = ServiceStatus.CONNECTING;
         const authInfo: {[service: string]: string} = this.config.core.authentication.cactusbotdev;
 
@@ -106,13 +108,16 @@ export class ServiceHandler {
      */
     public async connectAllChannels() {
         await this.loadAllChannels();
+        const cereus = new Cereus(this);
 
         channels.forEach(async channel => {
             const name: string = channel.service.toLowerCase();
-            const service: Service = new services[name]();
+            // This line is the reason I don't sleep at night.
+            // well, one of them.
+            const service: Service = new (services[name].bind(this, cereus));
             // Make sure it's a valid service
             if (service === undefined) {
-                throw new Error("Attempetd to use service that doesn't exist.");
+                throw new Error("Attempted to use service that doesn't exist.");
             }
             // Connect to the channel
             const connected = await this.connectChannel(channel, service, name);
@@ -127,13 +132,28 @@ export class ServiceHandler {
             // Listen for event packets
             console.log("Attempting to listen for events...");
             service.events.subscribe(
-                (event: CactusEventPacket) => {
-                    console.log("Got event: " + JSON.stringify(event));
+                async (event: CactusEventPacket) => {
+                    const response = await cereus.handle(event);
+                    if (!response && event.success) {
+                        console.error("No response from event handler.");
+                        return;
+                    }
+                    this.sendServiceMessage(channel.channel.toString(), channel.service, response);
                 },
                 (error) => console.error,
                 () => console.log("Done")
             );
             console.log("Listening for events!");
         });
+    }
+
+    public async sendServiceMessage(channel: string, service: string, message: CactusMessagePacket) {
+        this.channels[channel].filter(e => e.serviceName.toLowerCase() === service.toLowerCase())
+            .forEach(async channelService => channelService.sendMessage(message));
+    }
+
+    private async loadAllChannels() {
+        // This does nothing right now. This needs an api to exist before
+        // anything can really happen here.
     }
 }
