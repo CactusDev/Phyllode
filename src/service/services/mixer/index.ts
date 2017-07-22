@@ -81,6 +81,7 @@ export class MixerHandler extends Service {
             return false;
         }
         this.chat.on("ChatMessage", async message => {
+            console.log("Raw message", JSON.stringify(message));
             let converted = await this.convert(message);
             if (converted.user === this.botName) {
                 return;

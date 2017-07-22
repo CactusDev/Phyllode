@@ -31,5 +31,9 @@
     "tslint": "^5.5.0",
     "typed-rest-client": "^0.10.0",
     "typescript": "^2.4.1"
+  },
+  "devDependencies": {
+    "chai": "^4.1.0",
+    "chai-as-promised": "^7.1.1"
   }
 }
