@@ -91,16 +91,15 @@ export class TwitchHandler extends Service {
             const segment = rawSegment.trim();
             let segmentType: "text" | "emoji" = "text";
             let segmentData: any;
-            // XXX: Why must this be casted to any?
             if (emojis[segment] !== undefined) {
-            segmentType = "emoji";
-            segmentData = emojis[segment];
+                segmentType = "emoji";
+                segmentData = emojis[segment];
             } else {
-            segmentData = segment;
+                segmentData = segment;
             }
             finished.push({
-            "type": segmentType,
-            data: segmentData
+                "type": segmentType,
+                data: segmentData
             });
         }
         let isAction = false;
@@ -120,15 +119,16 @@ export class TwitchHandler extends Service {
             action: isAction
         };
         if (isTarget) {
-            finalMessagePacket.target = isTarget;
+            console.log("here's the packet ", JSON.stringify(message), JSON.stringify(state));
+            finalMessagePacket.target = "todo";
         }
         return finalMessagePacket;
-        }
+    }
 
-        public async invert(packet: CactusMessagePacket): Promise<string> {
+    public async invert(packet: CactusMessagePacket): Promise<string> {
         // This needs something related to the contexts too. (See the todo below, and one of the many above)
-            let messages = packet.text;
-            let chatMessage = "";
+        let messages = packet.text;
+        let chatMessage = "";
 
         if (packet.action) {
             chatMessage += "/me ";

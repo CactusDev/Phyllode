@@ -42,7 +42,7 @@ interface CactusMessagePacket extends CactusPacket {
     user: string;
     role: "banned" | "user" | "subscriber" | "moderator" | "owner";
     action: boolean;
-    target?: boolean;
+    target?: string;
 }
 
 /**

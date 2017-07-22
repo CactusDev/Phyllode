@@ -9,6 +9,8 @@ import * as httpm from "typed-rest-client/HttpClient";
 
 import { Service as ServiceAnnotation } from "../../service.annotation";
 
+type Role = "user" | "moderator" | "owner" | "subscriber" | "banned";
+
 /**
  * Handle the Mixer service.
  *
@@ -34,7 +36,7 @@ export class MixerHandler extends Service {
     private carina: Carina;
 
     private botName = "";
-
+    
     public async connect(oauthKey: string, refresh?: string, expiry?: string): Promise<boolean> {
         this.headers.Authorization = `Bearer ${oauthKey}`
         // Emoji stuff
@@ -129,15 +131,25 @@ export class MixerHandler extends Service {
                 });
             });
 
+            let role: "user" | "moderator" | "owner" | "subscriber" | "banned" = "user";
+            // HACK: This is a really bad hack.
+            let stringRole: any = packet.user_roles[0].toLowerCase();
+            if (stringRole === "mod") {
+                role = "moderator";
+            } else if (stringRole === "sub") {
+                role = "subscriber";
+            } else {
+                role = stringRole;
+            }
             let cactusPacket: CactusMessagePacket = {
-                    type: "message",
+                    "type": "message",
                     text: messageComponents,
                     action: meta.me !== undefined,
                     user: packet.user_name,
-                    role: packet.user_roles[0].toLowerCase()
+                    role: role
                 };
             if (meta.whisper !== undefined) {
-                cactusPacket.target = true
+                cactusPacket.target = packet.target
             }
             return cactusPacket;
         }
@@ -167,6 +179,7 @@ export class MixerHandler extends Service {
             throw new Error("Not connected to chat.");
         }
 
+        console.log(message.target);
         const finalMessage = await this.invert(message);
         console.log("The final message is " + finalMessage);
         let method = "msg"
@@ -174,9 +187,11 @@ export class MixerHandler extends Service {
 
         if (message.target) {
             method = "whisper";
-            args.push(message.user);
+            args.push(message.target);
         }
         args.push(finalMessage);
+        console.log(message.user);
+        console.log(method, args);
         this.chat.call(method, args);
     }
 
