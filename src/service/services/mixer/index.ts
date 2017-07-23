@@ -87,10 +87,9 @@ export class MixerHandler extends Service {
             if (converted.user === this.botName) {
                 return;
             }
-            let finished = await this.cereus.parseServiceMessage(converted);
-            const response = await this.cereus.handle(await this.cereus.parseServiceMessage(finished));
+            const response = await this.cereus.handle(await this.cereus.parseServiceMessage(converted));
             if (!response) {
-                console.error("Mixer MessageHandler: Got no response from cereus? " + JSON.stringify(finished));
+                console.error("Mixer MessageHandler: Got no response from cereus? " + JSON.stringify(converted));
                 return;
             }
             this.sendMessage(response);

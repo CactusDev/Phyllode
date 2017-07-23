@@ -15,22 +15,10 @@ interface CactusPacket {
  */
 interface CactusMessageComponent {
     type: "text" | "emoji" | "url" | "variable";
-    data: string;
+    data?: string;
+    tag?: any;
+    modifiers?: any;
 }
-
-interface CactusContext {
-    action: {
-        enabled: boolean;
-        prefix: string
-    };
-    target: {
-        enabled: boolean;
-        prefix: string;
-    };
-    role: "banned" | "user" | "subscriber" | "moderator" | "owner";
-    user: string;
-}
-
 /**
  * Message packet
  *
