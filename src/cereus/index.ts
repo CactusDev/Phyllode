@@ -5,6 +5,8 @@ import * as httpm from "typed-rest-client/HttpClient";
 
 export const messages: Subject<CactusMessagePacket> = new Subject();
 
+const validVariables: string[] = ["COUNT", "CHANNEL", "USER"];
+
 /**
  * The CactusBot Cereus handler system.
  *
@@ -21,17 +23,18 @@ export class Cereus {
 
     public async parseServiceMessage(messagePacket: CactusMessagePacket): Promise<CactusMessagePacket> {
         const messagePackets = messagePacket.text;
+        if (!messagePackets || messagePackets.some(e => !e.data)) {
+            return null;
+        }
 
         // Does this packet-set actually need to be parsed?
-        // Packets that don't contain a variable, don't need to be parsed twice.
-        // Besides, we only want to parse packets with variables.
+        // Packets that don't contain a variable don't need to be parsed twice.
         const shouldParse = messagePackets.some(e => e.data.includes("%"));
         if (!shouldParse) {
             return messagePacket;
         }
 
         messagePacket.text.forEach(async packet => {
-            // const packet = messagePacket.text[i];
             // We only care about components that can contain a variable, the text type.
             if (packet.type !== "text") {
                 return;
@@ -51,22 +54,55 @@ export class Cereus {
                     if (inVariable) {
                         inVariable = false;
                         let split = current.split("|");
-                        let ready: any = [];
-                        if (split && split.length > 0) {
-                            ready.push(split[0]);
-                            ready[1] = split.slice(0);
-                        } else {
-                            ready = [current, []];
+                        let data: any = {};
+                        let modifiers: string[] = [];
+
+                        if (split.length > 1) {
+                            // Get everything that ISN'T the variable.
+                            modifiers = split.slice(1);
                         }
-                        packets.push({
-                            type: "variable",
-                            data: ready
-                        });
-                        current = "";
+                        const prefix = split[0]
+                        // Is this an argument-segment?
+                        if (prefix.startsWith("ARG")) {
+                            // This is all arguments, and it's valid.
+                            const end = prefix.substring(3, prefix.length);
+                            data["type"] = prefix;
+                            if (end === "S") {
+                                // XXX: Can we remove this if statement? The only purpose is so that it doesn't hit the `else` block.
+                            } else if (+end) {
+                                // Handle ARG1
+                                data["data"] = +end
+                            } else {
+                                // Invalid ending for the ARG variable.
+                                continue;
+                            }
+                            // Push the variable.
+                            packets.push({
+                                "type": "variable",
+                                tag: data,
+                                modifiers: modifiers
+                            });
+                            current = "";
+                            // And now we're done with this segment!
+                            continue;
+                        } else if (validVariables.indexOf(prefix)) {
+                            // None of the other arguments require extra parsing.
+                            // Valid variable, so lets put this into the packet as one.
+                            data["type"] = prefix;
+                            // Push the variable.
+                            packets.push({
+                                "type": "variable",
+                                tag: data,
+                                modifiers: modifiers
+                            });
+                            current = "";
+                            // And we're done with this segment!
+                            continue;
+                        }
                     } else {
                         inVariable = true;
                         packets.push({
-                            type: "text",
+                            "type": "text",
                             data: current
                         });
                         current = "";
@@ -75,7 +111,7 @@ export class Cereus {
                     current += char;
                     if (pos === message.length - 1) {
                         packets.push({
-                            type: "text",
+                            "type": "text",
                             data: current
                         });
                     }
@@ -84,6 +120,7 @@ export class Cereus {
             // Now that we're done, set all the packets to the new ones.
             messagePacket.text = packets;
         });
+        console.log("Final", JSON.stringify(messagePacket));
         return messagePacket;
     }
 

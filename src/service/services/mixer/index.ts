@@ -9,6 +9,8 @@ import * as httpm from "typed-rest-client/HttpClient";
 
 import { Service as ServiceAnnotation } from "../../service.annotation";
 
+type Role = "user" | "moderator" | "owner" | "subscriber" | "banned";
+
 /**
  * Handle the Mixer service.
  *
@@ -86,10 +88,9 @@ export class MixerHandler extends Service {
             if (converted.user === this.botName) {
                 return;
             }
-            let finished = await this.cereus.parseServiceMessage(converted);
-            const response = await this.cereus.handle(await this.cereus.parseServiceMessage(finished));
+            const response = await this.cereus.handle(await this.cereus.parseServiceMessage(converted));
             if (!response) {
-                console.error("Mixer MessageHandler: Got no response from cereus? " + JSON.stringify(finished));
+                console.error("Mixer MessageHandler: Got no response from cereus? " + JSON.stringify(converted));
                 return;
             }
             this.sendMessage(response);
@@ -133,7 +134,7 @@ export class MixerHandler extends Service {
             let role = await this.convertRole(packet.user_roles[0].toLowerCase());
 
             let cactusPacket: CactusMessagePacket = {
-                    type: "message",
+                    "type": "message",
                     text: messageComponents,
                     action: !!meta.me,
                     user: packet.user_name,

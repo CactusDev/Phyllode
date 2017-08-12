@@ -17,7 +17,9 @@ interface CactusPacket {
  */
 interface CactusMessageComponent {
     type: "text" | "emoji" | "url" | "variable";
-    data: string;
+    data?: string;
+    tag?: string;
+    modifiers?: string[];
 }
 
 interface CactusContext {
@@ -32,7 +34,6 @@ interface CactusContext {
     role: Role;
     user: string;
 }
-
 /**
  * Message packet
  *
