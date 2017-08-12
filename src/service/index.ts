@@ -20,14 +20,12 @@ const channels: IChannel[] = [
         channel: 17887,
         service: "Mixer",
         botUser: 25873
-    }
-    /*
+    },
     {
         channel: "Innectic",
         service: "Twitch",
         botUser: "cactusbotdev"
     }
-    */
 ]
 
 const services: ServiceMapping = {

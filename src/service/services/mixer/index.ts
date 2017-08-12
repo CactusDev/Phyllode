@@ -156,7 +156,7 @@ export class MixerHandler extends Service {
             if (packet.action) {
                 message += "/me ";
             }
-
+ 
             for (let messagePacket of packet.text) {
                 if (messagePacket.type === "emoji") {
                     const emoji = await this.getEmoji(messagePacket.data.trim());
@@ -209,16 +209,10 @@ export class MixerHandler extends Service {
     }
 
     public async getEmoji(name: string): Promise<string> {
-        for (let emoji in emojis) {
-            if (emoji === name) {
-                return emoji;
-            }
-        }
-        // Unknown emotes just return the raw emote.
-        return `:${name}`;
+        return emojis[name] ? emojis[name] : `:${name}`;
     }
 
-        /**
+    /**
      * Setup all the carina events.
      *
      * @private

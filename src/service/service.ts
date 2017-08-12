@@ -130,9 +130,9 @@ export abstract class Service {
      * Convert from the service role to the Cactus version of the role.
      *
      * @abstract
-     * @param {String} role the role from the service
+     * @param {*} args arguments
      * @returns {Promise<Role>} the cactus version of the role
      * @memberof Service
      */
-    public abstract async convertRole(role: String): Promise<Role>;
+    public abstract async convertRole(...args: any[]): Promise<Role>;
 }
