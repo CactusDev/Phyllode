@@ -1,3 +1,4 @@
+import { Cereus } from "../../../cereus";
 import { Service, ServiceStatus } from "../../service";
 import { ChatSocket } from "mixer-chat";
 
@@ -28,7 +29,7 @@ export class MixerHandler extends Service {
 
     private base = "https://mixer.com/api/v1";
     private headers = {
-        Authorization: "Bearer"
+        Authorization: ""
     }
 
     private reversedEmoji: Emojis = {};
@@ -36,14 +37,19 @@ export class MixerHandler extends Service {
     private carina: Carina;
 
     private botName = "";
-    
-    public async connect(oauthKey: string, refresh?: string, expiry?: string): Promise<boolean> {
-        this.headers.Authorization = `Bearer ${oauthKey}`
+
+    constructor(protected cereus: Cereus) {
+        super(cereus);
+
         // Emoji stuff
         for (let k of Object.keys(emojis)) {
             const v = emojis[k];
             this.reversedEmoji[v] = k;
         }
+    }
+
+    public async connect(oauthKey: string, refresh?: string, expiry?: string): Promise<boolean> {
+        this.headers.Authorization = `Bearer ${oauthKey}`
 
         // Start up carina connection
         Carina.WebSocket = ws;
@@ -106,7 +112,7 @@ export class MixerHandler extends Service {
     }
 
     public async convert(packet: any): Promise<CactusMessagePacket> {
-        if (packet.message !== undefined) {
+        if (!!packet.message) {
             const message = packet.message.message;
             const meta = packet.message.meta;
 
@@ -121,7 +127,7 @@ export class MixerHandler extends Service {
                 const trimmed = msg.text.trim();
                 let type: "text" | "emoji" | "url" = "text";
 
-                if (emojis[trimmed] !== undefined) {
+                if (!!emojis[trimmed]) {
                     type = "emoji";
                 }
                 messageComponents.push({
@@ -130,47 +136,43 @@ export class MixerHandler extends Service {
                 });
             });
 
-            let role: "user" | "moderator" | "owner" | "subscriber" | "banned" = "user";
-            // HACK: This is a really bad hack.
-            let stringRole: any = packet.user_roles[0].toLowerCase();
-            if (stringRole === "mod") {
-                role = "moderator";
-            } else if (stringRole === "sub") {
-                role = "subscriber";
-            } else {
-                role = stringRole;
-            }
+            let role = await this.convertRole(packet.user_roles[0].toLowerCase());
+
             let cactusPacket: CactusMessagePacket = {
                     "type": "message",
                     text: messageComponents,
-                    action: meta.me !== undefined,
+                    action: !!meta.me,
                     user: packet.user_name,
                     role: role
                 };
-            if (meta.whisper !== undefined) {
-                cactusPacket.target = packet.target
+            if (meta.whisper && packet.target) {
+                cactusPacket.target = packet.target;
             }
             return cactusPacket;
         }
         return null;
     }
 
-    public async invert(packet: CactusMessagePacket): Promise<string> {
-        let message = "";
+    public async invert(...packets: CactusMessagePacket[]): Promise<string[]> {
+        let responses: string[] = [];
+        for (let packet of packets) {
+            let message = "";
 
-        if (packet.action) {
-            message += "/me ";
-        }
-
-        for (let messagePacket of packet.text) {
-            if (messagePacket.type === "emoji") {
-                const emoji = await this.getEmoji(messagePacket.data.trim());
-                message += ` :${emoji}`;
-            } else {
-                message += ` ${messagePacket.data}`;
+            if (packet.action) {
+                message += "/me ";
             }
+
+            for (let messagePacket of packet.text) {
+                if (messagePacket.type === "emoji") {
+                    const emoji = await this.getEmoji(messagePacket.data.trim());
+                    message += ` :${emoji}`;
+                } else {
+                    message += ` ${messagePacket.data}`;
+                }
+            }
+            responses.push(message.trim());
         }
-        return message.trim();
+        return responses;
     }
 
     public async sendMessage(message: CactusMessagePacket) {
@@ -178,20 +180,29 @@ export class MixerHandler extends Service {
             throw new Error("Not connected to chat.");
         }
 
-        console.log(message.target);
-        const finalMessage = await this.invert(message);
-        console.log("The final message is " + finalMessage);
-        let method = "msg"
-        let args = []
+        const finalMessage: string[] = await this.invert(message);
+        finalMessage.forEach(async msg => {
+            let method = "msg"
+            let args = []
 
-        if (message.target) {
-            method = "whisper";
-            args.push(message.target);
+            if (message.target) {
+                method = "whisper";
+                args.push(message.target);
+            }
+            args.push(msg);
+            this.chat.call(method, args);
+        });
+    }
+
+    public async convertRole(role: String): Promise<Role> {
+        role = role.toLowerCase();
+        if (role === "mod" || role === "founder" || role === "staff" || role === "global mod") {
+            return "moderator";
+        } else if (role === "owner") {
+            return "owner";
+        } else {
+            return "user";
         }
-        args.push(finalMessage);
-        console.log(message.user);
-        console.log(method, args);
-        this.chat.call(method, args);
     }
 
     public get status(): ServiceStatus {
@@ -202,7 +213,11 @@ export class MixerHandler extends Service {
         this._status = status;
     }
 
-        /**
+    public async getEmoji(name: string): Promise<string> {
+        return emojis[name] ? emojis[name] : this.reversedEmoji[name] ? this.reversedEmoji[name] : "";
+    }
+
+    /**
      * Setup all the carina events.
      *
      * @private
@@ -263,15 +278,4 @@ export class MixerHandler extends Service {
             this.events.next(packet);
         });
     }
-
-    private async getEmoji(name: string): Promise<string> {
-        for (let emoji in emojis) {
-            if (emoji === name) {
-                console.log("We found the emoji");
-                return emoji;
-            }
-        }
-        return "UNKNOWN";
-    }
-
 }

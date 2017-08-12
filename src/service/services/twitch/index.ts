@@ -1,3 +1,4 @@
+import { Cereus } from "../../../cereus";
 import { Service, ServiceStatus } from "../../service";
 import { emojis } from "./emoji";
 
@@ -12,19 +13,26 @@ export class TwitchHandler extends Service {
 
     private reversedEmoji: Emojis = {};
 
-    public async connect(oauthKey: string, refresh?: string, expiry?: string): Promise<boolean> {
-        if (this.status === ServiceStatus.READY) {
-            return;
-        }
+    constructor(protected cereus: Cereus) {
+        super(cereus);
+
+        // Emoji stuff
         for (let k of Object.keys(emojis)) {
             const v = emojis[k];
             this.reversedEmoji[v] = k;
+        }
+    }
+
+    public async connect(oauthKey: string, refresh?: string, expiry?: string): Promise<boolean> {
+        if (this.status === ServiceStatus.READY) {
+            return;
         }
         this.oauth = oauthKey;
         return true;
     }
 
     public async authenticate(channel: string | number, botId: string | number): Promise<boolean> {
+        // TODO: Handle number channel ids
         this.channel = (<string>channel).toLowerCase();
 
         // TODO: Support for multiple channels from the one handler.
@@ -36,14 +44,14 @@ export class TwitchHandler extends Service {
         //       so that we don't keep creating more.
         const connectionOptions = {
             options: {
-            debug: true  // XXX: This shouldn't stay, but it's useful for debugging
+                debug: true  // XXX: This shouldn't stay, but it's useful for debugging
             },
             connection: {
-            reconnect: true
+                reconnect: true
             },
             identity: {
-            username: botId,
-            password: `oauth:${this.oauth}`
+                username: botId,
+                password: `oauth:${this.oauth}`
             },
             channels: [channel]  // TODO: See the above todo.
         }
@@ -54,7 +62,7 @@ export class TwitchHandler extends Service {
         this.instance.on("message", async (fromChannel: string, state: any, message: string, self: boolean) => {
             // Make sure that this message didn't come from us.
             if (self) {
-            return;
+                return;
             }
             // Now that we know it's not us, then we can start parsing.
             const response = await this.convert([message, state]);
@@ -68,22 +76,27 @@ export class TwitchHandler extends Service {
     }
 
     public async convert(packet: any): Promise<CactusMessagePacket> {
-        // XXX: Is there a way to make this not gross? Maybe some-sort of an internal `Context` thing?
         const message: any = packet[0];
         const state: any = packet[1];
 
-        const isMod = state.mod;
-        const isBroadcaster = state.badges.broadcaster && state.badges.broadcaster === "1";  // Why in tarnation is that a string?!
-        const isSub = state.subscriber;
+        let isMod = false;
+        let isBroadcaster = false;
+        let isSub = false;
 
-        let role: "banned" | "user" | "subscriber" | "moderator" | "owner" = "user";
-        if (isSub) {
-            role = "subscriber";
-        } else if (isMod) {
-            role = "moderator";
-        } else if (isBroadcaster) {
-            role = "owner";
+        if (state.badges) {
+            isBroadcaster = state.badges.broadcaster && state.badges.broadcaster === "1";
+            isMod = state.mod;
+            isSub = state.subscriber;
         }
+
+        let textRole = "user";
+        if (isMod) {
+            textRole = "mod";
+        } else if (isBroadcaster) {
+            textRole = "broadcaster";
+        }
+
+        const role = await this.convertRole(textRole);
 
         const finished: CactusMessageComponent[] = [];
         const segments: any[] = message.split(" ");
@@ -91,7 +104,8 @@ export class TwitchHandler extends Service {
             const segment = rawSegment.trim();
             let segmentType: "text" | "emoji" = "text";
             let segmentData: any;
-            if (emojis[segment] !== undefined) {
+
+            if (emojis[segment]) {
                 segmentType = "emoji";
                 segmentData = emojis[segment];
             } else {
@@ -103,14 +117,8 @@ export class TwitchHandler extends Service {
             });
         }
         let isAction = false;
-        let isTarget = false;
         const messageType = state["message-type"]
 
-        if (messageType === "action") {
-            isAction = true;
-        } else if (messageType === "whisper") {
-            isTarget = true;
-        }
         const finalMessagePacket: CactusMessagePacket = {
             "type": "message",
             user: state["display-name"],
@@ -118,42 +126,63 @@ export class TwitchHandler extends Service {
             text: finished,
             action: isAction
         };
-        if (isTarget) {
-            console.log("here's the packet ", JSON.stringify(message), JSON.stringify(state));
-            finalMessagePacket.target = "todo";
+        if (messageType === "action") {
+            isAction = true;
+        } else if (messageType === "whisper") {
+            finalMessagePacket.target = state.username;
         }
         return finalMessagePacket;
     }
 
-    public async invert(packet: CactusMessagePacket): Promise<string> {
-        // This needs something related to the contexts too. (See the todo below, and one of the many above)
-        let messages = packet.text;
-        let chatMessage = "";
+    public async invert(...packets: CactusMessagePacket[]): Promise<string[]> {
+        let finished: string[] = [];
+        for (let packet of packets) {
+            let messages = packet.text;
+            let chatMessage = "";
 
-        if (packet.action) {
-            chatMessage += "/me ";
-        }
-
-        messages.forEach(async msg => {
-            if (msg !== null) {
-        if (msg["type"] === "emoji") {
-            console.log(this.reversedEmoji["custom_sarcasm"])
-            chatMessage += ` ${this.reversedEmoji[msg.data]}`;
-        } else {
-            // HACK: Only kind of a hack, but for some reason all the ACTIONs tain this.
-            //       Can the replace be removed?
-            chatMessage += ` ${msg.data.replace("\u0001", "")}`;
-        }
+            if (packet.action) {
+                chatMessage += "/me ";
             }
-        });
-        return chatMessage.trim();
+
+            messages.forEach(async msg => {
+                if (msg !== null) {
+                    if (msg["type"] === "emoji") {
+                        chatMessage += ` ${this.reversedEmoji[msg.data]}`;
+                    } else {
+                        // HACK: Only kind of a hack, but for some reason all the ACTIONs contain this.
+                        //       Can the replace be removed?
+                        chatMessage += ` ${msg.data.replace("\u0001", "")}`;
+                    }
+                }
+            });
+            finished.push(chatMessage.trim());
+        }
+        return finished;
+    }
+
+    public async getEmoji(name: string): Promise<string> {
+        return emojis[name] ? emojis[name] : this.reversedEmoji[name] ? this.reversedEmoji[name] : "";
     }
 
     public async sendMessage(message: CactusMessagePacket) {
-    // To make this work between channels, we would need some way to pass around the channels. Maybe an optional parameter for `Context`?
-    // (See an above todo for more context information)
-    const inverted = await this.invert(message);
-    this.instance.say(this.channel, inverted);
+        const inverted = await this.invert(message);
+        inverted.forEach(packet => {
+            if (message.target) {
+                this.instance.whisper(message.target, packet);
+                return;
+            }
+            this.instance.say(this.channel, packet)
+        });
+    }
+
+    public async convertRole(role: string): Promise<Role> {
+        role = role.toLowerCase();
+        if (role === "mod") {
+            return "moderator";
+        } else if (role === "broadcaster") {
+            return "owner";
+        }
+        return "user";
     }
 
     public get status(): ServiceStatus {

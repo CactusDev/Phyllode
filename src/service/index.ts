@@ -20,14 +20,12 @@ const channels: IChannel[] = [
         channel: 17887,
         service: "Mixer",
         botUser: 25873
-    }
-    /*
+    },
     {
         channel: "Innectic",
         service: "Twitch",
         botUser: "cactusbotdev"
     }
-    */
 ]
 
 const services: ServiceMapping = {
@@ -92,7 +90,7 @@ export class ServiceHandler {
         }
         service.status = ServiceStatus.READY;
 
-        if (this.channels[channel.channel] === undefined) {
+        if (!this.channels[channel.channel]) {
             this.channels[channel.channel] = [service];
         } else {
             this.channels[channel.channel].push(service);
@@ -116,7 +114,7 @@ export class ServiceHandler {
             // well, one of them.
             const service: Service = new (services[name].bind(this, cereus));
             // Make sure it's a valid service
-            if (service === undefined) {
+            if (!service) {
                 throw new Error("Attempted to use service that doesn't exist.");
             }
             // Connect to the channel
@@ -135,7 +133,7 @@ export class ServiceHandler {
                 async (event: CactusEventPacket) => {
                     const response = await cereus.handle(event);
                     if (!response && event.success) {
-                        console.error("No response from event handler.");
+                        console.error("No response from event handler?");
                         return;
                     }
                     this.sendServiceMessage(channel.channel.toString(), channel.service, response);

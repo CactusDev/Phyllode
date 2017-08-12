@@ -120,7 +120,6 @@ export class Cereus {
             // Now that we're done, set all the packets to the new ones.
             messagePacket.text = packets;
         });
-        console.log("Final", JSON.stringify(messagePacket));
         return messagePacket;
     }
 
@@ -132,7 +131,7 @@ export class Cereus {
      * @memberof Cereus
      */
     public async handle(packet: CactusEventPacket | CactusMessagePacket): Promise<CactusMessagePacket> {
-        const response = await this.httpc.post("http://151.80.89.161:5023/response", JSON.stringify(packet));
+        const response = await this.httpc.post("http://localhost:5023/response", JSON.stringify(packet));
         if (response.message.statusCode !== 200) {
             return null;
         }

@@ -1,4 +1,6 @@
 
+type Role = "banned" | "user" | "subscriber" | "moderator" | "owner";
+
 /**
  * Base cactus packet type
  *
@@ -16,8 +18,21 @@ interface CactusPacket {
 interface CactusMessageComponent {
     type: "text" | "emoji" | "url" | "variable";
     data?: string;
-    tag?: any;
-    modifiers?: any;
+    tag?: string;
+    modifiers?: string[];
+}
+
+interface CactusContext {
+    action: {
+        enabled: boolean;
+        prefix: string
+    };
+    target: {
+        enabled: boolean;
+        prefix: string;
+    };
+    role: Role;
+    user: string;
 }
 /**
  * Message packet
@@ -28,7 +43,7 @@ interface CactusMessageComponent {
 interface CactusMessagePacket extends CactusPacket {
     text: CactusMessageComponent[];
     user: string;
-    role: "banned" | "user" | "subscriber" | "moderator" | "owner";
+    role: Role;
     action: boolean;
     target?: string;
 }

@@ -116,7 +116,7 @@ export abstract class Service {
      * @returns {Promise<string>} the service packet
      * @memberof Service
      */
-    public abstract async invert(packet: CactusMessagePacket): Promise<string>;
+    public abstract async invert(...packet: CactusMessagePacket[]): Promise<string[]>;
 
     /**
      * Send a mesasge to the service
@@ -125,4 +125,14 @@ export abstract class Service {
      * @memberof Service
      */
     public abstract async sendMessage(message: CactusMessagePacket): Promise<void>;
+
+    /**
+     * Convert from the service role to the Cactus version of the role.
+     *
+     * @abstract
+     * @param {*} args arguments
+     * @returns {Promise<Role>} the cactus version of the role
+     * @memberof Service
+     */
+    public abstract async convertRole(...args: any[]): Promise<Role>;
 }
