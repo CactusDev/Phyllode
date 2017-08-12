@@ -163,16 +163,16 @@ describe("Service", () => {
         });
 
         // This might look like it does nothing, but it's important.
-        it("should convert the 'cactus' emote into ':cactus'", (done) => {
-            mixer.getEmoji("cactus").should.eventually.be.equal(":cactus").notify(done);
+        it("should convert the ':cactus' emote into '🌵'", (done) => {
+            mixer.getEmoji(":cactus").should.eventually.be.equal("🌵").notify(done);
         });
 
-        it("should convert the 'mappa' emote into '.sarcasm'", (done) => {
-            mixer.getEmoji("mappa").should.eventually.be.equal(".sarcasm").notify(done);
+        it("should convert the ':mappa' emote into '.sarcasm'", (done) => {
+            mixer.getEmoji(":mappa").should.eventually.be.equal(".sarcasm").notify(done);
         });
 
         it("should convert the '.sarcasm' placeholder into ':mappa'", (done) => {
-            mixer.getEmoji(".sarcasm").should.eventually.be.equal("mappa").notify(done);            
+            mixer.getEmoji(".sarcasm").should.eventually.be.equal(":mappa").notify(done);            
         });
 
         it("should omit the 'TESTING' emote.", (done) => {
@@ -227,8 +227,8 @@ describe("Service", () => {
             twitch.getEmoji(".sarcasm").should.eventually.be.equal("Kappa").notify(done);            
         });
 
-        it("should leave omit the 'cactus' emote", (done) => {
-            twitch.getEmoji("cactus").should.eventually.be.equal("").notify(done);
+        it("should convert the 'cactus' emote into '🌵'", (done) => {
+            twitch.getEmoji("cactus").should.eventually.be.equal("🌵").notify(done);
         });
 
         it("should convert the ':D' emote into 😃", (done) => {
