@@ -90,7 +90,49 @@ interface CactusBanPacket {
     duration?: number;
 }
 
-type CactusEvent = "follow" | "subscribe" | "host" | "join" | "leave";
+type CactusEvent = FollowEvent | SubscribeEvent | HostEvent | JoinEvent;
+
+/**
+ * Follow event. {@param success} is true for a follow and false for an
+ * unfollow.
+ *
+ * @interface FollowEvent
+ */
+interface FollowEvent {
+    type: "follow";
+    success: boolean;
+}
+
+/**
+ * Subscribe event. {@param streak} contains the number of continuous months
+ * for which the subscription has occurred.
+ *
+ * @interface SubscribeEvent
+ */
+interface SubscribeEvent {
+    type: "subscribe";
+    streak: number;
+}
+
+/**
+ * Host event. {@param success} is true for a host and false for an unhost.
+ *
+ * @interface HostEvent
+ */
+interface HostEvent {
+    type: "host";
+    success: boolean;
+}
+
+/**
+ * Join event. {@param success} is true for a join and false for a leave.
+ *
+ * @interface JoinEvent
+ */
+interface JoinEvent {
+    type: "join";
+    success: boolean;
+}
 
 /**
  * Events. Events are follows, subs, etc
@@ -98,9 +140,8 @@ type CactusEvent = "follow" | "subscribe" | "host" | "join" | "leave";
  * @interface CactusEventPacket
  */
 interface CactusEventPacket {
+    type: "event";
     kind: CactusEvent;
-    success: boolean;
-    streak?: number;
 }
 
 type Channel = string;
