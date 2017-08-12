@@ -1,9 +1,8 @@
 export const emojis: Emojis = {
   ":spaceship": "🚀",
   ":127": "🔥",
-  ":cactus": "cactus",
   "cactus": ":cactus",
-  ":whoappa": "😲:",
+  ":whoappa": "😲",
   ":bacon": "🥓",
   ":beer": "🍺",
   ":cake": "🍰",
@@ -154,5 +153,5 @@ export const emojis: Emojis = {
   ":dog": "🐶",
   ":woof": "🐶",
   ":hamster": "🐹",
-  ":mappa": "custom_sarcasm"
+  ".sarcasm": ":mappa"
 }

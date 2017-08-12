@@ -26,7 +26,7 @@ export class MixerHandler extends Service {
 
     private base = "https://mixer.com/api/v1";
     private headers = {
-        Authorization: "Bearer"
+        Authorization: ""
     }
 
     private reversedEmoji: Emojis = {};
@@ -37,6 +37,7 @@ export class MixerHandler extends Service {
 
     public async connect(oauthKey: string, refresh?: string, expiry?: string): Promise<boolean> {
         this.headers.Authorization = `Bearer ${oauthKey}`
+
         // Emoji stuff
         for (let k of Object.keys(emojis)) {
             const v = emojis[k];
@@ -81,7 +82,6 @@ export class MixerHandler extends Service {
             return false;
         }
         this.chat.on("ChatMessage", async message => {
-            console.log("Raw message", JSON.stringify(message));
             let converted = await this.convert(message);
             if (converted.user === this.botName) {
                 return;
@@ -106,7 +106,7 @@ export class MixerHandler extends Service {
     }
 
     public async convert(packet: any): Promise<CactusMessagePacket> {
-        if (packet.message !== undefined) {
+        if (!!packet.message) {
             const message = packet.message.message;
             const meta = packet.message.meta;
 
@@ -121,7 +121,7 @@ export class MixerHandler extends Service {
                 const trimmed = msg.text.trim();
                 let type: "text" | "emoji" | "url" = "text";
 
-                if (emojis[trimmed] !== undefined) {
+                if (!!emojis[trimmed]) {
                     type = "emoji";
                 }
                 messageComponents.push({
@@ -130,37 +130,43 @@ export class MixerHandler extends Service {
                 });
             });
 
+            let role = await this.convertRole(packet.user_roles[0].toLowerCase());
+
             let cactusPacket: CactusMessagePacket = {
                     type: "message",
                     text: messageComponents,
-                    action: meta.me !== undefined,
+                    action: !!meta.me,
                     user: packet.user_name,
-                    role: packet.user_roles[0].toLowerCase()
+                    role: role
                 };
-            if (meta.whisper !== undefined) {
-                cactusPacket.target = true
+            if (meta.whisper && packet.target) {
+                cactusPacket.target = packet.target;
             }
             return cactusPacket;
         }
         return null;
     }
 
-    public async invert(packet: CactusMessagePacket): Promise<string> {
-        let message = "";
+    public async invert(...packets: CactusMessagePacket[]): Promise<string[]> {
+        let responses: string[] = [];
+        for (let packet of packets) {
+            let message = "";
 
-        if (packet.action) {
-            message += "/me ";
-        }
-
-        for (let messagePacket of packet.text) {
-            if (messagePacket.type === "emoji") {
-                const emoji = await this.getEmoji(messagePacket.data.trim());
-                message += ` :${emoji}`;
-            } else {
-                message += ` ${messagePacket.data}`;
+            if (packet.action) {
+                message += "/me ";
             }
+
+            for (let messagePacket of packet.text) {
+                if (messagePacket.type === "emoji") {
+                    const emoji = await this.getEmoji(messagePacket.data.trim());
+                    message += ` :${emoji}`;
+                } else {
+                    message += ` ${messagePacket.data}`;
+                }
+            }
+            responses.push(message.trim());
         }
-        return message.trim();
+        return responses;
     }
 
     public async sendMessage(message: CactusMessagePacket) {
@@ -168,17 +174,29 @@ export class MixerHandler extends Service {
             throw new Error("Not connected to chat.");
         }
 
-        const finalMessage = await this.invert(message);
-        console.log("The final message is " + finalMessage);
-        let method = "msg"
-        let args = []
+        const finalMessage: string[] = await this.invert(message);
+        finalMessage.forEach(async msg => {
+            let method = "msg"
+            let args = []
 
-        if (message.target) {
-            method = "whisper";
-            args.push(message.user);
+            if (message.target) {
+                method = "whisper";
+                args.push(message.target);
+            }
+            args.push(msg);
+            this.chat.call(method, args);
+        });
+    }
+
+    public async convertRole(role: String): Promise<Role> {
+        role = role.toLowerCase();
+        if (role === "mod" || role === "founder" || role === "staff" || role === "global mod") {
+            return "moderator";
+        } else if (role === "owner") {
+            return "owner";
+        } else {
+            return "user";
         }
-        args.push(finalMessage);
-        this.chat.call(method, args);
     }
 
     public get status(): ServiceStatus {
@@ -187,6 +205,16 @@ export class MixerHandler extends Service {
 
     public set status(status: ServiceStatus) {
         this._status = status;
+    }
+
+    public async getEmoji(name: string): Promise<string> {
+        for (let emoji in emojis) {
+            if (emoji === name) {
+                return emoji;
+            }
+        }
+        // Unknown emotes just return the raw emote.
+        return `:${name}`;
     }
 
         /**
@@ -250,15 +278,4 @@ export class MixerHandler extends Service {
             this.events.next(packet);
         });
     }
-
-    private async getEmoji(name: string): Promise<string> {
-        for (let emoji in emojis) {
-            if (emoji === name) {
-                console.log("We found the emoji");
-                return emoji;
-            }
-        }
-        return "UNKNOWN";
-    }
-
 }
