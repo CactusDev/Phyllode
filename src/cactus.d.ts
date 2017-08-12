@@ -1,8 +1,9 @@
 type CactusPacket = CactusMessagePacket | CactusEventPacket | CactusBanPacket;
 
-type CactusComponent = Text | Emoji | Tag | URL | Variable;
+type Component = Text | Emoji | Tag | URL | Variable;
+
 /**
- * Text component
+ * Text {@see Component}, containing raw text.
  *
  * @interface Text
  */
@@ -10,8 +11,11 @@ interface Text {
     type: "text";
     data: string;
 }
+
 /**
- * Emoji component
+ * Emoji {@see Component}, containing an emoji.
+ * If the emoji is a standard Unicode emoji, its alpha code should be used.
+ * Otherwise, a consistent name should be chosen, prefixed with a period.
  *
  * @interface Emoji
  */
@@ -19,8 +23,10 @@ interface Emoji {
     type: "emoji";
     data: string;
 }
+
 /**
- * Tag component
+ * Tag {@see Component}, containing a tag. No prefix, such as an @ symbol,
+ * should be stored.
  *
  * @interface Tag
  */
@@ -28,8 +34,9 @@ interface Tag {
     type: "tag";
     data: string;
 }
+
 /**
- * URL component
+ * URL {@see Component}, containing a URL.
  *
  * @interface URL
  */
@@ -37,8 +44,22 @@ interface URL {
     type: "url";
     data: string;
 }
+
 /**
- * Variable component
+ * Variable {@see Component}, containing a fully-capitalized variable tag and
+ * a list of lowercase modifiers.
+ *
+ * @example {
+ *     type: "variable",
+ *     tag: "ARG3",
+ *     modifiers: ["reverse", "title"]
+ * }
+ *
+ * @example {
+ *     type: "variable",
+ *     tag: "USER",
+ *     modifiers: []
+ *  }
  *
  * @interface Variable
  */
@@ -55,7 +76,7 @@ interface Variable {
  */
 interface CactusMessagePacket {
     type: "message";
-    text: CactusComponent[];
+    text: Component[];
     action: boolean;
 }
 
