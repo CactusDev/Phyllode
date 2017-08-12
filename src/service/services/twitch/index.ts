@@ -1,3 +1,4 @@
+import { Cereus } from "../../../cereus";
 import { Service, ServiceStatus } from "../../service";
 import { emojis } from "./emoji";
 
@@ -12,13 +13,19 @@ export class TwitchHandler extends Service {
 
     private reversedEmoji: Emojis = {};
 
-    public async connect(oauthKey: string, refresh?: string, expiry?: string): Promise<boolean> {
-        if (this.status === ServiceStatus.READY) {
-            return;
-        }
+    constructor(protected cereus: Cereus) {
+        super(cereus);
+
+        // Emoji stuff
         for (let k of Object.keys(emojis)) {
             const v = emojis[k];
             this.reversedEmoji[v] = k;
+        }
+    }
+
+    public async connect(oauthKey: string, refresh?: string, expiry?: string): Promise<boolean> {
+        if (this.status === ServiceStatus.READY) {
+            return;
         }
         this.oauth = oauthKey;
         return true;
@@ -154,7 +161,7 @@ export class TwitchHandler extends Service {
     }
 
     public async getEmoji(name: string): Promise<string> {
-        return emojis[name] ? emojis[name] : `${name}`;
+        return emojis[name] ? emojis[name] : this.reversedEmoji[name] ? this.reversedEmoji[name] : "";
     }
 
     public async sendMessage(message: CactusMessagePacket) {
