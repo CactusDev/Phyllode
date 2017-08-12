@@ -153,5 +153,7 @@ export const emojis: Emojis = {
   ":dog": "🐶",
   ":woof": "🐶",
   ":hamster": "🐹",
-  ".sarcasm": ":mappa"
+  ".sarcasm": "mappa",
+  ":mappa": ".sarcasm",
+  "mappa": ".sarcasm"
 }
