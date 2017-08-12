@@ -1,3 +1,4 @@
+import { Cereus } from "../../../cereus";
 import { Service, ServiceStatus } from "../../service";
 import { ChatSocket } from "mixer-chat";
 
@@ -37,14 +38,18 @@ export class MixerHandler extends Service {
 
     private botName = "";
 
-    public async connect(oauthKey: string, refresh?: string, expiry?: string): Promise<boolean> {
-        this.headers.Authorization = `Bearer ${oauthKey}`
+    constructor(protected cereus: Cereus) {
+        super(cereus);
 
         // Emoji stuff
         for (let k of Object.keys(emojis)) {
             const v = emojis[k];
             this.reversedEmoji[v] = k;
         }
+    }
+
+    public async connect(oauthKey: string, refresh?: string, expiry?: string): Promise<boolean> {
+        this.headers.Authorization = `Bearer ${oauthKey}`
 
         // Start up carina connection
         Carina.WebSocket = ws;
@@ -156,7 +161,7 @@ export class MixerHandler extends Service {
             if (packet.action) {
                 message += "/me ";
             }
- 
+
             for (let messagePacket of packet.text) {
                 if (messagePacket.type === "emoji") {
                     const emoji = await this.getEmoji(messagePacket.data.trim());
@@ -209,7 +214,7 @@ export class MixerHandler extends Service {
     }
 
     public async getEmoji(name: string): Promise<string> {
-        return emojis[name] ? emojis[name] : `:${name}`;
+        return emojis[name] ? emojis[name] : this.reversedEmoji[name] ? this.reversedEmoji[name] : "";
     }
 
     /**

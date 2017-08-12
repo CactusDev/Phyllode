@@ -120,7 +120,6 @@ export class Cereus {
             // Now that we're done, set all the packets to the new ones.
             messagePacket.text = packets;
         });
-        console.log("Final", JSON.stringify(messagePacket));
         return messagePacket;
     }
 

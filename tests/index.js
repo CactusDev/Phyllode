@@ -10,8 +10,8 @@ const assert = chai.assert;
 const expect = chai.expect;
 const should = chai.should();
 
-const mixer = require("../dist/service/services/mixer").MixerHandler;
-const twitch = require("../dist/service/services/twitch").TwitchHandler;
+const mixer = new (require("../dist/service/services/mixer").MixerHandler)(null);
+const twitch = new (require("../dist/service/services/twitch").TwitchHandler)(null);
 
 const mixerChatConverted = {
     type: "message",
@@ -153,90 +153,102 @@ const twitchWhisperConverted = {
 describe("Service", () => {
     describe("Mixer", () => {
         it("should convert an incoming message", (done) => {
-            mixer.prototype.convert(mixerChatPacket).then(JSON.stringify)
+            mixer.convert(mixerChatPacket).then(JSON.stringify)
                 .should.eventually.be.equal(JSON.stringify(mixerChatConverted)).notify(done);
         });
 
         it("should convert a whispered message", (done) => {
-            mixer.prototype.convert(mixerWhisperPacket).then(JSON.stringify)
+            mixer.convert(mixerWhisperPacket).then(JSON.stringify)
                 .should.eventually.be.equal(JSON.stringify(mixerWhisperConverted)).notify(done);
         });
 
         // This might look like it does nothing, but it's important.
         it("should convert the 'cactus' emote into ':cactus'", (done) => {
-            mixer.prototype.getEmoji("cactus").should.eventually.be.equal(":cactus").notify(done);
+            mixer.getEmoji("cactus").should.eventually.be.equal(":cactus").notify(done);
         });
 
-        it("should convert the ':mappa' emote into '.sarcasm'", (done) => {
-            mixer.prototype.getEmoji("mappa").should.eventually.be.equal(".sarcasm").notify(done);
+        it("should convert the 'mappa' emote into '.sarcasm'", (done) => {
+            mixer.getEmoji("mappa").should.eventually.be.equal(".sarcasm").notify(done);
         });
+
+        it("should convert the '.sarcasm' placeholder into ':mappa'", (done) => {
+            mixer.getEmoji(".sarcasm").should.eventually.be.equal("mappa").notify(done);            
+        });
+
+        it("should omit the 'TESTING' emote.", (done) => {
+            mixer.getEmoji("TESTING").should.eventually.be.equal("").notify(done);           
+        })
 
         it("should convert the ':D' emote into 😃", (done) => {
-            mixer.prototype.getEmoji(":D").should.eventually.be.equal("😃").notify(done);
+            mixer.getEmoji(":D").should.eventually.be.equal("😃").notify(done);
         });
 
         it("should convert the 'Mod' role to 'moderator'", (done) => {
-            mixer.prototype.convertRole("Mod").should.eventually.be.equal("moderator").notify(done);
+            mixer.convertRole("Mod").should.eventually.be.equal("moderator").notify(done);
         });
 
         it("should convert the 'User' role to 'user'", (done) => {
-            mixer.prototype.convertRole("User").should.eventually.be.equal("user").notify(done);
+            mixer.convertRole("User").should.eventually.be.equal("user").notify(done);
         });
 
         it("should convert the 'Owner' role to 'owner'", (done) => {
-            mixer.prototype.convertRole("Owner").should.eventually.be.equal("owner").notify(done);
+            mixer.convertRole("Owner").should.eventually.be.equal("owner").notify(done);
         });
 
         it("should convert the 'Founder' role to 'moderator'", (done) => {
-            mixer.prototype.convertRole("Founder").should.eventually.be.equal("moderator").notify(done);
+            mixer.convertRole("Founder").should.eventually.be.equal("moderator").notify(done);
         });
 
         it("should convert the 'Global Mod' role to 'moderator'", (done) => {
-            mixer.prototype.convertRole("Global Mod").should.eventually.be.equal("moderator").notify(done);
+            mixer.convertRole("Global Mod").should.eventually.be.equal("moderator").notify(done);
         });
 
         it("should convert the 'SPAM' role to 'user'", (done) => {
-            mixer.prototype.convertRole("SPAM").should.eventually.be.equal("user").notify(done);            
+            mixer.convertRole("SPAM").should.eventually.be.equal("user").notify(done);            
         });
     });
 
     describe("Twitch", () => {
         it("should convert an incoming message", (done) => {
-            twitch.prototype.convert(twitchChatPacket).then(JSON.stringify)
+            twitch.convert(twitchChatPacket).then(JSON.stringify)
                 .should.eventually.be.equal(JSON.stringify(twitchChatConverted)).notify(done);
         });
 
         it("should convert a whispered message", (done) => {
-            twitch.prototype.convert(twitchWhisperPacket).then(JSON.stringify)
+            twitch.convert(twitchWhisperPacket).then(JSON.stringify)
                 .should.eventually.be.equal(JSON.stringify(twitchWhisperConverted)).notify(done);
             });
 
         it("should convert the 'Kappa' emote into '.sarcasm'", (done) => {
-            twitch.prototype.getEmoji("Kappa").should.eventually.be.equal(".sarcasm").notify(done);
+            twitch.getEmoji("Kappa").should.eventually.be.equal(".sarcasm").notify(done);
         });
 
-        it("should leave the 'cactus' emote alone", (done) => {
-            twitch.prototype.getEmoji("cactus").should.eventually.be.equal("cactus").notify(done);
+        it("should convert the '.sarcasm' placeholder into 'Kappa'", (done) => {
+            twitch.getEmoji(".sarcasm").should.eventually.be.equal("Kappa").notify(done);            
+        });
+
+        it("should leave omit the 'cactus' emote", (done) => {
+            twitch.getEmoji("cactus").should.eventually.be.equal("").notify(done);
         });
 
         it("should convert the ':D' emote into 😃", (done) => {
-            twitch.prototype.getEmoji(":D").should.eventually.be.equal("😃").notify(done);
+            twitch.getEmoji(":D").should.eventually.be.equal("😃").notify(done);
         });
 
         it("should convert the 'Mod' role to 'moderator'", (done) => {
-            twitch.prototype.convertRole("Mod").should.eventually.be.equal("moderator").notify(done);
+            twitch.convertRole("Mod").should.eventually.be.equal("moderator").notify(done);
         });
 
         it("should convert the 'User' role to 'user'", (done) => {
-            twitch.prototype.convertRole("User").should.eventually.be.equal("user").notify(done);
+            twitch.convertRole("User").should.eventually.be.equal("user").notify(done);
         });
 
         it("should convert the 'Broadcaster' role to 'owner'", (done) => {
-            twitch.prototype.convertRole("broadcaster").should.eventually.be.equal("owner").notify(done);
+            twitch.convertRole("broadcaster").should.eventually.be.equal("owner").notify(done);
         });
 
         it("should convert the 'SPAM' role to 'user'", (done) => {
-            twitch.prototype.convertRole("SPAM").should.eventually.be.equal("user").notify(done);            
+            twitch.convertRole("SPAM").should.eventually.be.equal("user").notify(done);            
         });
     });
 });
