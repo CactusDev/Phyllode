@@ -10,3 +10,5 @@ core:
       clientId: ""
       clientSecret: ""
       redirectURI: "localhost/callback"
+    discord:
+      auth: ""

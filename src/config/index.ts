@@ -15,6 +15,9 @@ export class Config {
                 clientId: string;
                 clientSecret: string;
                 redirectURI: string;
+            },
+            discord: {
+                auth: string;
             }
         }
     }

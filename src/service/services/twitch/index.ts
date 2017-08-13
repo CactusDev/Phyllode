@@ -29,7 +29,7 @@ export class TwitchHandler extends Service {
 
     public async connect(oauthKey: string, refresh?: string, expiry?: number): Promise<boolean> {
         if (this.status === ServiceStatus.READY) {
-            return;
+            return false;
         }
         this.oauth = oauthKey;
         return true;
@@ -72,10 +72,10 @@ export class TwitchHandler extends Service {
             const converted = await this.convert([message, state, fromChannel]);
             const responses = await this.cereus.handle(await this.cereus.parseServiceMessage(converted));
             if (!responses) {
-                console.error("Mixer MessageHandler: Got no response from Cereus? " + JSON.stringify(converted));
+                console.error("Twitch MessageHandler: Got no response from Cereus? " + JSON.stringify(converted));
                 return;
             }
-            responses.forEach(async response => this.sendMessage(response));
+            responses.forEach(async response => await this.sendMessage(response));
         });
         return true;
     }
@@ -158,8 +158,6 @@ export class TwitchHandler extends Service {
     public async invert(...scopes: CactusScope[]): Promise<string[]> {
         let finished: string[] = [];
         for (let scope of scopes) {
-            // This needs something related to the contexts too. (See the todo below, and one of the many above)
-
             if (scope.packet.type === "message") {
                 let packet = (<CactusMessagePacket>scope.packet);
                 let messages = packet.text;
