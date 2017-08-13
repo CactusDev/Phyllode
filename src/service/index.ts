@@ -4,6 +4,8 @@ import { MixerHandler, TwitchHandler } from "./services";
 import { Service, ServiceStatus } from "./service";
 import { Config } from "../config";
 
+import { MixerAuthenticator } from "./services/mixer/authentication";
+
 interface ServiceMapping {
     [name: string]: typeof Service
 }
@@ -61,8 +63,13 @@ export enum ConnectionTristate {
 export class ServiceHandler {
 
     private channels: Channels = {};
+    private mixerAuthenticator: MixerAuthenticator;
 
     constructor(private config: Config) {
+        this.mixerAuthenticator = new MixerAuthenticator();
+        this.mixerAuthenticator.setup(this.config.core.oauth.clientId,
+                                      this.config.core.oauth.clientSecret,
+                                      this.config.core.oauth.redirectURI);
     }
 
     /**
@@ -112,7 +119,7 @@ export class ServiceHandler {
             const name: string = channel.service.toLowerCase();
             // This line is the reason I don't sleep at night.
             // well, one of them.
-            const service: Service = new (services[name].bind(this, cereus));
+            const service: Service = new (services[name].bind(this, cereus, this.config));
             // Make sure it's a valid service
             if (!service) {
                 throw new Error("Attempted to use service that doesn't exist.");
@@ -147,7 +154,7 @@ export class ServiceHandler {
 
     public async sendServiceMessage(channel: string, service: string, message: CactusMessagePacket) {
         this.channels[channel].filter(e => e.serviceName.toLowerCase() === service.toLowerCase())
-            .forEach(async channelService => channelService.sendMessage(message));
+            .forEach(async channelService => await channelService.sendMessage(message));
     }
 
     private async loadAllChannels() {

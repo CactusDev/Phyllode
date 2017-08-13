@@ -1,4 +1,5 @@
 
+import { Config } from "../config";
 import { Subject } from "rxjs";
 import { Cereus } from "../cereus";
 
@@ -69,7 +70,7 @@ export abstract class Service {
     protected _status: ServiceStatus;
 
 
-    constructor(protected cereus: Cereus) {
+    constructor(protected cereus: Cereus, protected config: Config) {
 
     }
 
@@ -135,4 +136,12 @@ export abstract class Service {
      * @memberof Service
      */
     public abstract async convertRole(...args: any[]): Promise<Role>;
+
+    /**
+     * Reauthenticate a user account.
+     *
+     * @abstract
+     * @memberof Service
+     */
+    public abstract async reauthenticate(): Promise<void>;
 }

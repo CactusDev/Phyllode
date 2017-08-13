@@ -1,6 +1,12 @@
 core:
   api_url: "https://cactus.exoz.one/api/"
+  # This stuff is all temp until the api supports it
   authentication:
     cactusbotdev:
       twitch: ""
-      mixer: ""
+      mixer: ""  # This should be the last refresh token that you had.
+  oauth:
+    mixer:
+      clientId: ""
+      clientSecret: ""
+      redirectURI: "localhost/callback"

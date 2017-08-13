@@ -1,3 +1,4 @@
+import { Config } from "../../../config";
 import { Cereus } from "../../../cereus";
 import { Service, ServiceStatus } from "../../service";
 import { ChatSocket } from "mixer-chat";
@@ -38,8 +39,8 @@ export class MixerHandler extends Service {
 
     private botName = "";
 
-    constructor(protected cereus: Cereus) {
-        super(cereus);
+    constructor(protected cereus: Cereus, protected config: Config) {
+        super(cereus, config);
 
         // Emoji stuff
         for (let k of Object.keys(emojis)) {
@@ -205,6 +206,9 @@ export class MixerHandler extends Service {
         }
     }
 
+    public async reauthenticate() {
+    }
+
     public get status(): ServiceStatus {
         return this._status;
     }
@@ -214,7 +218,7 @@ export class MixerHandler extends Service {
     }
 
     public async getEmoji(name: string): Promise<string> {
-        return emojis[name] ? emojis[name] : this.reversedEmoji[name] ? this.reversedEmoji[name] : "";
+        return emojis[name] || this.reversedEmoji[name] || "";
     }
 
     /**
@@ -227,6 +231,7 @@ export class MixerHandler extends Service {
     private async setupCarinaEvents(id: number) {
         this.carina.on("error", console.error);
         this.carina.subscribe<MixerFollowPacket>(`channel:${id}:followed`, async data => {
+            console.log(data);
             const packet: CactusEventPacket = {
                 type: "event",
                 kind: "follow",

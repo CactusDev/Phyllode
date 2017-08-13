@@ -185,6 +185,10 @@ export class TwitchHandler extends Service {
         return "user";
     }
 
+    public async reauthenticate() {
+        console.log("Twitch: Skipping reauthentication");
+    }
+
     public get status(): ServiceStatus {
         return this._status;
     }
