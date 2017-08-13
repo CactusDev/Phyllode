@@ -21,16 +21,21 @@ interface IChannel {
 
 // THIS IS ONLY TEMP DATA UNTIL WE HAVE A MODEL IN STONE
 const channels: IChannel[] = [
+    {
+        channel: "innectic",
+        service: "Mixer",
+        botUser: 25873
+    },
     // {
-    //     channel: "innectic",
+    //     channel: "2cubed",
     //     service: "Mixer",
     //     botUser: 25873
     // },
-    {
-        channel: "CactusDev",
-        service: "Discord",
-        botUser: "CactusBot"
-    }
+    // {
+    //     channel: "CactusDev",
+    //     service: "Discord",
+    //     botUser: "CactusBot"
+    // },
     // {
     //     channel: "Innectic",
     //     service: "Twitch",
@@ -105,9 +110,11 @@ export class ServiceHandler {
             } else if (name === "discord") {
                 this.keysInRotation[channel.botUser.toString()] = this.config.core.oauth.discord.auth;
             }
+            await new Promise<any>((resolve, reject) => setTimeout(() => resolve(), 2000));
         }
         // Attempt to connect to the service
         const connected = await service.connect(this.keysInRotation[channel.botUser.toString()]);
+        console.log(this.keysInRotation[channel.botUser.toString()]);
         if (!connected) {
             return ConnectionTristate.FALSE;
         }
@@ -139,6 +146,22 @@ export class ServiceHandler {
         const cereus = new Cereus(this);
         const authInfo: {[service: string]: string} = this.config.core.authentication.cactusbotdev;
 
+        mixerAuthenticator.on("mixer:reauthenticate", async (data: AuthenticationData, user: string) => {
+            this.keysInRotation[user] = data.access_token;
+            if (!this.connected["mixer"][user]) {
+                return;
+            }
+            for (let connected of this.connected["mixer"][user]) {
+                const disconnected = await connected.disconnect();
+                if (!disconnected) {
+                    Logger.error("Services", "Unable to disconnect from Mixer.");
+                    continue;
+                }
+                await connected.reauthenticate(data);
+            }
+        });
+
+        console.log(this.keysInRotation);
         for (let channel of channels) {
             // TODO: This is only temp until the api supports the things I need
             if (channel.service === "Twitch" && !this.keysInRotation[channel.botUser]) {
@@ -187,21 +210,6 @@ export class ServiceHandler {
             );
             Logger.info("Events", "Listening for events!");
         }
-
-        mixerAuthenticator.on("mixer:reauthenticate", async (data: AuthenticationData, user: string) => {
-            this.keysInRotation[user] = data.access_token;
-            if (!this.connected["mixer"][user]) {
-                return;
-            }
-            for (let connected of this.connected["mixer"][user]) {
-                const disconnected = await connected.disconnect();
-                if (!disconnected) {
-                    Logger.error("Services", "Unable to disconnect from Mixer.");
-                    continue;
-                }
-                await connected.reauthenticate(data);
-            }
-        });
     }
 
     public async sendServiceMessage(channel: string, service: string, message: CactusScope) {

@@ -1,6 +1,5 @@
 import { ServiceHandler } from "./service";
 import { Injectable } from "@angular/core";
-import { LoggerInstance } from "winston";
 
 import { Logger } from "./logger";
 
