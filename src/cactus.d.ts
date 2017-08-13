@@ -1,15 +1,17 @@
 type CactusPacket = CactusMessagePacket | CactusEventPacket | CactusBanPacket;
 
-type Component = Text | Emoji | Tag | URL | Variable;
+interface Component {
+    type: "text" | "emoji" | "tag" | "url" | "variable";
+    data: string;
+}
 
 /**
  * Text {@see Component}, containing raw text.
  *
  * @interface Text
  */
-interface Text {
+interface TextComponent extends Component {
     type: "text";
-    data: string;
 }
 
 /**
@@ -19,9 +21,8 @@ interface Text {
  *
  * @interface Emoji
  */
-interface Emoji {
+interface EmojiComponent extends Component {
     type: "emoji";
-    data: string;
 }
 
 /**
@@ -30,9 +31,8 @@ interface Emoji {
  *
  * @interface Tag
  */
-interface Tag {
+interface TagComponent extends Component {
     type: "tag";
-    data: string;
 }
 
 /**
@@ -40,33 +40,27 @@ interface Tag {
  *
  * @interface URL
  */
-interface URL {
+interface URLComponent extends Component {
     type: "url";
-    data: string;
 }
 
 /**
- * Variable {@see Component}, containing a fully-capitalized variable tag and
- * a list of lowercase modifiers.
+ * Variable {@see Component}, containing isolated variable data.
  *
  * @example {
  *     type: "variable",
- *     tag: "ARG3",
- *     modifiers: ["reverse", "title"]
+ *     data: "ARG3|reverse|title"
  * }
  *
  * @example {
  *     type: "variable",
- *     tag: "USER",
- *     modifiers: []
+ *     data: "USER"
  *  }
  *
  * @interface Variable
  */
-interface Variable {
+interface VariableComponent extends Component {
     type: "variable";
-    tag: string;
-    modifiers: string[];
 }
 
 /**
@@ -154,8 +148,8 @@ interface CactusScope {
     packet: CactusPacket;
     channel: Channel;
     user?: User;
-    role: Role;
-    target: boolean;
+    role?: Role;
+    target?: User;
     service: Service;
 }
 
