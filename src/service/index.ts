@@ -142,7 +142,7 @@ export class ServiceHandler {
      */
     public async connectAllChannels() {
         await this.loadAllChannels();
-        const cereus = new Cereus(this);
+        const cereus = new Cereus(this, `${this.config.core.cereus.url}/${this.config.core.cereus.response_endpoint}`);
         const authInfo: {[service: string]: string} = this.config.core.authentication.cactusbotdev;
 
         mixerAuthenticator.on("mixer:reauthenticate", async (data: AuthenticationData, user: string) => {

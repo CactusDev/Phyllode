@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "test": "mocha tests",
-    "run": "tsc && node dist",
+    "start": "tsc && node dist",
     "app": "node dist"
   },
   "repository": {
