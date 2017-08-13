@@ -6,6 +6,7 @@ import { emojis } from "./emoji";
 import { Service as ServiceAnnotation } from "../../service.annotation";
 
 const tmi = require("tmi.js");
+const isUrl = require("is-url");
 
 @ServiceAnnotation("Twitch")
 export class TwitchHandler extends Service {
@@ -112,12 +113,15 @@ export class TwitchHandler extends Service {
         const segments: any[] = message.split(" ");
         for (let rawSegment of segments) {
             const segment = rawSegment.trim();
-            let segmentType: "text" | "emoji" = "text";
+            let segmentType: "text" | "emoji" | "url" = "text";
             let segmentData: any;
 
             if (emojis[segment]) {
                 segmentType = "emoji";
                 segmentData = emojis[segment];
+            } else if (isUrl(segment)) {
+                segmentType = "url";
+                segmentData = segment;
             } else {
                 segmentData = segment;
             }
