@@ -1,6 +1,6 @@
 import { Cereus } from "../cereus";
 
-import { MixerHandler, TwitchHandler } from "./services";
+import { MixerHandler, TwitchHandler, DiscordHandler } from "./services";
 import { Service, ServiceStatus } from "./service";
 import { Config } from "../config";
 
@@ -14,17 +14,22 @@ interface ServiceMapping {
 
 interface IChannel {
     channel: string | number;
-    service: "Mixer" | "Twitch";
+    service: "Mixer" | "Twitch" | "Discord";
     botUser: string | number;
 }
 
 // THIS IS ONLY TEMP DATA UNTIL WE HAVE A MODEL IN STONE
 const channels: IChannel[] = [
+    // {
+    //     channel: "innectic",
+    //     service: "Mixer",
+    //     botUser: 25873
+    // },
     {
-        channel: "innectic",
-        service: "Mixer",
-        botUser: 25873
-    },
+        channel: "CactusDev",
+        service: "Discord",
+        botUser: "CactusBot"
+    }
     // {
     //     channel: "Innectic",
     //     service: "Twitch",
@@ -34,7 +39,8 @@ const channels: IChannel[] = [
 
 const services: ServiceMapping = {
     mixer: MixerHandler,
-    twitch: TwitchHandler
+    twitch: TwitchHandler,
+    discord: DiscordHandler
 };
 
 /**
@@ -93,7 +99,11 @@ export class ServiceHandler {
         const authInfo: { [service: string]: string } = this.config.core.authentication.cactusbotdev;
 
         if (!this.keysInRotation[channel.botUser]) {
-            await mixerAuthenticator.refreshToken(authInfo.mixer, channel.botUser.toString());
+            if (name === "mixer") {
+                await mixerAuthenticator.refreshToken(authInfo.mixer, channel.botUser.toString());
+            } else if (name === "discord") {
+                this.keysInRotation[channel.botUser.toString()] = this.config.core.oauth.discord.auth;
+            }
         }
         // Attempt to connect to the service
         const connected = await service.connect(this.keysInRotation[channel.botUser.toString()]);
