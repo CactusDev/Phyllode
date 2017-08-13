@@ -1,5 +1,8 @@
 import { ServiceHandler } from "./service";
 import { Injectable } from "@angular/core";
+import { LoggerInstance } from "winston";
+
+import { Logger } from "./logger";
 
 /**
  * Start all the Core services.
@@ -19,16 +22,16 @@ export class Core {
      * @memberof Core
      */
     public async start() {
-        console.log("Attempting to connect to channels...");
+        Logger.info("Attempting to connect to channels...");
         this.serviceHandler.connectAllChannels();
 
-        process.on("exit", () => {
-            this.stop();
-        });
+        process.on("SIGTERM", () => this.stop());
+        process.on("SIGINT", () => this.stop());
     }
 
     public async stop() {
-        console.log("Disconnecting from all channels...");
-        this.serviceHandler.disconnectAllChannels();
+        Logger.info("Disconnecting from all channels...");
+        await this.serviceHandler.disconnectAllChannels();
+        process.exit(0);
     }
 }

@@ -1,5 +1,7 @@
 import { ServiceHandler } from "../service";
 
+import { Logger } from "../logger";
+
 import { Subject } from "rxjs";
 import * as httpm from "typed-rest-client/HttpClient";
 
@@ -81,7 +83,6 @@ export class Cereus {
                 // Now that we're done, set all the packets to the new ones.
                 (<CactusMessagePacket>scope.packet).text = packets;
             });
-            console.log("Final", JSON.stringify(scope));
             return scope;
         }
     }
@@ -96,14 +97,14 @@ export class Cereus {
     public async handle(packet: CactusScope): Promise<CactusScope[]> {
         const response = await this.httpc.post("http://151.80.89.161:6023/response", JSON.stringify(packet));
         if (response.message.statusCode === 404) {
-            console.error("Cereus handler: Invalid packet sent:", JSON.stringify);
+            Logger.error("Cereus", "Invalid packet sent: '" + JSON.stringify(packet) + "'");
             return null;
         }
         let message: CactusScope[];
         try {
             message = JSON.parse(await response.readBody());
         } catch (e) {
-            console.error(e);
+            Logger.error("Cereus", e);
             return null;
         }
         if (!message || message.length < 1) {

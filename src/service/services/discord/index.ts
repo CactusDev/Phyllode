@@ -7,6 +7,7 @@ import * as httpm from "typed-rest-client/HttpClient";
 import * as discord from "discord.js";
 
 import { Service as ServiceAnnotation } from "../../service.annotation";
+import { Logger } from "../../../logger";
 
 const isUrl = require("is-url");
 
@@ -39,7 +40,7 @@ export class DiscordHandler extends Service {
         this.client = new discord.Client();
 
         this.client.on("ready", () => {
-            console.log("Connected to Discord.");
+            Logger.info("Services", "Connected to Discord Guild '" + channel + "' on account " + botId);
             this.client.user.setGame("CactusBot");
         });
 
@@ -145,7 +146,7 @@ export class DiscordHandler extends Service {
                 (<discord.TextChannel>channel).send(packet);
                 return;
             }
-            console.error("Invalid channel type", channel.type);
+            Logger.error("Services", "Invalid channel type " +s channel.type);
         });
     }
 
@@ -154,7 +155,7 @@ export class DiscordHandler extends Service {
     }
 
     public async reauthenticate() {
-        console.log("Discord: Skipping reauthentication");
+        Logger.warn("Services", "Discord: Skipping reauthentication");
     }
 
     public get status(): ServiceStatus {

@@ -11,6 +11,7 @@ import * as ws from "ws";
 import * as httpm from "typed-rest-client/HttpClient";
 
 import { Service as ServiceAnnotation } from "../../service.annotation";
+import { Logger } from "../../../logger";
 
 type Role = "user" | "moderator" | "owner" | "subscriber" | "banned";
 
@@ -94,6 +95,7 @@ export class MixerHandler extends Service {
             return false;
         }
         this.chat.on("ChatMessage", async message => {
+            Logger.info("Messages", `${this._channel}(Mixer): ${message.message.message}`);
             let converted = await this.convert(message);
             if (converted.user === this.botName) {
                 return;
@@ -105,7 +107,7 @@ export class MixerHandler extends Service {
             responses.forEach(async response => this.sendMessage(response));
         });
 
-        this.chat.on("error", console.error);
+        this.chat.on("error", error => Logger.error("Services", error));
         return this.chat.isConnected();
     }
 
@@ -228,16 +230,16 @@ export class MixerHandler extends Service {
     public async reauthenticate(data: AuthenticationData) {
         const disconnected = await this.disconnect();
         if (!disconnected) {
-            console.error("Unable to disconnect from service 'Mixer'.");
+            Logger.error("Services", "Unable to disconnect from service 'Mixer'.");
             return;
         }
         const connected = await this.connect(data.access_token);
         const authenticated = await this.authenticate(this.channel, this.botId);
         if (!connected || !authenticated) {
-            console.error("Unable to connected to channel", this.channel);
+            Logger.error("Services", "Unable to connected to channel " + this.channel);
             return;
         }
-        console.log("Reconnected to channel", this.channel);
+        Logger.error("Services", "Reconnected to channel " + this.channel);
     }
 
     public get status(): ServiceStatus {
@@ -260,7 +262,7 @@ export class MixerHandler extends Service {
      * @memberof MixerHandler
      */
     private async setupCarinaEvents(id: number) {
-        this.carina.on("error", console.error);
+        this.carina.on("error", error => Logger.error("Services", error));
         this.carina.subscribe<MixerFollowPacket>(`channel:${id}:followed`, async data => {
             const packet: CactusEventPacket = {
                 type: "event",
