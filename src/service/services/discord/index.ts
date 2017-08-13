@@ -43,7 +43,6 @@ export class DiscordHandler extends Service {
 
         this.client.on("message", async (message: discord.Message) => {
             const converted = await this.convert([message.content, message.guild.id, message.channel.id]);
-            console.log("converted", converted)
             const responses = await this.cereus.handle(await this.cereus.parseServiceMessage(converted));
             if (!responses) {
                 console.error("Discord MessageHandler: Got no response from Cereus? " + JSON.stringify(converted));
@@ -90,7 +89,6 @@ export class DiscordHandler extends Service {
                 text: finished,
                 action: false // TODO
             },
-            target: guild,
             channel: channel,
             user: "Innectic",
             role: role,
@@ -115,7 +113,7 @@ export class DiscordHandler extends Service {
                         continue;
                     }
                     if (msg.type === "emoji") {
-                        // TODO
+                        message += await this.getEmoji(msg.data.trim());
                     } else {
                         message += msg.data;
                     }
@@ -136,13 +134,13 @@ export class DiscordHandler extends Service {
             const channel = this.client.channels.get(message.channel);
             // What in tarnation
             if (channel.type === "dm") {
-                (<discord.DMChannel>channel).sendMessage(packet);
+                (<discord.DMChannel>channel).send(packet);
                 return;
             } else if (channel.type === "text") {
-                (<discord.TextChannel>channel).sendMessage(packet);
+                (<discord.TextChannel>channel).send(packet);
                 return;
             } else if (channel.type === "group") {
-                (<discord.GroupDMChannel>channel).sendMessage(packet);
+                (<discord.GroupDMChannel>channel).send(packet);
                 return;
             }
             console.error("Invalid channel type", channel.type);
