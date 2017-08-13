@@ -76,7 +76,7 @@ export class ServiceHandler {
      */
     public async connectChannel(channel: IChannel, service: Service, name: string): Promise<ConnectionTristate> {
         service.status = ServiceStatus.CONNECTING;
-        const authInfo: {[service: string]: string} = this.config.core.authentication.cactusbotdev;
+        const authInfo: { [service: string]: string } = this.config.core.authentication.cactusbotdev;
 
         // Attempt to connect to the service
         const connected = await service.connect(authInfo[name.toLowerCase()]);
@@ -132,13 +132,15 @@ export class ServiceHandler {
             // Listen for event packets
             console.log("Attempting to listen for events...");
             service.events.subscribe(
-                async (event: CactusEventPacket) => {
-                    const response = await cereus.handle(event);
-                    if (!response && event.success) {
+                async (scope: CactusScope) => {
+                    const responses = await cereus.handle(scope);
+                    if (!responses) {
                         console.error("No response from event handler?");
                         return;
                     }
-                    this.sendServiceMessage(channel.channel.toString(), channel.service, response);
+                    responses.forEach(async response => {
+                        this.sendServiceMessage(channel.channel.toString(), channel.service, response);
+                    })
                 },
                 (error) => console.error,
                 () => console.log("Done")
@@ -147,7 +149,7 @@ export class ServiceHandler {
         });
     }
 
-    public async sendServiceMessage(channel: string, service: string, message: CactusMessagePacket) {
+    public async sendServiceMessage(channel: string, service: string, message: CactusScope) {
         this.channels[channel].filter(e => e.serviceName.toLowerCase() === service.toLowerCase())
             .forEach(async channelService => channelService.sendMessage(message));
     }

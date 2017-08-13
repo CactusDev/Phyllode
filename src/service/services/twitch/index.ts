@@ -67,7 +67,7 @@ export class TwitchHandler extends Service {
         return true;
     }
 
-    public async convert(packet: any): Promise<CactusMessagePacket> {
+    public async convert(packet: any): Promise<CactusScope> {
         // XXX: Is there a way to make this not gross? Maybe some-sort of an internal `Context` thing?
         const message: any = packet[0];
         const state: any = packet[1];
@@ -85,7 +85,7 @@ export class TwitchHandler extends Service {
             role = "owner";
         }
 
-        const finished: CactusMessageComponent[] = [];
+        const finished: Component[] = [];
         const segments: any[] = message.split(" ");
         for (let rawSegment of segments) {
             const segment = rawSegment.trim();
@@ -104,51 +104,64 @@ export class TwitchHandler extends Service {
             });
         }
         let isAction = false;
+        let target = "";
         const messageType = state["message-type"]
 
-        const finalMessagePacket: CactusMessagePacket = {
-            "type": "message",
-            user: state["display-name"],
-            role: role,
-            text: finished,
-            action: isAction
-        };
+
         if (messageType === "action") {
             isAction = true;
         } else if (messageType === "whisper") {
-            finalMessagePacket.target = "" // TODO: Figure this out
+            target = "" // TODO: Figure this out
         }
-        return finalMessagePacket;
+
+        const scope: CactusScope = {
+            packet: {
+                "type": "message",
+                text: finished,
+                action: isAction
+            },
+            channel: "CHANNEL NAME",  // TODO cc: @Innectic
+            user: state["display-name"],
+            role: role,
+            target: target,
+            service: this.serviceName
+        };
+
+        return scope;
     }
 
-    public async invert(...packets: CactusMessagePacket[]): Promise<string[]> {
+    public async invert(...scopes: CactusScope[]): Promise<string[]> {
         let finished: string[] = [];
-        for (let packet of packets) {
+        for (let scope of scopes) {
             // This needs something related to the contexts too. (See the todo below, and one of the many above)
-            let messages = packet.text;
-            let chatMessage = "";
 
-            if (packet.action) {
-                chatMessage += "/me ";
-            }
+            if (scope.packet.type === "message") {
+                let packet = (<CactusMessagePacket>scope.packet);
+                let messages = packet.text;
+                let chatMessage = "";
 
-            messages.forEach(async msg => {
-                if (msg !== null) {
-            if (msg["type"] === "emoji") {
-                chatMessage += ` ${this.reversedEmoji[msg.data]}`;
-            } else {
-                // HACK: Only kind of a hack, but for some reason all the ACTIONs contain this.
-                //       Can the replace be removed?
-                chatMessage += ` ${msg.data.replace("\u0001", "")}`;
-            }
+                if (packet.action) {
+                    chatMessage += "/me ";
                 }
-            });
-            finished.push(chatMessage.trim());
+
+                messages.forEach(async msg => {
+                    if (msg !== null) {
+                        if (msg["type"] === "emoji") {
+                            chatMessage += ` ${this.reversedEmoji[msg.data]}`;
+                        } else {
+                            // HACK: Only kind of a hack, but for some reason all the ACTIONs contain this.
+                            //       Can the replace be removed?
+                            chatMessage += ` ${msg.data.replace("\u0001", "")}`;
+                        }
+                    }
+                });
+                finished.push(chatMessage.trim());
+            }
         }
         return finished;
     }
 
-    public async sendMessage(message: CactusMessagePacket) {
+    public async sendMessage(message: CactusScope) {
         // To make this work between channels, we would need some way to pass around the channels.
         // Maybe an optional parameter for `Context`?
         // (See an above todo for more context information)

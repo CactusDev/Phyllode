@@ -28,7 +28,7 @@ export interface BotInfo {
  * @enum {number}
  */
 export enum ServiceStatus {
-    CONNECTING,  AUTHENTICATING, READY
+    CONNECTING, AUTHENTICATING, READY
 }
 
 /**
@@ -54,10 +54,10 @@ export abstract class Service {
     /**
      * Events from any sort of service event system
      *
-     * @type {Subject<CactusEventPacket>}
+     * @type {Subject<CactusScope>}
      * @memberof Service
      */
-    public events: Subject<CactusEventPacket> = new Subject();
+    public events: Subject<CactusScope> = new Subject();
 
 
     /**
@@ -67,6 +67,7 @@ export abstract class Service {
      * @memberof Service
      */
     protected _status: ServiceStatus;
+    protected _channel: string;
 
 
     constructor(protected cereus: Cereus) {
@@ -104,27 +105,27 @@ export abstract class Service {
      * Convert a service packet into a Cactus formatted packet
      *
      * @param {*} packet the packet from the service
-     * @returns {Promise<CactusPacket>} the packet in the CactusBot format
+     * @returns {Promise<CactusScope>} the packet in the CactusBot format
      * @memberof Service
      */
-    public abstract async convert(packet: any): Promise<CactusPacket>;
+    public abstract async convert(packet: any): Promise<CactusScope>;
 
     /**
      * Convert from a CactusPacket back into a service packet
      *
-     * @param {CactusPacket} packet the packet to convert
+     * @param {CactusScope} packet the packet to convert
      * @returns {Promise<string>} the service packet
      * @memberof Service
      */
-    public abstract async invert(...packet: CactusMessagePacket[]): Promise<string[]>;
+    public abstract async invert(...packet: CactusScope[]): Promise<string[]>;
 
     /**
      * Send a mesasge to the service
      *
-     * @param {string} message the message to send
+     * @param {CactusScope} message the message to send
      * @memberof Service
      */
-    public abstract async sendMessage(message: CactusMessagePacket): Promise<void>;
+    public abstract async sendMessage(message: CactusScope): Promise<void>;
 
     /**
      * Convert from the service role to the Cactus version of the role.
