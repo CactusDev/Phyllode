@@ -144,9 +144,6 @@ export class DiscordHandler extends Service {
             } else if (channel.type === "text") {
                 (<discord.TextChannel>channel).send(packet);
                 return;
-            } else if (channel.type === "group") {
-                (<discord.GroupDMChannel>channel).send(packet);
-                return;
             }
             console.error("Invalid channel type", channel.type);
         });
