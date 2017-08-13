@@ -21,5 +21,14 @@ export class Core {
     public async start() {
         console.log("Attempting to connect to channels...");
         this.serviceHandler.connectAllChannels();
+
+        process.on("exit", () => {
+            this.stop();
+        });
+    }
+
+    public async stop() {
+        console.log("Disconnecting from all channels...");
+        this.serviceHandler.disconnectAllChannels();
     }
 }

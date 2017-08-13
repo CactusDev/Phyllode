@@ -207,6 +207,14 @@ export class ServiceHandler {
             .forEach(async channelService => await channelService.sendMessage(message));
     }
 
+    public async disconnectAllChannels() {
+        Object.keys(this.channels).forEach(channel => {
+            this.channels[channel].forEach(service => {
+                await service.disconnect();
+            });
+        });
+    }
+
     private async loadAllChannels() {
         // This does nothing right now. This needs an api to exist before
         // anything can really happen here.
