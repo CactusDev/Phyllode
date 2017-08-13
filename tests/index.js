@@ -14,30 +14,36 @@ const mixer = new (require("../dist/service/services/mixer").MixerHandler)(null)
 const twitch = new (require("../dist/service/services/twitch").TwitchHandler)(null);
 
 const mixerChatConverted = {
-    type: "message",
-    text: [
-        {
-            type: "text",
-            data: "test"
-        }
-    ],
-    action: false,
-    user: "0x01",
-    role: "user"
+    "packet": {
+        "type": "message",
+        "text": [
+            {
+                "type": "text",
+                "data": "test"
+            }
+        ],
+        "action": false
+    },
+    "user": "0x01",
+    "role": "user",
+    "service": "Mixer"
 }
 
 const mixerWhisperConverted = {
-    type: "message",
-    text: [
-        {
-            type: "text",
-            data: "test"
-        }
-    ],
-    action: false,
-    user: "0x01",
-    role: "user",
-    target: "CactusBotDev"
+    "packet": {
+        "type": "message",
+        "text": [
+            {
+                "type": "text",
+                "data": "test"
+            }
+        ],
+        "action": false
+    },
+    "user": "0x01",
+    "role": "user",
+    "target": true,
+    "service": "Mixer"
 }
 
 const mixerWhisperPacket = {
@@ -105,16 +111,19 @@ const twitchChatPacket = [
 ]
 
 const twitchChatConverted = {
-    type: "message",
-    user: "Innectic",
-    role: "owner",
-    text: [
-        {
-            type: "text",
-            data: "test"
-        }
-    ],
-    action: false
+    "packet": {
+        "type": "message",
+        "text": [
+            {
+                "type": "text",
+                "data": "test"
+            }
+        ],
+        "action": false
+    },
+    "user": "Innectic",
+    "role": "owner",
+    "service": "Twitch"
 }
 
 const twitchWhisperPacket = [
@@ -137,17 +146,20 @@ const twitchWhisperPacket = [
 ]
 
 const twitchWhisperConverted = {
-    type: "message",
-    user: "Innectic",
-    role: "user",
-    text: [
-        {
-            type: "text",
-            data: "test"
-        }
-    ],
-    action: false,
-    target: "innectic"
+    "packet": {
+        "type": "message",
+        "text": [
+            {
+                "type": "text",
+                "data": "test"
+            }
+        ],
+        "action": false
+    },
+    "user": "Innectic",
+    "role": "user",
+    "service": "Twitch",
+    "target": "innectic"
 }
 
 describe("Service", () => {
@@ -195,12 +207,12 @@ describe("Service", () => {
             mixer.convertRole("Owner").should.eventually.be.equal("owner").notify(done);
         });
 
-        it("should convert the 'Founder' role to 'moderator'", (done) => {
-            mixer.convertRole("Founder").should.eventually.be.equal("moderator").notify(done);
+        it("should convert the 'Founder' role to 'user'", (done) => {
+            mixer.convertRole("Founder").should.eventually.be.equal("user").notify(done);
         });
 
-        it("should convert the 'Global Mod' role to 'moderator'", (done) => {
-            mixer.convertRole("Global Mod").should.eventually.be.equal("moderator").notify(done);
+        it("should convert the 'Global Mod' role to 'user'", (done) => {
+            mixer.convertRole("Global Mod").should.eventually.be.equal("user").notify(done);
         });
 
         it("should convert the 'SPAM' role to 'user'", (done) => {
