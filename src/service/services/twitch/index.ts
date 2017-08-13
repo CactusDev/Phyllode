@@ -2,8 +2,11 @@ import { Cereus } from "../../../cereus";
 import { Service, ServiceStatus } from "../../service";
 import { emojis } from "./emoji";
 
+import { Service as ServiceAnnotation } from "../../service.annotation";
+
 const tmi = require("tmi.js");
 
+@ServiceAnnotation("Twitch")
 export class TwitchHandler extends Service {
 
     private instance: any;
@@ -65,8 +68,13 @@ export class TwitchHandler extends Service {
                 return;
             }
             // Now that we know it's not us, then we can start parsing.
-            const response = await this.convert([message, state]);
-            this.sendMessage(response);
+            const converted = await this.convert([message, state]);
+            const responses = await this.cereus.handle(await this.cereus.parseServiceMessage(converted));
+            if (!responses) {
+                console.error("Mixer MessageHandler: Got no response from Cereus? " + JSON.stringify(converted));
+                return;
+            }
+            responses.forEach(async response => this.sendMessage(response));
         });
         return true;
     }
@@ -117,7 +125,7 @@ export class TwitchHandler extends Service {
             });
         }
         let isAction = false;
-        let target = "";
+        let target: string = undefined;
         const messageType = state["message-type"]
 
 
@@ -133,12 +141,15 @@ export class TwitchHandler extends Service {
                 text: finished,
                 action: isAction
             },
-            channel: "CHANNEL NAME",  // TODO cc: @Innectic
+            channel: "innectic",
             user: state["display-name"],
             role: role,
-            target: target,
             service: this.serviceName
         };
+
+        if (target) {
+            scope.target = target;
+        }
 
         return scope;
     }
@@ -157,9 +168,10 @@ export class TwitchHandler extends Service {
                     chatMessage += "/me ";
                 }
 
-                messages.forEach(async msg => {
+                for (let msg of messages) {
                     if (msg !== null) {
                         if (msg["type"] === "emoji") {
+                            const emoji = await this.getEmoji(msg.data.trim());
                             chatMessage += ` ${this.reversedEmoji[msg.data]}`;
                         } else {
                             // HACK: Only kind of a hack, but for some reason all the ACTIONs contain this.
@@ -167,7 +179,7 @@ export class TwitchHandler extends Service {
                             chatMessage += ` ${msg.data.replace("\u0001", "")}`;
                         }
                     }
-                });
+                }
                 finished.push(chatMessage.trim());
             }
         }
@@ -175,7 +187,7 @@ export class TwitchHandler extends Service {
     }
 
     public async getEmoji(name: string): Promise<string> {
-        return emojis[name] ? emojis[name] : this.reversedEmoji[name] ? this.reversedEmoji[name] : "";
+        return emojis[name] || this.reversedEmoji[name] || "";
     }
 
     public async sendMessage(message: CactusScope) {
