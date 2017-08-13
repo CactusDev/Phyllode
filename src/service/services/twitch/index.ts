@@ -1,3 +1,4 @@
+import { Cereus } from "../../../cereus";
 import { Service, ServiceStatus } from "../../service";
 import { emojis } from "./emoji";
 
@@ -12,19 +13,26 @@ export class TwitchHandler extends Service {
 
     private reversedEmoji: Emojis = {};
 
-    public async connect(oauthKey: string, refresh?: string, expiry?: string): Promise<boolean> {
-        if (this.status === ServiceStatus.READY) {
-            return;
-        }
+    constructor(protected cereus: Cereus) {
+        super(cereus);
+
+        // Emoji stuff
         for (let k of Object.keys(emojis)) {
             const v = emojis[k];
             this.reversedEmoji[v] = k;
+        }
+    }
+
+    public async connect(oauthKey: string, refresh?: string, expiry?: string): Promise<boolean> {
+        if (this.status === ServiceStatus.READY) {
+            return;
         }
         this.oauth = oauthKey;
         return true;
     }
 
     public async authenticate(channel: string | number, botId: string | number): Promise<boolean> {
+        // TODO: Handle number channel ids
         this.channel = (<string>channel).toLowerCase();
 
         // TODO: Support for multiple channels from the one handler.
@@ -68,22 +76,27 @@ export class TwitchHandler extends Service {
     }
 
     public async convert(packet: any): Promise<CactusScope> {
-        // XXX: Is there a way to make this not gross? Maybe some-sort of an internal `Context` thing?
         const message: any = packet[0];
         const state: any = packet[1];
 
-        const isMod = state.mod;
-        const isBroadcaster = state.badges.broadcaster && state.badges.broadcaster === "1";  // Why in tarnation is that a string?!
-        const isSub = state.subscriber;
+        let isMod = false;
+        let isBroadcaster = false;
+        let isSub = false;
 
-        let role: "banned" | "user" | "subscriber" | "moderator" | "owner" = "user";
-        if (isSub) {
-            role = "subscriber";
-        } else if (isMod) {
-            role = "moderator";
-        } else if (isBroadcaster) {
-            role = "owner";
+        if (state.badges) {
+            isBroadcaster = state.badges.broadcaster && state.badges.broadcaster === "1";
+            isMod = state.mod;
+            isSub = state.subscriber;
         }
+
+        let textRole = "user";
+        if (isMod) {
+            textRole = "mod";
+        } else if (isBroadcaster) {
+            textRole = "broadcaster";
+        }
+
+        const role = await this.convertRole(textRole);
 
         const finished: Component[] = [];
         const segments: any[] = message.split(" ");
@@ -92,7 +105,7 @@ export class TwitchHandler extends Service {
             let segmentType: "text" | "emoji" = "text";
             let segmentData: any;
 
-            if (!!emojis[segment]) {
+            if (emojis[segment]) {
                 segmentType = "emoji";
                 segmentData = emojis[segment];
             } else {
@@ -111,7 +124,7 @@ export class TwitchHandler extends Service {
         if (messageType === "action") {
             isAction = true;
         } else if (messageType === "whisper") {
-            target = "" // TODO: Figure this out
+            target = state.username;
         }
 
         const scope: CactusScope = {
@@ -161,16 +174,29 @@ export class TwitchHandler extends Service {
         return finished;
     }
 
+    public async getEmoji(name: string): Promise<string> {
+        return emojis[name] ? emojis[name] : this.reversedEmoji[name] ? this.reversedEmoji[name] : "";
+    }
+
     public async sendMessage(message: CactusScope) {
-        // To make this work between channels, we would need some way to pass around the channels.
-        // Maybe an optional parameter for `Context`?
-        // (See an above todo for more context information)
         const inverted = await this.invert(message);
-        inverted.forEach(packet => this.instance.say(message.channel, packet));
+        inverted.forEach(packet => {
+            if (message.target) {
+                this.instance.whisper(message.target, packet);
+                return;
+            }
+            this.instance.say(this.channel, packet)
+        });
     }
 
     public async convertRole(role: string): Promise<Role> {
-        return "user"; // TODO
+        role = role.toLowerCase();
+        if (role === "mod") {
+            return "moderator";
+        } else if (role === "broadcaster") {
+            return "owner";
+        }
+        return "user";
     }
 
     public get status(): ServiceStatus {

@@ -1,3 +1,4 @@
+import { Cereus } from "../../../cereus";
 import { Service, ServiceStatus } from "../../service";
 import { ChatSocket } from "mixer-chat";
 
@@ -37,14 +38,18 @@ export class MixerHandler extends Service {
 
     private botName = "";
 
-    public async connect(oauthKey: string, refresh?: string, expiry?: string): Promise<boolean> {
-        this.headers.Authorization = `Bearer ${oauthKey}`
+    constructor(protected cereus: Cereus) {
+        super(cereus);
 
         // Emoji stuff
         for (let k of Object.keys(emojis)) {
             const v = emojis[k];
             this.reversedEmoji[v] = k;
         }
+    }
+
+    public async connect(oauthKey: string, refresh?: string, expiry?: string): Promise<boolean> {
+        this.headers.Authorization = `Bearer ${oauthKey}`
 
         // Start up carina connection
         Carina.WebSocket = ws;
@@ -222,22 +227,16 @@ export class MixerHandler extends Service {
     }
 
     public async getEmoji(name: string): Promise<string> {
-        for (let emoji in emojis) {
-            if (emoji === name) {
-                return emoji;
-            }
-        }
-        // Unknown emotes just return the raw emote.
-        return `:${name}`;
+        return emojis[name] ? emojis[name] : this.reversedEmoji[name] ? this.reversedEmoji[name] : "";
     }
 
     /**
- * Setup all the carina events.
- *
- * @private
- * @param {number} id the id of the channel to subscribe to
- * @memberof MixerHandler
- */
+     * Setup all the carina events.
+     *
+     * @private
+     * @param {number} id the id of the channel to subscribe to
+     * @memberof MixerHandler
+     */
     private async setupCarinaEvents(id: number) {
         this.carina.on("error", console.error);
         this.carina.subscribe<MixerFollowPacket>(`channel:${id}:followed`, async data => {
