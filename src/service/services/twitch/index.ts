@@ -49,9 +49,6 @@ export class TwitchHandler extends Service {
         //       this handler can support multiple from one instance,
         //       so that we don't keep creating more.
         const connectionOptions = {
-            options: {
-                debug: true  // XXX: This shouldn't stay, but it's useful for debugging
-            },
             connection: {
                 reconnect: true
             },
@@ -64,6 +61,13 @@ export class TwitchHandler extends Service {
 
         this.instance = new tmi.client(connectionOptions);
         this.instance.connect();
+                        // this.emit("join", channel, _.username(this.getUsername()), true);
+
+        this.instance.on("join", (joinedChannel: string, user: string, joined: boolean) => {
+            if (joined && user === botId) {
+                Logger.info("Services", `Connected to Twitch channel '${joinedChannel}' on account '${user}'`);
+            }
+        });
 
         this.instance.on("message", async (fromChannel: string, state: any, message: string, self: boolean) => {
             Logger.info("Messages", `${fromChannel}(Twitch): ${message}`);
