@@ -2,8 +2,11 @@ import { Cereus } from "../../../cereus";
 import { Service, ServiceStatus } from "../../service";
 import { emojis } from "./emoji";
 
+import { Service as ServiceAnnotation } from "../../service.annotation";
+
 const tmi = require("tmi.js");
 
+@ServiceAnnotation("Twitch")
 export class TwitchHandler extends Service {
 
     private instance: any;
@@ -65,8 +68,13 @@ export class TwitchHandler extends Service {
                 return;
             }
             // Now that we know it's not us, then we can start parsing.
-            const response = await this.convert([message, state]);
-            this.sendMessage(response);
+            const converted = await this.convert([message, state, fromChannel]);
+            const responses = await this.cereus.handle(await this.cereus.parseServiceMessage(converted));
+            if (!responses) {
+                console.error("Mixer MessageHandler: Got no response from Cereus? " + JSON.stringify(converted));
+                return;
+            }
+            responses.forEach(async response => this.sendMessage(response));
         });
         return true;
     }
@@ -75,9 +83,10 @@ export class TwitchHandler extends Service {
         return true;
     }
 
-    public async convert(packet: any): Promise<CactusMessagePacket> {
+    public async convert(packet: any): Promise<CactusScope> {
         const message: any = packet[0];
         const state: any = packet[1];
+        const channel: string = packet[2];
 
         let isMod = false;
         let isBroadcaster = false;
@@ -98,7 +107,7 @@ export class TwitchHandler extends Service {
 
         const role = await this.convertRole(textRole);
 
-        const finished: CactusMessageComponent[] = [];
+        const finished: Component[] = [];
         const segments: any[] = message.split(" ");
         for (let rawSegment of segments) {
             const segment = rawSegment.trim();
@@ -117,54 +126,71 @@ export class TwitchHandler extends Service {
             });
         }
         let isAction = false;
+        let target: string = undefined;
         const messageType = state["message-type"]
 
-        const finalMessagePacket: CactusMessagePacket = {
-            "type": "message",
-            user: state["display-name"],
-            role: role,
-            text: finished,
-            action: isAction
-        };
         if (messageType === "action") {
             isAction = true;
         } else if (messageType === "whisper") {
-            finalMessagePacket.target = state.username;
+            target = state.username;
         }
-        return finalMessagePacket;
+
+        const scope: CactusScope = {
+            packet: {
+                "type": "message",
+                text: finished,
+                action: isAction
+            },
+            channel: channel,
+            user: state["display-name"],
+            role: role,
+            service: this.serviceName
+        };
+
+        if (target) {
+            scope.target = target;
+        }
+
+        return scope;
     }
 
-    public async invert(...packets: CactusMessagePacket[]): Promise<string[]> {
+    public async invert(...scopes: CactusScope[]): Promise<string[]> {
         let finished: string[] = [];
-        for (let packet of packets) {
-            let messages = packet.text;
-            let chatMessage = "";
+        for (let scope of scopes) {
+            // This needs something related to the contexts too. (See the todo below, and one of the many above)
 
-            if (packet.action) {
-                chatMessage += "/me ";
-            }
+            if (scope.packet.type === "message") {
+                let packet = (<CactusMessagePacket>scope.packet);
+                let messages = packet.text;
+                let chatMessage = "";
 
-            messages.forEach(async msg => {
-                if (msg !== null) {
-                    if (msg["type"] === "emoji") {
-                        chatMessage += ` ${this.reversedEmoji[msg.data]}`;
-                    } else {
-                        // HACK: Only kind of a hack, but for some reason all the ACTIONs contain this.
-                        //       Can the replace be removed?
-                        chatMessage += ` ${msg.data.replace("\u0001", "")}`;
+                if (packet.action) {
+                    chatMessage += "/me ";
+                }
+
+                for (let msg of messages) {
+                    if (msg !== null) {
+                        if (msg["type"] === "emoji") {
+                            const emoji = await this.getEmoji(msg.data.trim());
+                            chatMessage += ` ${emoji}`;
+                        } else {
+                            // HACK: Only kind of a hack, but for some reason all the ACTIONs contain this.
+                            //       Can the replace be removed?
+                            chatMessage += ` ${msg.data.replace("\u0001", "")}`;
+                        }
                     }
                 }
-            });
-            finished.push(chatMessage.trim());
+                finished.push(chatMessage.trim());
+            }
         }
         return finished;
     }
 
     public async getEmoji(name: string): Promise<string> {
-        return emojis[name] ? emojis[name] : this.reversedEmoji[name] ? this.reversedEmoji[name] : "";
+        return emojis[name] || this.reversedEmoji[name] || "";
     }
 
-    public async sendMessage(message: CactusMessagePacket) {
+    public async sendMessage(message: CactusScope) {
         const inverted = await this.invert(message);
         inverted.forEach(packet => {
             if (message.target) {
