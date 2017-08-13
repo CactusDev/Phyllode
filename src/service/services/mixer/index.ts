@@ -100,7 +100,6 @@ export class MixerHandler extends Service {
             }
             const responses = await this.cereus.handle(await this.cereus.parseServiceMessage(converted));
             if (!responses) {
-                console.error("Mixer MessageHandler: Got no response from Cereus? " + JSON.stringify(converted));
                 return;
             }
             responses.forEach(async response => this.sendMessage(response));

@@ -73,7 +73,6 @@ export class TwitchHandler extends Service {
             const converted = await this.convert([message, state, fromChannel]);
             const responses = await this.cereus.handle(await this.cereus.parseServiceMessage(converted));
             if (!responses) {
-                console.error("Twitch MessageHandler: Got no response from Cereus? " + JSON.stringify(converted));
                 return;
             }
             responses.forEach(async response => await this.sendMessage(response));

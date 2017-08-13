@@ -174,7 +174,6 @@ export class ServiceHandler {
                 async (scope: CactusScope) => {
                     const responses = await cereus.handle(scope);
                     if (!responses) {
-                        console.error("No response from event handler?");
                         return;
                     }
                     responses.forEach(async response => {

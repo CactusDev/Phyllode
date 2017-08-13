@@ -95,7 +95,8 @@ export class Cereus {
      */
     public async handle(packet: CactusScope): Promise<CactusScope[]> {
         const response = await this.httpc.post("http://151.80.89.161:6023/response", JSON.stringify(packet));
-        if (response.message.statusCode !== 200) {
+        if (response.message.statusCode === 404) {
+            console.error("Cereus handler: Invalid packet sent:", JSON.stringify);
             return null;
         }
         let message: CactusScope[];
@@ -106,7 +107,6 @@ export class Cereus {
             return null;
         }
         if (!message || message.length < 1) {
-            console.error("Didn't get a response from cereus. Packet: " + JSON.stringify(packet));
             return null;
         }
         return message;  // XXX: Do we need all the responses?

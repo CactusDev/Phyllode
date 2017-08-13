@@ -48,7 +48,6 @@ export class DiscordHandler extends Service {
                 message.author.id), message.channel.id]);
             const responses = await this.cereus.handle(await this.cereus.parseServiceMessage(converted));
             if (!responses) {
-                console.error("Discord MessageHandler: Got no response from Cereus? " + JSON.stringify(converted));
                 return;
             }
             responses.forEach(async response => await this.sendMessage(response));
