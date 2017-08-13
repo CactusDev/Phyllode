@@ -21,26 +21,26 @@ interface IChannel {
 
 // THIS IS ONLY TEMP DATA UNTIL WE HAVE A MODEL IN STONE
 const channels: IChannel[] = [
-    {
-        channel: "innectic",
-        service: "Mixer",
-        botUser: 25873
-    },
+    // {
+    //     channel: "innectic",
+    //     service: "Mixer",
+    //     botUser: 25873
+    // },
     // {
     //     channel: "2cubed",
     //     service: "Mixer",
     //     botUser: 25873
     // },
-    // {
-    //     channel: "CactusDev",
-    //     service: "Discord",
-    //     botUser: "CactusBot"
-    // },
-    // {
-    //     channel: "Innectic",
-    //     service: "Twitch",
-    //     botUser: "cactusbotdev"
-    // }
+    {
+        channel: "CactusDev",
+        service: "Discord",
+        botUser: "CactusBot"
+    },
+    {
+        channel: "Innectic",
+        service: "Twitch",
+        botUser: "cactusbotdev"
+    }
 ]
 
 const services: ServiceMapping = {
@@ -110,11 +110,10 @@ export class ServiceHandler {
             } else if (name === "discord") {
                 this.keysInRotation[channel.botUser.toString()] = this.config.core.oauth.discord.auth;
             }
-            await new Promise<any>((resolve, reject) => setTimeout(() => resolve(), 2000));
+            await new Promise<any>((resolve, reject) => setTimeout(() => resolve(), 100));
         }
         // Attempt to connect to the service
         const connected = await service.connect(this.keysInRotation[channel.botUser.toString()]);
-        console.log(this.keysInRotation[channel.botUser.toString()]);
         if (!connected) {
             return ConnectionTristate.FALSE;
         }
@@ -161,7 +160,6 @@ export class ServiceHandler {
             }
         });
 
-        console.log(this.keysInRotation);
         for (let channel of channels) {
             // TODO: This is only temp until the api supports the things I need
             if (channel.service === "Twitch" && !this.keysInRotation[channel.botUser]) {

@@ -70,24 +70,31 @@ export class DiscordHandler extends Service {
         const guild = packet[1];
         const channel = packet[2];
 
-        for (let segment of segments) {
-            let segmentType: "text" | "emoji" | "url" = "text";
-            let segmentData: any;
+        let current = "";
 
+        for (let segment of segments) {
             if (emojis[segment]) {
-                segmentType = "emoji";
-                segmentData = emojis[segment];
+                finished.push({
+                    "type": "text",
+                    data: current
+                });
+                finished.push({
+                    "type": "emoji",
+                    data: emojis[segment]
+                });
             } else if (isUrl(segment)) {
-                segmentType = "url";
-                segmentData = segment;
+                finished.push({
+                    "type": "url",
+                    data: segment
+                });
             } else {
-                segmentData = segment;
+                current += ` ${segment}`;
             }
-            finished.push({
-                "type": segmentType,
-                data: segmentData
-            });
         }
+        finished.push({
+            "type": "text",
+            data: current.trim()
+        });
 
         const scope: CactusScope = {
             packet: {
@@ -111,9 +118,8 @@ export class DiscordHandler extends Service {
                 let message = "";
 
                 if (packet.action) {
-                    message += "/me";
+                    message += "_";
                 }
-
                 for (let msg of packet.text) {
                     if (message == null) {
                         continue;
@@ -121,8 +127,11 @@ export class DiscordHandler extends Service {
                     if (msg.type === "emoji") {
                         message += await this.getEmoji(msg.data.trim());
                     } else {
-                        message += msg.data;
+                        message += " " + msg.data;
                     }
+                }
+                if (packet.action) {
+                    message += "_";
                 }
                 finished.push(message.trim());
             }
