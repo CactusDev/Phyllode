@@ -1,3 +1,6 @@
+import { Logger } from "./logger";
+Logger.setup();
+
 import "reflect-metadata";
 
 import { ReflectiveInjector } from "@angular/core";
@@ -6,9 +9,7 @@ import { ServiceHandler } from "./service";
 
 import * as nconf from "config";
 import { Config } from "./config";
-import { Logger } from "./logger";
 
-Logger.setup();
 
 const injector = ReflectiveInjector.resolveAndCreate([
     {

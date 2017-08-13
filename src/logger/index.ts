@@ -1,10 +1,7 @@
-import { Injectable } from "@angular/core";
 const winston = require("winston");
 let logger = new (winston.Logger)();
 
-@Injectable()
 export class Logger {
-    // public static winston: Winston.LoggerInstance = new Winston.Logger();
 
     public static setup() {
         winston.addColors({
@@ -36,6 +33,22 @@ export class Logger {
                 label: "Events"
             }
         });
+
+        winston.loggers.add("events", {
+            console: {
+                level: "debug",
+                colorize: true,
+                label: "Events"
+            }
+        });
+
+        winston.loggers.add("core", {
+            console: {
+                level: "debug",
+                colorize: true,
+                label: "Core"
+            }
+        });
     }
 
     public static info(container: string, msg: string) {
@@ -45,11 +58,11 @@ export class Logger {
 
     public static warn(container: string, msg: string) {
         container = container.toLowerCase();
-        winston.loggers.warn(container).warn(msg);
+        winston.loggers.get(container).warn(msg);
     }
 
     public static error(container: string, msg: string) {
         container = container.toLowerCase();
-        winston.loggers.eror(container).error(msg);
+        winston.loggers.get(container).error(msg);
     }
 }
