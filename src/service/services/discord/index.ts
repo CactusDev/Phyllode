@@ -146,7 +146,7 @@ export class DiscordHandler extends Service {
                 (<discord.TextChannel>channel).send(packet);
                 return;
             }
-            Logger.error("Services", "Invalid channel type " +s channel.type);
+            Logger.error("Services", "Invalid channel type " + channel.type);
         });
     }
 

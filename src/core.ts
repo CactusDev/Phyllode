@@ -22,7 +22,7 @@ export class Core {
      * @memberof Core
      */
     public async start() {
-        Logger.info("Attempting to connect to channels...");
+        Logger.info("Core", "Attempting to connect to channels...");
         this.serviceHandler.connectAllChannels();
 
         process.on("SIGTERM", () => this.stop());
@@ -30,7 +30,7 @@ export class Core {
     }
 
     public async stop() {
-        Logger.info("Disconnecting from all channels...");
+        Logger.info("Core", "Disconnecting from all channels...");
         await this.serviceHandler.disconnectAllChannels();
         process.exit(0);
     }
