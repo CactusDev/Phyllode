@@ -20,28 +20,7 @@ interface IChannel {
 }
 
 // THIS IS ONLY TEMP DATA UNTIL WE HAVE A MODEL IN STONE
-const channels: IChannel[] = [
-    // {
-    //     channel: "innectic",
-    //     service: "Mixer",
-    //     botUser: 25873
-    // },
-    // {
-    //     channel: "2cubed",
-    //     service: "Mixer",
-    //     botUser: 25873
-    // },
-    {
-        channel: "CactusDev",
-        service: "Discord",
-        botUser: "CactusBot"
-    },
-    {
-        channel: "Innectic",
-        service: "Twitch",
-        botUser: "cactusbotdev"
-    }
-]
+let channels: IChannel[] = [];
 
 const services: ServiceMapping = {
     mixer: MixerHandler,
@@ -131,7 +110,7 @@ export class ServiceHandler {
         } else {
             this.channels[channel.channel].push(service);
         }
-        Logger.info("Services", `Connected to channel ${channel.channel}.`);
+        Logger.info("Services", `Connected to channel ${channel.channel} on service ${service.serviceName}.`);
         return ConnectionTristate.TRUE;
     }
 
@@ -143,6 +122,8 @@ export class ServiceHandler {
     public async connectAllChannels() {
         await this.loadAllChannels();
         const cereus = new Cereus(this, `${this.config.core.cereus.url}/${this.config.core.cereus.response_endpoint}`);
+        // TODO: this will become a call to the api getting the auth information for whatever account is being used for the current
+        //       authenticating account.
         const authInfo: {[service: string]: string} = this.config.core.authentication.cactusbotdev;
 
         mixerAuthenticator.on("mixer:reauthenticate", async (data: AuthenticationData, user: string) => {
@@ -178,10 +159,9 @@ export class ServiceHandler {
                 Logger.warn("Services", "Failed to authenticate!");
                 return;
             } else if (connected === ConnectionTristate.FALSE) {
-                Logger.warn("Services", "Unable to connect to service.");
+                Logger.warn("Services", `Unable to connect to ${channel.service}.`);
                 return;
             }
-            Logger.info("Services", "Connected.");
             // Add to the connected channels
             if (!this.connected[name]) {
                 this.connected[name] = {};
@@ -191,6 +171,8 @@ export class ServiceHandler {
             }
             this.connected[name][channel.botUser].push(service);
             // Listen for event packets
+
+            // Cleanup: This should become just one observable that's being listened and pushed to.
             Logger.info("Events", "Attempting to listen for events...");
             service.events.subscribe(
                 async (scope: CactusScope) => {
@@ -224,7 +206,27 @@ export class ServiceHandler {
     }
 
     private async loadAllChannels() {
-        // This does nothing right now. This needs an api to exist before
-        // anything can really happen here.
+        channels = [
+            {
+                channel: "innectic",
+                service: "Mixer",
+                botUser: 25873
+            },
+            {
+                channel: "2cubed",
+                service: "Mixer",
+                botUser: 25873
+            },
+            {
+                channel: "CactusDev",
+                service: "Discord",
+                botUser: "CactusBot"
+            },
+            {
+                channel: "Innectic",
+                service: "Twitch",
+                botUser: "cactusbotdev"
+            }
+        ]
     }
 }
