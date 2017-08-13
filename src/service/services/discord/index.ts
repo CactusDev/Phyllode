@@ -8,6 +8,8 @@ import * as discord from "discord.js";
 
 import { Service as ServiceAnnotation } from "../../service.annotation";
 
+const isUrl = require("is-url");
+
 @ServiceAnnotation("Discord")
 export class DiscordHandler extends Service {
 
@@ -42,7 +44,8 @@ export class DiscordHandler extends Service {
         });
 
         this.client.on("message", async (message: discord.Message) => {
-            const converted = await this.convert([message.content, message.guild.id, message.channel.id]);
+            console.log(message);
+            const converted = await this.convert([message.cleanContent, message.guild.id, message.channel.id]);
             const responses = await this.cereus.handle(await this.cereus.parseServiceMessage(converted));
             if (!responses) {
                 console.error("Discord MessageHandler: Got no response from Cereus? " + JSON.stringify(converted));
@@ -68,12 +71,15 @@ export class DiscordHandler extends Service {
         const channel = packet[2];
 
         for (let segment of segments) {
-            let segmentType: "text" | "emoji" = "text";
+            let segmentType: "text" | "emoji" | "url" = "text";
             let segmentData: any;
 
             if (emojis[segment]) {
                 segmentType = "emoji";
                 segmentData = emojis[segment];
+            } else if (isUrl(segment)) {
+                segmentType = "url";
+                segmentData = segment;
             } else {
                 segmentData = segment;
             }
