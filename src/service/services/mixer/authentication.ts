@@ -50,12 +50,13 @@ export class MixerAuthenticator extends EventEmitter {
      * @memberof MixerAuthenticator
      */
     public async refreshToken(refreshToken: string, account: string) {
-        Logger.info("Authentication", `Mixer: Refreshing OAuth for: ${account}.`);
+        Logger.info("Mixer", `Mixer: Refreshing OAuth for: ${account}.`);
         // Get the new tokens
         const result = await this.request("refresh_token", {refresh_token: refreshToken});
         // Emit to the rest of the app that accounts with that name need to reconnect with the new token
         console.log("Last refresh", result.refresh_token);
         this.emit("mixer:reauthenticate", result, account);
+        setTimeout(() => this.refreshToken(result.refresh_token, account), result.expires_in)
     }
 
     private async request(requestType: "refresh_token" | "authorization_code", extraData: Data): Promise<AuthenticationData> {
