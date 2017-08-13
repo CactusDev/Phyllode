@@ -1,3 +1,4 @@
+import { AuthenticationData } from "./authentication";
 import { Config } from "../../../config";
 import { Cereus } from "../../../cereus";
 import { Service, ServiceStatus } from "../../service";
@@ -10,6 +11,7 @@ import * as ws from "ws";
 import * as httpm from "typed-rest-client/HttpClient";
 
 import { Service as ServiceAnnotation } from "../../service.annotation";
+import { mixerAuthenticator } from "../..";
 
 type Role = "user" | "moderator" | "owner" | "subscriber" | "banned";
 
@@ -38,6 +40,8 @@ export class MixerHandler extends Service {
     private carina: Carina;
 
     private botName = "";
+    private channel = "";
+    private botId = 0;
 
     constructor(protected cereus: Cereus, protected config: Config) {
         super(cereus, config);
@@ -49,16 +53,20 @@ export class MixerHandler extends Service {
         }
     }
 
-    public async connect(oauthKey: string, refresh?: string, expiry?: string): Promise<boolean> {
-        this.headers.Authorization = `Bearer ${oauthKey}`
+    public async connect(oauthKey: string, refresh?: string, expiry?: number): Promise<boolean> {
+        this.headers.Authorization = `Bearer ${oauthKey}`;
 
         // Start up carina connection
-        Carina.WebSocket = ws;
-        this.carina = new Carina({ isBot: true }).open();
+        if (!this.carina) {
+            Carina.WebSocket = ws;
+            this.carina = new Carina({ isBot: true }).open();
+        }
         return true;
     }
 
     public async authenticate(channelRaw: string | number, botId: number): Promise<boolean> {
+        this.channel = <string>channelRaw;
+        this.botId = botId;
         let channelId: number;
         if (<any>channelRaw instanceof String) {
             const nameResult = await this.httpc.get(`${this.base}/channel/${channelRaw}`);
@@ -206,7 +214,19 @@ export class MixerHandler extends Service {
         }
     }
 
-    public async reauthenticate() {
+    public async reauthenticate(data: AuthenticationData) {
+        const disconnected = await this.disconnect();
+        if (!disconnected) {
+            console.error("Unable to disconnect from service 'Mixer'.");
+            return;
+        }
+        const connected = await this.connect(data.access_token);
+        const authenticated = await this.authenticate(this.channel, this.botId);
+        if (!connected || !authenticated) {
+            console.error("Unable to connected to channel", this.channel);
+            return;
+        }
+        console.log("Reconnected to channel", this.channel);
     }
 
     public get status(): ServiceStatus {

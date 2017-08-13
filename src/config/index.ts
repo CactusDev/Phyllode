@@ -11,9 +11,11 @@ export class Config {
             }
         };
         oauth: {
-            clientId: string;
-            clientSecret: string;
-            redirectURI: string;
+            mixer: {
+                clientId: string;
+                clientSecret: string;
+                redirectURI: string;
+            }
         }
     }
 }

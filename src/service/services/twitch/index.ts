@@ -1,3 +1,4 @@
+import { Config } from "../../../config";
 import { Cereus } from "../../../cereus";
 import { Service, ServiceStatus } from "../../service";
 import { emojis } from "./emoji";
@@ -13,8 +14,8 @@ export class TwitchHandler extends Service {
 
     private reversedEmoji: Emojis = {};
 
-    constructor(protected cereus: Cereus) {
-        super(cereus);
+    constructor(protected cereus: Cereus, protected config: Config) {
+        super(cereus, config);
 
         // Emoji stuff
         for (let k of Object.keys(emojis)) {
@@ -23,7 +24,7 @@ export class TwitchHandler extends Service {
         }
     }
 
-    public async connect(oauthKey: string, refresh?: string, expiry?: string): Promise<boolean> {
+    public async connect(oauthKey: string, refresh?: string, expiry?: number): Promise<boolean> {
         if (this.status === ServiceStatus.READY) {
             return;
         }
