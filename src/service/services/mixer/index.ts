@@ -54,7 +54,7 @@ export class MixerHandler extends Service {
 
     public async authenticate(channelRaw: string | number, botId: number): Promise<boolean> {
         let channelId: number;
-        const nameResult = await this.httpc.get(`${this.base}/channel/${channelRaw}`);
+        const nameResult = await this.httpc.get(`${this.base}/channels/${channelRaw}`);
         if (nameResult.message.statusCode !== 200) {
             return false;
         }

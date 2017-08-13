@@ -17,7 +17,7 @@ interface IChannel {
 // THIS IS ONLY TEMP DATA UNTIL WE HAVE A MODEL IN STONE
 const channels: IChannel[] = [
     {
-        channel: 17887,
+        channel: "innectic",
         service: "Mixer",
         botUser: 25873
     }
