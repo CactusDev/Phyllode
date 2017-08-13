@@ -166,7 +166,7 @@ export class TwitchHandler extends Service {
         // Maybe an optional parameter for `Context`?
         // (See an above todo for more context information)
         const inverted = await this.invert(message);
-        this.instance.say(this.channel, inverted);
+        inverted.forEach(packet => this.instance.say(message.channel, packet));
     }
 
     public async convertRole(role: string): Promise<Role> {
