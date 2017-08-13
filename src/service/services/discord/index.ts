@@ -44,7 +44,6 @@ export class DiscordHandler extends Service {
         });
 
         this.client.on("message", async (message: discord.Message) => {
-            console.log(message);
             const converted = await this.convert([message.cleanContent, message.guild.id, message.channel.id]);
             const responses = await this.cereus.handle(await this.cereus.parseServiceMessage(converted));
             if (!responses) {
