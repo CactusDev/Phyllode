@@ -1,5 +1,5 @@
 import { AuthenticationData } from "./authentication";
-import { Config } from "../../../config";
+
 import { Cereus } from "../../../cereus";
 import { Service, ServiceStatus } from "../../service";
 import { ChatSocket } from "mixer-chat";
@@ -11,7 +11,6 @@ import * as ws from "ws";
 import * as httpm from "typed-rest-client/HttpClient";
 
 import { Service as ServiceAnnotation } from "../../service.annotation";
-import { mixerAuthenticator } from "../..";
 
 type Role = "user" | "moderator" | "owner" | "subscriber" | "banned";
 
@@ -41,10 +40,11 @@ export class MixerHandler extends Service {
 
     private botName = "";
     private channel = "";
+
     private botId = 0;
 
-    constructor(protected cereus: Cereus, protected config: Config) {
-        super(cereus, config);
+    constructor(protected cereus: Cereus) {
+        super(cereus);
 
         // Emoji stuff
         for (let k of Object.keys(emojis)) {
@@ -54,29 +54,25 @@ export class MixerHandler extends Service {
     }
 
     public async connect(oauthKey: string, refresh?: string, expiry?: number): Promise<boolean> {
-        this.headers.Authorization = `Bearer ${oauthKey}`;
+        this.headers.Authorization = `Bearer ${oauthKey}`
 
         // Start up carina connection
-        if (!this.carina) {
-            Carina.WebSocket = ws;
-            this.carina = new Carina({ isBot: true }).open();
-        }
+        Carina.WebSocket = ws;
+        this.carina = new Carina({ isBot: true }).open();
         return true;
     }
 
     public async authenticate(channelRaw: string | number, botId: number): Promise<boolean> {
-        this.channel = <string>channelRaw;
-        this.botId = botId;
         let channelId: number;
-        if (<any>channelRaw instanceof String) {
-            const nameResult = await this.httpc.get(`${this.base}/channel/${channelRaw}`);
-            if (nameResult.message.statusCode !== 200) {
-                return false;
-            }
-            channelId = JSON.parse(await nameResult.readBody()).id;
-        } else {
-            channelId = <number>channelRaw;
+        this.botId = botId;
+        this.channel = channelRaw.toString();
+        const nameResult = await this.httpc.get(`${this.base}/channels/${channelRaw}`);
+        if (nameResult.message.statusCode !== 200) {
+            return false;
         }
+        let json = JSON.parse(await nameResult.readBody());
+        channelId = json.id;
+        this._channel = json.token;
         await this.setupCarinaEvents(channelId);
 
         const userResult = await this.httpc.get(`${this.base}/users/current`, this.headers);
@@ -102,12 +98,12 @@ export class MixerHandler extends Service {
             if (converted.user === this.botName) {
                 return;
             }
-            const response = await this.cereus.handle(await this.cereus.parseServiceMessage(converted));
-            if (!response) {
-                console.error("Mixer MessageHandler: Got no response from cereus? " + JSON.stringify(converted));
+            const responses = await this.cereus.handle(await this.cereus.parseServiceMessage(converted));
+            if (!responses) {
+                console.error("Mixer MessageHandler: Got no response from Cereus? " + JSON.stringify(converted));
                 return;
             }
-            this.sendMessage(response);
+            responses.forEach(async response => this.sendMessage(response));
         });
 
         this.chat.on("error", console.error);
@@ -120,7 +116,7 @@ export class MixerHandler extends Service {
         return true;
     }
 
-    public async convert(packet: any): Promise<CactusMessagePacket> {
+    public async convert(packet: any): Promise<CactusScope> {
         if (!!packet.message) {
             const message = packet.message.message;
             const meta = packet.message.meta;
@@ -129,16 +125,17 @@ export class MixerHandler extends Service {
                 // This is bad, and a Mixer bug.
                 throw new Error("No message");
             }
-            let messageComponents: CactusMessageComponent[] = []
+            let messageComponents: Component[] = []
 
             // Parse each piece of the message
             message.forEach(async (msg: MixerChatMessage) => {
                 const trimmed = msg.text.trim();
-                let type: "text" | "emoji" | "url" = "text";
+                let type: "text" | "emoji" | "tag" | "url" | "variable" = "text";
 
                 if (!!emojis[trimmed]) {
                     type = "emoji";
                 }
+
                 messageComponents.push({
                     type: type,
                     data: msg.text
@@ -147,56 +144,71 @@ export class MixerHandler extends Service {
 
             let role = await this.convertRole(packet.user_roles[0].toLowerCase());
 
-            let cactusPacket: CactusMessagePacket = {
-                    "type": "message",
+            let scope: CactusScope = {
+                packet: {
+                    type: "message",
                     text: messageComponents,
-                    action: !!meta.me,
-                    user: packet.user_name,
-                    role: role
-                };
-            if (meta.whisper && packet.target) {
-                cactusPacket.target = packet.target;
+                    action: !!meta.me
+                },
+                channel: this._channel,
+                user: packet.user_name,
+                role: role,
+                target: meta.whisper,
+                service: this.serviceName
             }
-            return cactusPacket;
+
+            return scope;
+
         }
         return null;
     }
 
-    public async invert(...packets: CactusMessagePacket[]): Promise<string[]> {
-        let responses: string[] = [];
-        for (let packet of packets) {
+    public async invert(...scopes: CactusScope[]): Promise<string[]> {
+
+        let results: string[] = [];
+
+        for (let scope of scopes) {
+
             let message = "";
 
-            if (packet.action) {
-                message += "/me ";
+            if (scope.packet.type === "message") {
+
+                if (scope.packet.action) {
+                    message += "/me ";
+                }
+
+                for (let messagePacket of scope.packet.text) {
+                    if (messagePacket.type === "emoji") {
+                        const emoji = await this.getEmoji(messagePacket.data.trim()) ||
+                                      await this.getEmoji(`:${messagePacket.data.trim()}`);
+                        message += ` ${emoji}`;
+                    } else {
+                        message += ` ${messagePacket.data}`;
+                    }
+                }
+
+                results.push(message.trim());
             }
 
-            for (let messagePacket of packet.text) {
-                if (messagePacket.type === "emoji") {
-                    const emoji = await this.getEmoji(messagePacket.data.trim());
-                    message += ` :${emoji}`;
-                } else {
-                    message += ` ${messagePacket.data}`;
-                }
-            }
-            responses.push(message.trim());
+            // return "FLAMING THINGS";
         }
-        return responses;
+
+        return results;
     }
 
-    public async sendMessage(message: CactusMessagePacket) {
+    public async sendMessage(scope: CactusScope) {
         if (!this.chat.isConnected()) {
             throw new Error("Not connected to chat.");
         }
 
-        const finalMessage: string[] = await this.invert(message);
+        const finalMessage: string[] = await this.invert(scope);
         finalMessage.forEach(async msg => {
             let method = "msg"
             let args = []
 
-            if (message.target) {
+            if (scope.target) {
                 method = "whisper";
-                args.push(message.target);
+                args.push(scope.target);
             }
             args.push(msg);
             this.chat.call(method, args);
@@ -205,7 +217,7 @@ export class MixerHandler extends Service {
 
     public async convertRole(role: String): Promise<Role> {
         role = role.toLowerCase();
-        if (role === "mod" || role === "founder" || role === "staff" || role === "global mod") {
+        if (role === "mod") {
             return "moderator";
         } else if (role === "owner") {
             return "owner";
@@ -251,56 +263,93 @@ export class MixerHandler extends Service {
     private async setupCarinaEvents(id: number) {
         this.carina.on("error", console.error);
         this.carina.subscribe<MixerFollowPacket>(`channel:${id}:followed`, async data => {
-            console.log(data);
             const packet: CactusEventPacket = {
                 type: "event",
-                kind: "follow",
-                success: data.following,
-                user: data.user.username
+                kind: {
+                    type: "follow",
+                    success: data.following
+                }
             };
-            this.events.next(packet);
+            const scope: CactusScope = {
+                packet: packet,
+                channel: this._channel,
+                user: data.user.username,
+                // role: "we don't get this",  // hnng
+                service: this.serviceName
+            };
+            this.events.next(scope);
         });
 
         this.carina.subscribe<MixerHostedPacket>(`channel:${id}:hosted`, async data => {
             const packet: CactusEventPacket = {
                 type: "event",
-                kind: "host",
-                success: true,
-                user: data.hoster.token
+                kind: {
+                    type: "host",
+                    success: true
+                }
             };
-            this.events.next(packet);
+            const scope: CactusScope = {
+                packet: packet,
+                channel: this._channel,
+                user: data.hoster.token,
+                // role: "we don't get this",  // hnng
+                service: this.serviceName
+            };
+            this.events.next(scope);
         });
 
         this.carina.subscribe<MixerHostedPacket>(`channel:${id}:unhosted`, async data => {
             const packet: CactusEventPacket = {
                 type: "event",
-                kind: "host",
-                success: false,
-                user: data.hoster.token
+                kind: {
+                    type: "host",
+                    success: false
+                }
             };
-            this.events.next(packet);
+            const scope: CactusScope = {
+                packet: packet,
+                channel: this._channel,
+                user: data.hoster.token,
+                // role: "we don't get this",  // hnng
+                service: this.serviceName
+            };
+            this.events.next(scope);
         });
 
         this.carina.subscribe<MixerSubscribePacket>(`channel:${id}:subscribed`, async data => {
             const packet: CactusEventPacket = {
                 type: "event",
-                kind: "subscribe",
-                streak: 1,
-                success: true,
-                user: data.username
+                kind: {
+                    type: "subscribe",
+                    streak: 1
+                }
             };
-            this.events.next(packet);
+            const scope: CactusScope = {
+                packet: packet,
+                channel: this._channel,
+                user: data.username,
+                // role: "we don't get this",  // hnng
+                service: this.serviceName
+            };
+            this.events.next(scope);
         });
 
         this.carina.subscribe<MixerResubscribePacket>(`channel:${id}:resubShared`, async data => {
             const packet: CactusEventPacket = {
                 type: "event",
-                kind: "subscribe",
-                streak: data.totalMonths,
-                success: true,
-                user: data.username
+                kind: {
+                    type: "subscribe",
+                    streak: data.totalMonths
+                }
             };
-            this.events.next(packet);
+            const scope: CactusScope = {
+                packet: packet,
+                channel: this._channel,
+                user: data.username,
+                // role: "we don't get this",  // hnng
+                service: this.serviceName
+            };
+            this.events.next(scope);
         });
     }
 }
