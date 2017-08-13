@@ -1,3 +1,5 @@
+import { AuthenticationData } from "./authentication";
+
 import { Cereus } from "../../../cereus";
 import { Service, ServiceStatus } from "../../service";
 import { ChatSocket } from "mixer-chat";
@@ -37,6 +39,9 @@ export class MixerHandler extends Service {
     private carina: Carina;
 
     private botName = "";
+    private channel = "";
+
+    private botId = 0;
 
     constructor(protected cereus: Cereus) {
         super(cereus);
@@ -48,7 +53,7 @@ export class MixerHandler extends Service {
         }
     }
 
-    public async connect(oauthKey: string, refresh?: string, expiry?: string): Promise<boolean> {
+    public async connect(oauthKey: string, refresh?: string, expiry?: number): Promise<boolean> {
         this.headers.Authorization = `Bearer ${oauthKey}`
 
         // Start up carina connection
@@ -59,6 +64,8 @@ export class MixerHandler extends Service {
 
     public async authenticate(channelRaw: string | number, botId: number): Promise<boolean> {
         let channelId: number;
+        this.botId = botId;
+        this.channel = channelRaw.toString();
         const nameResult = await this.httpc.get(`${this.base}/channels/${channelRaw}`);
         if (nameResult.message.statusCode !== 200) {
             return false;
@@ -217,6 +224,21 @@ export class MixerHandler extends Service {
         } else {
             return "user";
         }
+    }
+
+    public async reauthenticate(data: AuthenticationData) {
+        const disconnected = await this.disconnect();
+        if (!disconnected) {
+            console.error("Unable to disconnect from service 'Mixer'.");
+            return;
+        }
+        const connected = await this.connect(data.access_token);
+        const authenticated = await this.authenticate(this.channel, this.botId);
+        if (!connected || !authenticated) {
+            console.error("Unable to connected to channel", this.channel);
+            return;
+        }
+        console.log("Reconnected to channel", this.channel);
     }
 
     public get status(): ServiceStatus {

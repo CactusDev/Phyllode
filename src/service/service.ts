@@ -1,4 +1,6 @@
+import { AuthenticationData } from "./services/mixer/authentication";
 
+import { Config } from "../config";
 import { Subject } from "rxjs";
 import { Cereus } from "../cereus";
 
@@ -82,7 +84,7 @@ export abstract class Service {
      * @returns {Promise<boolean>} connection status
      * @memberof Service
      */
-    public abstract async connect(oauthKey: string, refresh?: string, expiry?: string): Promise<boolean>;
+    public abstract async connect(oauthKey: string, refresh?: string, expiry?: number): Promise<boolean>;
 
     /**
      * Authenticate this service instance with the service.
@@ -136,4 +138,12 @@ export abstract class Service {
      * @memberof Service
      */
     public abstract async convertRole(...args: any[]): Promise<Role>;
+
+    /**
+     * Reauthenticate a user account.
+     *
+     * @abstract
+     * @memberof Service
+     */
+    public abstract async reauthenticate(data?: AuthenticationData): Promise<void>;
 }

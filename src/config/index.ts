@@ -9,6 +9,13 @@ export class Config {
                 twitch: string;
                 mixer: string;
             }
+        };
+        oauth: {
+            mixer: {
+                clientId: string;
+                clientSecret: string;
+                redirectURI: string;
+            }
         }
     }
 }

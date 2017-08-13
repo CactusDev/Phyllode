@@ -1,3 +1,4 @@
+import { Config } from "../../../config";
 import { Cereus } from "../../../cereus";
 import { Service, ServiceStatus } from "../../service";
 import { emojis } from "./emoji";
@@ -26,7 +27,7 @@ export class TwitchHandler extends Service {
         }
     }
 
-    public async connect(oauthKey: string, refresh?: string, expiry?: string): Promise<boolean> {
+    public async connect(oauthKey: string, refresh?: string, expiry?: number): Promise<boolean> {
         if (this.status === ServiceStatus.READY) {
             return;
         }
@@ -209,6 +210,10 @@ export class TwitchHandler extends Service {
             return "owner";
         }
         return "user";
+    }
+
+    public async reauthenticate() {
+        console.log("Twitch: Skipping reauthentication");
     }
 
     public get status(): ServiceStatus {

@@ -4,6 +4,10 @@ import { MixerHandler, TwitchHandler } from "./services";
 import { Service, ServiceStatus } from "./service";
 import { Config } from "../config";
 
+import { MixerAuthenticator, AuthenticationData } from "./services/mixer/authentication";
+
+export const mixerAuthenticator: MixerAuthenticator = new MixerAuthenticator();
+
 interface ServiceMapping {
     [name: string]: typeof Service
 }
@@ -21,11 +25,11 @@ const channels: IChannel[] = [
         service: "Mixer",
         botUser: 25873
     },
-    {
-        channel: "Innectic",
-        service: "Twitch",
-        botUser: "cactusbotdev"
-    }
+    // {
+    //     channel: "Innectic",
+    //     service: "Twitch",
+    //     botUser: "cactusbotdev"
+    // }
 ]
 
 const services: ServiceMapping = {
@@ -40,6 +44,12 @@ const services: ServiceMapping = {
  */
 interface Channels {
     [channelUuid: string]: Service[]
+}
+
+interface ConnectedServices {
+    [service: string]: {
+        [username: string]: Service[];
+    };
 }
 
 /**
@@ -61,8 +71,14 @@ export enum ConnectionTristate {
 export class ServiceHandler {
 
     private channels: Channels = {};
+    private connected: ConnectedServices = {};
+
+    private keysInRotation: {[account: string]: string} = {};
 
     constructor(private config: Config) {
+        mixerAuthenticator.setup(this.config.core.oauth.mixer.clientId,
+                                 this.config.core.oauth.mixer.clientSecret,
+                                 this.config.core.oauth.mixer.redirectURI);
     }
 
     /**
@@ -76,8 +92,11 @@ export class ServiceHandler {
         service.status = ServiceStatus.CONNECTING;
         const authInfo: { [service: string]: string } = this.config.core.authentication.cactusbotdev;
 
+        if (!this.keysInRotation[channel.botUser]) {
+            await mixerAuthenticator.refreshToken(authInfo.mixer, channel.botUser.toString());
+        }
         // Attempt to connect to the service
-        const connected = await service.connect(authInfo[name.toLowerCase()]);
+        const connected = await service.connect(this.keysInRotation[channel.botUser.toString()]);
         if (!connected) {
             return ConnectionTristate.FALSE;
         }
@@ -107,12 +126,16 @@ export class ServiceHandler {
     public async connectAllChannels() {
         await this.loadAllChannels();
         const cereus = new Cereus(this);
+        const authInfo: {[service: string]: string} = this.config.core.authentication.cactusbotdev;
 
         channels.forEach(async channel => {
+            // TODO: This is only temp until the api supports the things I need
+            if (channel.service === "Twitch" && !this.keysInRotation[channel.botUser]) {
+                this.keysInRotation[channel.botUser] = authInfo.twitch;
+            }
             const name: string = channel.service.toLowerCase();
             // This line is the reason I don't sleep at night.
-            // well, one of them.
-            const service: Service = new (services[name].bind(this, cereus));
+            const service: Service = new (services[name].bind(this, cereus, this.config));
             // Make sure it's a valid service
             if (!service) {
                 throw new Error("Attempted to use service that doesn't exist.");
@@ -127,6 +150,14 @@ export class ServiceHandler {
                 return;
             }
             console.log("Connected.");
+            // Add to the connected channels
+            if (!this.connected[name]) {
+                this.connected[name] = {};
+            }
+            if (!this.connected[name][channel.botUser]) {
+                this.connected[name][channel.botUser] = [];
+            }
+            this.connected[name][channel.botUser].push(service);
             // Listen for event packets
             console.log("Attempting to listen for events...");
             service.events.subscribe(
@@ -145,11 +176,26 @@ export class ServiceHandler {
             );
             console.log("Listening for events!");
         });
+
+        mixerAuthenticator.on("mixer:reauthenticate", async (data: AuthenticationData, user: string) => {
+            this.keysInRotation[user] = data.access_token;
+            if (!this.connected["mixer"][user]) {
+                return;
+            }
+            for (let connected of this.connected["mixer"][user]) {
+                const disconnected = await connected.disconnect();
+                if (!disconnected) {
+                    console.log("Unable to disconnect from Mixer.");
+                    continue;
+                }
+                await connected.reauthenticate(data);
+            }
+        });
     }
 
     public async sendServiceMessage(channel: string, service: string, message: CactusScope) {
         this.channels[channel].filter(e => e.serviceName.toLowerCase() === service.toLowerCase())
-            .forEach(async channelService => channelService.sendMessage(message));
+            .forEach(async channelService => await channelService.sendMessage(message));
     }
 
     private async loadAllChannels() {
