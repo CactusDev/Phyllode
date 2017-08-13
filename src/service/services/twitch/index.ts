@@ -4,6 +4,7 @@ import { Service, ServiceStatus } from "../../service";
 import { emojis } from "./emoji";
 
 import { Service as ServiceAnnotation } from "../../service.annotation";
+import { Logger } from "../../../logger";
 
 const tmi = require("tmi.js");
 const isUrl = require("is-url");
@@ -214,7 +215,7 @@ export class TwitchHandler extends Service {
     }
 
     public async reauthenticate() {
-        console.log("Twitch: Skipping reauthentication");
+        Logger.warn("Services", "Twitch: Skipping reauthentication");
     }
 
     public get status(): ServiceStatus {

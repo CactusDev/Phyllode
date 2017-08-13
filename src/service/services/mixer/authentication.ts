@@ -2,6 +2,7 @@
 import * as httpm from "typed-rest-client/HttpClient";
 
 import { EventEmitter } from "events";
+import { Logger } from "../../../logger";
 
 interface Data {
     [name: string]: string;
@@ -49,7 +50,7 @@ export class MixerAuthenticator extends EventEmitter {
      * @memberof MixerAuthenticator
      */
     public async refreshToken(refreshToken: string, account: string) {
-        console.log(`Mixer: Refreshing OAuth for: ${account}.`);
+        Logger.info("Authentication", `Mixer: Refreshing OAuth for: ${account}.`);
         // Get the new tokens
         const result = await this.request("refresh_token", {refresh_token: refreshToken});
         // Emit to the rest of the app that accounts with that name need to reconnect with the new token
@@ -65,7 +66,6 @@ export class MixerAuthenticator extends EventEmitter {
 
         const result = await this.httpc.post(request, JSON.stringify(extraData));
         if (result.message.statusCode !== 200) {
-            console.log(await result.readBody());
             throw new Error("Request for Mixer authentication was NON-200!");
         }
         return JSON.parse(await result.readBody());

@@ -3,6 +3,7 @@ import { Cereus } from "../cereus";
 import { MixerHandler, TwitchHandler, DiscordHandler } from "./services";
 import { Service, ServiceStatus } from "./service";
 import { Config } from "../config";
+import { Logger } from "../logger";
 
 import { MixerAuthenticator, AuthenticationData } from "./services/mixer/authentication";
 
@@ -124,7 +125,7 @@ export class ServiceHandler {
         } else {
             this.channels[channel.channel].push(service);
         }
-        console.log(`Connected to channel ${channel.channel}.`);
+        Logger.info("Services", `Connected to channel ${channel.channel}.`);
         return ConnectionTristate.TRUE;
     }
 
@@ -153,13 +154,13 @@ export class ServiceHandler {
             // Connect to the channel
             const connected = await this.connectChannel(channel, service, name);
             if (connected === ConnectionTristate.FAILED) {
-                console.log("Failed to authenticate!");
+                Logger.warn("Services", "Failed to authenticate!");
                 return;
             } else if (connected === ConnectionTristate.FALSE) {
-                console.log("Unable to connect to service.");
+                Logger.warn("Services", "Unable to connect to service.");
                 return;
             }
-            console.log("Connected.");
+            Logger.info("Services", "Connected.");
             // Add to the connected channels
             if (!this.connected[name]) {
                 this.connected[name] = {};
@@ -169,7 +170,7 @@ export class ServiceHandler {
             }
             this.connected[name][channel.botUser].push(service);
             // Listen for event packets
-            console.log("Attempting to listen for events...");
+            Logger.info("Services", "Attempting to listen for events...");
             service.events.subscribe(
                 async (scope: CactusScope) => {
                     const responses = await cereus.handle(scope);
@@ -180,10 +181,10 @@ export class ServiceHandler {
                         this.sendServiceMessage(channel.channel.toString(), channel.service, response);
                     })
                 },
-                (error) => console.error,
-                () => console.log("Done")
+                (error) => Logger.error("Events", error),
+                () => Logger.info("Events", "Done listening for events.")
             );
-            console.log("Listening for events!");
+            Logger.info("Events", "Listening for events!");
         });
 
         mixerAuthenticator.on("mixer:reauthenticate", async (data: AuthenticationData, user: string) => {
@@ -194,7 +195,7 @@ export class ServiceHandler {
             for (let connected of this.connected["mixer"][user]) {
                 const disconnected = await connected.disconnect();
                 if (!disconnected) {
-                    console.log("Unable to disconnect from Mixer.");
+                    Logger.error("Services", "Unable to disconnect from Mixer.");
                     continue;
                 }
                 await connected.reauthenticate(data);
@@ -208,8 +209,8 @@ export class ServiceHandler {
     }
 
     public async disconnectAllChannels() {
-        Object.keys(this.channels).forEach(channel => {
-            this.channels[channel].forEach(service => {
+        Object.keys(this.channels).forEach(async channel => {
+            this.channels[channel].forEach(async service => {
                 await service.disconnect();
             });
         });

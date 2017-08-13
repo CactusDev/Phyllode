@@ -6,6 +6,9 @@ import { ServiceHandler } from "./service";
 
 import * as nconf from "config";
 import { Config } from "./config";
+import { Logger } from "./logger";
+
+Logger.setup();
 
 const injector = ReflectiveInjector.resolveAndCreate([
     {
@@ -25,4 +28,4 @@ const injector = ReflectiveInjector.resolveAndCreate([
 
 const core: Core = injector.get(Core);
 core.start()
-    .catch(console.error);
+    .catch(err => Logger.error("Core", err));

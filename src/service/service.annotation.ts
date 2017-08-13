@@ -1,4 +1,6 @@
 
+import { Logger } from "../logger";
+
 export function Service(name: string) {
     return (target: Function) => {
         if (Reflect.hasMetadata("annotation:service:registration", target)) {
@@ -8,6 +10,6 @@ export function Service(name: string) {
 
         target.prototype.serviceName = name;
         target.prototype.registered = true;
-        console.log(`Service "${name}" has been registered!`);
+        Logger.info("Services", `Service "${name}" has been registered!`);
     };
 }
