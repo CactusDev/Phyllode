@@ -68,7 +68,7 @@ export class TwitchHandler extends Service {
                 return;
             }
             // Now that we know it's not us, then we can start parsing.
-            const converted = await this.convert([message, state]);
+            const converted = await this.convert([message, state, fromChannel]);
             const responses = await this.cereus.handle(await this.cereus.parseServiceMessage(converted));
             if (!responses) {
                 console.error("Mixer MessageHandler: Got no response from Cereus? " + JSON.stringify(converted));
@@ -86,6 +86,7 @@ export class TwitchHandler extends Service {
     public async convert(packet: any): Promise<CactusScope> {
         const message: any = packet[0];
         const state: any = packet[1];
+        const channel: string = packet[2];
 
         let isMod = false;
         let isBroadcaster = false;
@@ -128,7 +129,6 @@ export class TwitchHandler extends Service {
         let target: string = undefined;
         const messageType = state["message-type"]
 
-
         if (messageType === "action") {
             isAction = true;
         } else if (messageType === "whisper") {
@@ -141,7 +141,7 @@ export class TwitchHandler extends Service {
                 text: finished,
                 action: isAction
             },
-            channel: "innectic",
+            channel: channel,
             user: state["display-name"],
             role: role,
             service: this.serviceName
@@ -172,7 +172,7 @@ export class TwitchHandler extends Service {
                     if (msg !== null) {
                         if (msg["type"] === "emoji") {
                             const emoji = await this.getEmoji(msg.data.trim());
-                            chatMessage += ` ${this.reversedEmoji[msg.data]}`;
+                            chatMessage += ` ${emoji}`;
                         } else {
                             // HACK: Only kind of a hack, but for some reason all the ACTIONs contain this.
                             //       Can the replace be removed?
