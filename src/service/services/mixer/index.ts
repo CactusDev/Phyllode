@@ -95,6 +95,7 @@ export class MixerHandler extends Service {
             return false;
         }
         this.chat.on("ChatMessage", async message => {
+            Logger.info("Messages", `${this._channel}(Mixer): ${message.message.message}`);
             let converted = await this.convert(message);
             if (converted.user === this.botName) {
                 return;

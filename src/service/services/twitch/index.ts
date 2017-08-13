@@ -66,6 +66,7 @@ export class TwitchHandler extends Service {
         this.instance.connect();
 
         this.instance.on("message", async (fromChannel: string, state: any, message: string, self: boolean) => {
+            Logger.info("Messages", `${fromChannel}(Twitch): ${message}`);
             // Make sure that this message didn't come from us.
             if (self) {
                 return;

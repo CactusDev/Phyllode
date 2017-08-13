@@ -170,7 +170,7 @@ export class ServiceHandler {
             }
             this.connected[name][channel.botUser].push(service);
             // Listen for event packets
-            Logger.info("Services", "Attempting to listen for events...");
+            Logger.info("Events", "Attempting to listen for events...");
             service.events.subscribe(
                 async (scope: CactusScope) => {
                     const responses = await cereus.handle(scope);
@@ -178,6 +178,7 @@ export class ServiceHandler {
                         return;
                     }
                     responses.forEach(async response => {
+                        Logger.info("Events", `${channel.channel} (${channel.service}): ${response}`);
                         this.sendServiceMessage(channel.channel.toString(), channel.service, response);
                     })
                 },

@@ -29,11 +29,11 @@ export class Logger {
             }
         });
 
-        winston.loggers.add("services", {
+        winston.loggers.add("messages", {
             console: {
                 level: "debug",
                 colorize: true,
-                label: "Services"
+                label: "Events"
             }
         });
     }
