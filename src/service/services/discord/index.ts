@@ -29,7 +29,7 @@ export class DiscordHandler extends Service {
     }
 
     public async connect(oauthKey: string, refresh?: string, expiry?: number): Promise<boolean> {
-        if (this.status === ServiceStatus.READY) {
+        if (this.setStatus(ServiceStatus.READY)) {
             return false;
         }
         this.oauth = oauthKey;
@@ -165,13 +165,5 @@ export class DiscordHandler extends Service {
 
     public async reauthenticate() {
         Logger.warn("Services", "Discord: Skipping reauthentication");
-    }
-
-    public get status(): ServiceStatus {
-        return this._status;
-    }
-
-    public set status(state: ServiceStatus) {
-        this._status = state;
     }
 }

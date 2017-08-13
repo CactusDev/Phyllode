@@ -101,7 +101,7 @@ export class ServiceHandler {
      * @returns {Promise<boolean>} if the connection was successful.
      */
     public async connectChannel(channel: IChannel, service: Service, name: string): Promise<ConnectionTristate> {
-        service.status = ServiceStatus.CONNECTING;
+        service.setStatus(ServiceStatus.CONNECTING);
         const authInfo: { [service: string]: string } = this.config.core.authentication.cactusbotdev;
 
         if (!this.keysInRotation[channel.botUser]) {
@@ -117,14 +117,14 @@ export class ServiceHandler {
         if (!connected) {
             return ConnectionTristate.FALSE;
         }
-        service.status = ServiceStatus.AUTHENTICATING;
+        service.setStatus(ServiceStatus.AUTHENTICATING);
 
         // Attempt to authenticate
         const authenticated = await service.authenticate(channel.channel, channel.botUser);
         if (!authenticated) {
             return ConnectionTristate.FAILED;
         }
-        service.status = ServiceStatus.READY;
+        service.setStatus(ServiceStatus.READY);
 
         if (!this.channels[channel.channel]) {
             this.channels[channel.channel] = [service];

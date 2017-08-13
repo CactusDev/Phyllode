@@ -14,9 +14,7 @@ export class TwitchHandler extends Service {
 
     private instance: any;
 
-    private channel = "";
     private oauth = "";
-
     private reversedEmoji: Emojis = {};
 
     constructor(protected cereus: Cereus) {
@@ -30,7 +28,7 @@ export class TwitchHandler extends Service {
     }
 
     public async connect(oauthKey: string, refresh?: string, expiry?: number): Promise<boolean> {
-        if (this.status === ServiceStatus.READY) {
+        if (this.getStatus() === ServiceStatus.READY) {
             return false;
         }
         this.oauth = oauthKey;
@@ -61,7 +59,6 @@ export class TwitchHandler extends Service {
 
         this.instance = new tmi.client(connectionOptions);
         this.instance.connect();
-                        // this.emit("join", channel, _.username(this.getUsername()), true);
 
         this.instance.on("join", (joinedChannel: string, user: string, joined: boolean) => {
             if (joined && user === botId) {
@@ -221,13 +218,5 @@ export class TwitchHandler extends Service {
 
     public async reauthenticate() {
         Logger.warn("Services", "Twitch: Skipping reauthentication");
-    }
-
-    public get status(): ServiceStatus {
-        return this._status;
-    }
-
-    public set status(state: ServiceStatus) {
-        this._status = state;
     }
 }
