@@ -139,7 +139,7 @@ export class ServiceHandler {
         const cereus = new Cereus(this);
         const authInfo: {[service: string]: string} = this.config.core.authentication.cactusbotdev;
 
-        channels.forEach(async channel => {
+        for (let channel of channels) {
             // TODO: This is only temp until the api supports the things I need
             if (channel.service === "Twitch" && !this.keysInRotation[channel.botUser]) {
                 this.keysInRotation[channel.botUser] = authInfo.twitch;
@@ -186,7 +186,7 @@ export class ServiceHandler {
                 () => Logger.info("Events", "Done listening for events.")
             );
             Logger.info("Events", "Listening for events!");
-        });
+        }
 
         mixerAuthenticator.on("mixer:reauthenticate", async (data: AuthenticationData, user: string) => {
             this.keysInRotation[user] = data.access_token;
