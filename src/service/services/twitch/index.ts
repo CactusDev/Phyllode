@@ -6,6 +6,8 @@ import { twitchEmojis } from "./emoji";
 import { Service as ServiceAnnotation } from "../../service.annotation";
 import { Logger } from "../../../logger";
 
+import { eatSpaces } from "../../../util";
+
 const tmi = require("tmi.js");
 const isUrl = require("is-url");
 
@@ -132,7 +134,7 @@ export class TwitchHandler extends Service {
             }
             finished.push({
                 "type": segmentType,
-                data: segmentData
+                data: await eatSpaces(segmentData)
             });
         }
         let isAction = false;
@@ -173,7 +175,7 @@ export class TwitchHandler extends Service {
                 let chatMessage = "";
 
                 if (packet.action) {
-                    chatMessage += "/me ";
+                    chatMessage += "ACTION ";
                 }
 
                 for (let msg of messages) {
@@ -188,7 +190,7 @@ export class TwitchHandler extends Service {
                         }
                     }
                 }
-                finished.push(chatMessage.trim());
+                finished.push(await eatSpaces(chatMessage));
             }
         }
         return finished;
@@ -205,7 +207,7 @@ export class TwitchHandler extends Service {
                 this.instance.whisper(message.target, packet);
                 return;
             }
-            this.instance.say(this.channel, packet)
+            this.instance.say(this.channel, packet);
         });
     }
 

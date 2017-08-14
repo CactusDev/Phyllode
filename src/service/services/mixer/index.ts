@@ -181,10 +181,6 @@ export class MixerHandler extends Service {
             let message = "";
 
             if (scope.packet.type === "message") {
-                if (scope.target) {
-                    message += `/w ${scope.target} `;
-                }
-
                 if (scope.packet.action) {
                     message += "/me ";
                 }
