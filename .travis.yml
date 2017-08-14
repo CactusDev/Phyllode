@@ -6,9 +6,9 @@ before_install:
   - npm install -g typescript
   - npm install
   - npm install istanbul coveralls
+  - npm install istanbul coveralls -g
 script:
   - tsc
-  - npm test
   - npm run travis
 branches:
   only:

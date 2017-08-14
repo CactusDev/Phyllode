@@ -64,3 +64,4 @@ typings/
 # Custom
 dist/
 local.yml
+coverage/
