@@ -129,3 +129,18 @@ test("converts a Cactus message action packet to a Twitch message action packet"
     const result = await twitch.invert(twitchChatActionConverted);
     t.deepEqual(result, ["ACTION test"]);
 });
+
+test("converts 'Broadcaster' to 'owner'", async t => {
+    const result = await twitch.convertRole("Broadcaster");
+    t.is(result, "owner");
+});
+
+test("converts 'Mod' to 'moderator'", async t => {
+    const result = await twitch.convertRole("Mod");
+    t.is(result, "moderator");
+});
+
+test("converts 'literally anything else' to 'user'", async t => {
+    const result = await twitch.convertRole("literally anything else");
+    t.is(result, "user");
+});

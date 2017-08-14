@@ -129,3 +129,19 @@ test("converts a Cactus message action packet to a Mixer message action packet",
     const result = await mixer.invert(mixerChatActionConverted);
     t.deepEqual(result, ["/me test"]);
 });
+
+test("converts 'Owner' to 'owner'", async t => {
+    const result = await mixer.convertRole("Owner");
+    t.is(result, "owner");
+});
+
+test("converts 'Mod' to 'moderator'", async t => {
+    const result = await mixer.convertRole("Mod");
+    t.is(result, "moderator");
+});
+
+test("converts 'literally anything else' to 'user'", async t => {
+    const result = await mixer.convertRole("literally anything else");
+    t.is(result, "user");
+});
+
