@@ -3,6 +3,7 @@ import { ServiceHandler } from "../service";
 import { Logger } from "../logger";
 
 import { Subject } from "rxjs";
+import { eatSpaces } from "../util";
 import * as httpm from "typed-rest-client/HttpClient";
 
 export const messages: Subject<CactusMessagePacket> = new Subject();
@@ -27,7 +28,7 @@ export class Cereus {
         if (scope.packet.type === "message") {
             const components = scope.packet.text;
             if (!components || components.some(e => !e.data)) {
-                return null;
+                return scope;
             }
 
             // Does this packet-set actually need to be parsed?
@@ -36,10 +37,10 @@ export class Cereus {
                 return scope;
             }
 
-            scope.packet.text.forEach(async packet => {
+            for (let packet of scope.packet.text) {
                 // We only care about components that can contain a variable, the text type.
                 if (packet.type !== "text") {
-                    return;
+                    return scope;
                 }
                 const message = packet.data;
 
@@ -57,14 +58,14 @@ export class Cereus {
                             inVariable = false;
                             packets.push({
                                 type: "variable",
-                                data: current
-                            })
+                                data: await eatSpaces(current)
+                            });
                             current = "";
                         } else {
                             inVariable = true;
                             packets.push({
                                 type: "text",
-                                data: current
+                                data: await eatSpaces(current)
                             });
                             current = "";
                         }
@@ -73,14 +74,14 @@ export class Cereus {
                         if (pos === message.length - 1) {
                             packets.push({
                                 type: "text",
-                                data: current
+                                data: await eatSpaces(current)
                             });
                         }
                     }
                 }
                 // Now that we're done, set all the packets to the new ones.
-                (<CactusMessagePacket>scope.packet).text = packets;
-            });
+                (<CactusMessagePacket> scope.packet).text = packets;
+            };
             return scope;
         }
     }
