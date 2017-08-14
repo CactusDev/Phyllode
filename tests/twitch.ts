@@ -1,3 +1,4 @@
+import { ServiceStatus } from "../src/service/service";
 
 import "reflect-metadata";
 
@@ -168,4 +169,10 @@ test("converts 'literally anything else' to 'user'", async t => {
 test("converts a text, cactus, and green heart to the proper format for Twitch.", async t => {
     const result = await twitch.invert(multiEmoji);
     t.deepEqual(result, ["Cactus love! :cactus: <3"]);
-})
+});
+
+test("service status can be changed, and retrieved", async t => {
+    const status = ServiceStatus.READY;
+    twitch.setStatus(status);
+    t.is(twitch.getStatus(), status);
+});
