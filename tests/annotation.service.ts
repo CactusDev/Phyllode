@@ -8,22 +8,15 @@ import { test } from "ava";
 @ServiceAnnotation("Test1")
 @ServiceAnnotation("ErrorTime")
 abstract class TestService extends Service {
-    public async doThing() {
-        return;
-    }
 }
 
 @ServiceAnnotation("Test2", {singleInstance: true})
 abstract class TestService2 extends Service {
-    public async doThing() {
-        return;
-    }
+
 }
 
 abstract class TestService3 extends Service {
-    public async doThing() {
-        return;
-    }
+
 }
 
 @ServiceAnnotation("Test4", {})
