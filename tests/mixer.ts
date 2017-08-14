@@ -121,6 +121,9 @@ const multiEmoji: CactusScope = {
     service: "Mixer"
 }
 
+test("has the proper name", async t => {
+    t.is(mixer.serviceName, "Mixer");
+});
 
 test("converts a Mixer chat packet to a Cactus chat packet", async t => {
     const result = await mixer.convert(mixerChatPacket);

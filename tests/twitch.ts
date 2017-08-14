@@ -121,6 +121,10 @@ const multiEmoji: CactusScope = {
     service: "Discord"
 }
 
+test("has the proper name", async t => {
+    t.is(twitch.serviceName, "Twitch");
+});
+
 test("converts a Twitch chat packet to a Cactus chat packet", async t => {
     const result = await twitch.convert(twitchChatPacket);
     t.deepEqual(result, twitchChatConverted);

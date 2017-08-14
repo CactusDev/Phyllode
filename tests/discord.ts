@@ -43,6 +43,10 @@ const multiEmoji: CactusScope = {
     service: "Discord"
 }
 
+test("has the proper name", async t => {
+    t.is(discord.serviceName, "Discord");
+});
+
 test("converts 'literally anything' to 'owner'", async t => {
     const result = await discord.convertRole("literally anything");
     t.is(result, "owner");
