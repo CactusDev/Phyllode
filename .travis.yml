@@ -5,7 +5,7 @@ node_js:
 before_install:
   - npm install -g typescript
   - npm install
-  - npm install istanbul
+  - npm install istanbul coveralls
 script:
   - tsc
   - npm test
