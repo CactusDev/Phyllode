@@ -157,7 +157,7 @@ export abstract class Service {
      * @memberof Service
      */
     public async addChannel(channel: string): Promise<void> {
-        Logger.error("Services", `${this.serviceName}: Unsupported operation: Cannot add channels to handler.`);
+        throw new Error(`${this.serviceName}: Unsupported operation: Cannot add channels to handler.`);
     }
 
     /**

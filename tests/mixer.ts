@@ -168,4 +168,8 @@ test("converts 'literally anything else' to 'user'", async t => {
 test("converts a text, cactus, and green heart to the proper format for Mixer.", async t => {
     const result = await mixer.invert(multiEmoji);
     t.deepEqual(result, ["Cactus love! :cactus <3"]);
-})
+});
+
+test("should throw an error when trying to join another channel", async t => {
+    await mixer.addChannel("test").catch(e => t.pass());
+});

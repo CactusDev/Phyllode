@@ -1,9 +1,8 @@
-import { ServiceStatus } from "../src/service/service";
-
 import "reflect-metadata";
 
 import { test } from "ava";
 import { TwitchHandler } from "../src/service/services";
+import { ServiceStatus } from "../src/service/service";
 
 const twitch = new TwitchHandler(null);
 
@@ -175,4 +174,8 @@ test("service status can be changed, and retrieved", async t => {
     const status = ServiceStatus.READY;
     twitch.setStatus(status);
     t.is(twitch.getStatus(), status);
+});
+
+test("should add channel to twitch handler", async t => {
+    twitch.addChannel("test").catch(e => t.fail()).then(() => t.pass());
 });

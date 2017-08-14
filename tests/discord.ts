@@ -65,4 +65,4 @@ test("converts a Cactus message packet to a Discord message packet", async t => 
 test("converts a text, cactus, and green heart to the proper format for Discord.", async t => {
     const result = await discord.invert(multiEmoji);
     t.deepEqual(result, ["Cactus love! :cactus::green_heart:"]);
-})
+});

@@ -220,4 +220,11 @@ export class TwitchHandler extends Service {
         }
         return "user";
     }
+
+    public async addChannel(channel: string): Promise<void> {
+        Logger.info("Services", `Attempting to join ${channel}...`);
+        if (this.instance) {
+            this.instance.join(channel);
+        }
+    }
 }
