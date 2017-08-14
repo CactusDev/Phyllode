@@ -25,65 +25,66 @@ export class Cereus {
     }
 
     public async parseServiceMessage(scope: CactusScope): Promise<CactusScope> {
-        if (scope.packet.type === "message") {
-            const components = scope.packet.text;
-            if (!components || components.some(e => !e.data)) {
-                return scope;
-            }
-
-            // Does this packet-set actually need to be parsed?
-            // Packets that don't contain a variable don't need to be parsed twice.
-            if (!components.some(e => e.data.includes("%"))) {
-                return scope;
-            }
-
-            for (let packet of scope.packet.text) {
-                // We only care about components that can contain a variable, the text type.
-                if (packet.type !== "text") {
-                    continue;
-                }
-                const message = packet.data;
-
-                let current = "";
-                let inVariable = false;
-                let packets: Component[] = [];
-
-                for (let pos = 0; pos < message.length; pos++) {
-                    const char = message[pos];
-                    if (char === " ") {
-                        inVariable = false;
-                        current += " ";
-                    } else if (char === "%") {
-                        if (inVariable) {
-                            inVariable = false;
-                            packets.push({
-                                type: "variable",
-                                data: await eatSpaces(current)
-                            });
-                            current = "";
-                        } else {
-                            inVariable = true;
-                            packets.push({
-                                type: "text",
-                                data: await eatSpaces(current)
-                            });
-                            current = "";
-                        }
-                    } else {
-                        current += char;
-                        if (pos === message.length - 1) {
-                            packets.push({
-                                type: "text",
-                                data: await eatSpaces(current)
-                            });
-                        }
-                    }
-                }
-                // Now that we're done, set all the packets to the new ones.
-                (<CactusMessagePacket> scope.packet).text = packets;
-            };
+        if (scope.packet.type !== "message") {
             return scope;
         }
+        const components = scope.packet.text;
+        if (!components || components.some(e => !e.data)) {
+            return scope;
+        }
+
+        // Does this packet-set actually need to be parsed?
+        // Packets that don't contain a variable don't need to be parsed twice.
+        if (!components.some(e => e.data.includes("%"))) {
+            return scope;
+        }
+
+        for (let packet of scope.packet.text) {
+            // We only care about components that can contain a variable, the text type.
+            if (packet.type !== "text") {
+                continue;
+            }
+            const message = packet.data;
+
+            let current = "";
+            let inVariable = false;
+            let packets: Component[] = [];
+
+            for (let pos = 0; pos < message.length; pos++) {
+                const char = message[pos];
+                if (char === " ") {
+                    inVariable = false;
+                    current += " ";
+                } else if (char === "%") {
+                    if (inVariable) {
+                        inVariable = false;
+                        packets.push({
+                            type: "variable",
+                            data: await eatSpaces(current)
+                        });
+                        current = "";
+                    } else {
+                        inVariable = true;
+                        packets.push({
+                            type: "text",
+                            data: await eatSpaces(current)
+                        });
+                        current = "";
+                    }
+                } else {
+                    current += char;
+                    if (pos === message.length - 1) {
+                        packets.push({
+                            type: "text",
+                            data: await eatSpaces(current)
+                        });
+                    }
+                }
+            }
+            // Now that we're done, set all the packets to the new ones.
+            (<CactusMessagePacket> scope.packet).text = packets;
+        };
+        return scope;
     }
 
     /**

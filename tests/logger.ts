@@ -15,5 +15,10 @@ test("Just calls the logger", t => {
     Logger.info("Core", "A");
     Logger.warn("Core", "A");
     Logger.error("Core", "A");
+    delete process.env["TEST"];
+    Logger.info("Core", "A");
+    Logger.warn("Core", "A");
+    Logger.error("Core", "A");
+    process.env["TEST"] = "true";
     t.pass();
 });
