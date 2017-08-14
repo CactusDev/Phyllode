@@ -5,12 +5,11 @@ node_js:
 before_install:
   - npm install -g typescript
   - npm install
-  - npm install nyc coveralls
+  - npm install istanbul
 script:
   - tsc
   - npm test
-after_success:
-  - "./node_modules/.bin/nyc report --reporter=text-lcov | ./node_modules/.bin/coveralls"
+  - npm run travis
 branches:
   only:
     - master
