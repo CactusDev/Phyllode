@@ -15,7 +15,7 @@ export function Service(name: string, options?: ServiceOptions) {
 
         target.prototype.serviceName = name;
         target.prototype.registered = true;
-        target.prototype.singleInstance = options.singleInstance !== undefined ? options.singleInstance : false;
+        target.prototype.singleInstance = options ? options.singleInstance !== undefined ? options.singleInstance : false : false;
         Logger.info("Services", `"${name}" has been registered!`);
     };
 }
