@@ -28,6 +28,10 @@ const argPacket: CactusScope = {
         type: "message",
         text: [
             {
+                type: "tag",
+                data: "innnectic"
+            },
+            {
                 type: "text",
                 data: "Hello, %ARGS%"
             }
@@ -76,6 +80,24 @@ const noTextPacket: CactusScope = {
     target: "CactusBotDev"
 }
 
+const emptyDataPacket: CactusScope = {
+    packet: {
+        type: "message",
+        text: [
+            {
+                type: "text",
+                data: null
+            }
+        ],
+        action: false
+    },
+    user: "0x01",
+    role: "user",
+    service: "Mixer",
+    channel: undefined,
+    target: "CactusBotDev"
+}
+
 test("packets containing no variables should be returned", async t => {
     const result = await cereus.parseServiceMessage(packet);
     t.deepEqual(result, packet);
@@ -86,7 +108,12 @@ test("convert text ARGS to variable ARGS", async t => {
     t.deepEqual(result, argPacketFinished);
 });
 
-test("packets without text or data should be ignored", async t => {
+test("packets without text should be ignored", async t => {
     const result = await cereus.parseServiceMessage(noTextPacket);
     t.deepEqual(result, noTextPacket);
+});
+
+test("packets without text data should be ignored", async t => {
+    const result = await cereus.parseServiceMessage(emptyDataPacket);
+    t.deepEqual(result, emptyDataPacket);
 });

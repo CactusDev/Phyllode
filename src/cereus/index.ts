@@ -40,7 +40,7 @@ export class Cereus {
             for (let packet of scope.packet.text) {
                 // We only care about components that can contain a variable, the text type.
                 if (packet.type !== "text") {
-                    return scope;
+                    continue;
                 }
                 const message = packet.data;
 
