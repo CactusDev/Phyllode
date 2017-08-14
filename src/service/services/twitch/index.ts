@@ -38,13 +38,6 @@ export class TwitchHandler extends Service {
         // TODO: Handle number channel ids
         this.channel = (<string>channel).toLowerCase();
 
-        // TODO: Support for multiple channels from the one handler.
-        //       This shouldn't be too hard, probably just an observable
-        //       that's hosted from this file, then we just watch that
-        //       Probably would need some sort of an identifier
-        //       in the service annotation or something saying that
-        //       this handler can support multiple from one instance,
-        //       so that we don't keep creating more.
         const connectionOptions = {
             connection: {
                 reconnect: true
