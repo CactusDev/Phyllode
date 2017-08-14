@@ -52,17 +52,23 @@ export class Logger {
     }
 
     public static info(container: string, msg: string) {
-        container = container.toLowerCase();
-        winston.loggers.get(container).info(msg);
+        if (process.env.TEST) {
+            return;
+        }
+        winston.loggers.get(container.toLowerCase()).info(msg);
     }
 
     public static warn(container: string, msg: string) {
-        container = container.toLowerCase();
-        winston.loggers.get(container).warn(msg);
+        if (process.env.TEST) {
+            return;
+        }
+        winston.loggers.get(container.toLowerCase()).warn(msg);
     }
 
     public static error(container: string, msg: string) {
-        container = container.toLowerCase();
-        winston.loggers.get(container).error(msg);
+        if (process.env.TEST) {
+            return;
+        }
+        winston.loggers.get(container.toLowerCase()).error(msg);
     }
 }

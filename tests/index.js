@@ -10,78 +10,7 @@ const assert = chai.assert;
 const expect = chai.expect;
 const should = chai.should();
 
-const mixer = new (require("../dist/service/services/mixer").MixerHandler)(null);
 const twitch = new (require("../dist/service/services/twitch").TwitchHandler)(null);
-
-const mixerChatConverted = {
-    "packet": {
-        "type": "message",
-        "text": [
-            {
-                "type": "text",
-                "data": "test"
-            }
-        ],
-        "action": false
-    },
-    "user": "0x01",
-    "role": "user",
-    "service": "Mixer"
-}
-
-const mixerWhisperConverted = {
-    "packet": {
-        "type": "message",
-        "text": [
-            {
-                "type": "text",
-                "data": "test"
-            }
-        ],
-        "action": false
-    },
-    "user": "0x01",
-    "role": "user",
-    "target": true,
-    "service": "Mixer"
-}
-
-const mixerWhisperPacket = {
-    "channel": 17887,
-    "id": "086474c0-6f1f-11e7-acbe-8532481fa356",
-    "user_name": "0x01",
-    "user_id": 1293590,
-    "user_roles": [
-        "User"
-    ],
-    "user_level": 5,
-    "message": {
-        "message":[
-            {"type": "text", "data": "test", "text": "test"}
-        ],
-        "meta": {
-            "whisper": true
-        }
-    },
-    "target": "CactusBotDev"
-}
-
-const mixerChatPacket = {
-    "channel": 17887,
-    "id": "cc486cd0-6f1e-11e7-acbe-8532481fa356",
-    "user_name": "0x01",
-    "user_id": 1293590,
-    "user_roles": [
-        "User"
-    ],
-    "user_level": 5,
-    "message": {
-        "message": [
-            {"type": "text", "data": "test", "text": "test"}
-        ],
-        "meta": {}
-    }
-}
 
 const twitchChatPacket = [
     // Message
