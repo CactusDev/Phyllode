@@ -1,0 +1,10 @@
+language: node_js
+node_js:
+  - '6.10'
+  - '7.10'
+before_install:
+  - npm install -g typescript
+  - npm install
+script:
+  - tsc
+  - npm test
