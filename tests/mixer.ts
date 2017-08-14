@@ -105,6 +105,23 @@ const mixerChatPacket = {
     }
 }
 
+const multiEmoji: CactusScope = {
+    packet: {
+        "type": "message",
+        text: [
+            {"type": "text", "data": "Cactus love! "},
+            {"type": "emoji", "data": "cactus"},
+            {"type": "emoji", "data": "green_heart"}
+        ],
+        action: false // TODO
+    },
+    channel: "innectic",
+    user: "Innectic",
+    role: "owner",
+    service: "Mixer"
+}
+
+
 test("converts a Mixer chat packet to a Cactus chat packet", async t => {
     const result = await mixer.convert(mixerChatPacket);
     t.deepEqual(result, mixerChatConverted);
@@ -145,3 +162,7 @@ test("converts 'literally anything else' to 'user'", async t => {
     t.is(result, "user");
 });
 
+test("converts a text, cactus, and green heart to the proper format for Mixer.", async t => {
+    const result = await mixer.invert(multiEmoji);
+    t.deepEqual(result, ["Cactus love! :cactus <3"]);
+})

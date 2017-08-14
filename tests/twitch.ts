@@ -105,6 +105,22 @@ const twitchChatActionConverted: CactusScope = {
     target: "CactusBotDev"
 }
 
+const multiEmoji: CactusScope = {
+    packet: {
+        "type": "message",
+        text: [
+            {"type": "text", "data": "Cactus love! "},
+            {"type": "emoji", "data": "cactus"},
+            {"type": "emoji", "data": "green_heart"}
+        ],
+        action: false // TODO
+    },
+    channel: "456",
+    user: "Innectic",
+    role: "owner",
+    service: "Discord"
+}
+
 test("converts a Twitch chat packet to a Cactus chat packet", async t => {
     const result = await twitch.convert(twitchChatPacket);
     t.deepEqual(result, twitchChatConverted);
@@ -144,3 +160,8 @@ test("converts 'literally anything else' to 'user'", async t => {
     const result = await twitch.convertRole("literally anything else");
     t.is(result, "user");
 });
+
+test("converts a text, cactus, and green heart to the proper format for Twitch.", async t => {
+    const result = await twitch.invert(multiEmoji);
+    t.deepEqual(result, ["Cactus love! :cactus: <3"]);
+})
