@@ -1,8 +1,10 @@
+import { makePropDecorator } from "@angular/core/src/util/decorators";
 
 import "reflect-metadata";
 
 import { test } from "ava";
 import { MixerHandler } from "../src/service/services";
+import { ServiceStatus } from "../src/service/service";
 
 const mixer = new MixerHandler(null);
 
@@ -115,10 +117,74 @@ const multiEmoji: CactusScope = {
         ],
         action: false // TODO
     },
-    channel: "innectic",
+    channel: undefined,
     user: "Innectic",
     role: "owner",
     service: "Mixer"
+}
+
+const inASpaceSuit = {
+    message: {
+        message: [
+            {
+                type: "inaspacesuit",
+                text: "0x01inaspacesuit"
+            }
+        ],
+        meta: {}
+    },
+    "user_roles": [
+        "user"
+    ],
+    "user_name": "0x01"
+}
+
+const emoticon = {
+    message: {
+        message: [
+            {
+                type: "emoticon",
+                text: ":D"
+            }
+        ],
+        meta: {}
+    },
+    "user_roles": [
+        "user"
+    ],
+    "user_name": "0x01"
+}
+
+const link = {
+    message: {
+        message: [
+            {
+                type: "link",
+                text: "google.com"
+            }
+        ],
+        meta: {}
+    },
+    "user_roles": [
+        "user"
+    ],
+    "user_name": "0x01"
+}
+
+const tag = {
+    message: {
+        message: [
+            {
+                type: "tag",
+                text: "0x01"
+            }
+        ],
+        meta: {}
+    },
+    "user_roles": [
+        "user"
+    ],
+    "user_name": "0x01"
 }
 
 test("has the proper name", async t => {
@@ -172,4 +238,92 @@ test("converts a text, cactus, and green heart to the proper format for Mixer.",
 
 test("should throw an error when trying to join another channel", async t => {
     await mixer.addChannel("test").catch(e => t.pass());
+});
+
+test("shouldn't parse when given no message", async t => {
+    t.is(await mixer.convert({message: null}), null);
+});
+
+test("should error when given 0 length mesages", async t => {
+    await mixer.convert({message: {message: []}}).catch(e => t.pass());
+});
+
+test("should convert emoticon to emoji", async t => {
+    t.deepEqual(await mixer.convert(emoticon), <CactusScope>{
+        packet: {
+            type: "message",
+            text: [
+                {
+                    type: "emoji",
+                    data: ":D"
+                }
+            ],
+            action: false
+        },
+        channel: undefined,
+        user: "0x01",
+        role: "user",
+        service: "Mixer",
+        target: undefined
+    });
+});
+
+test("should convert inaspacesuit to emoji", async t => {
+    t.deepEqual(await mixer.convert(inASpaceSuit), <CactusScope>{
+        packet: {
+            type: "message",
+            text: [
+                {
+                    type: "emoji",
+                    data: "0x01inaspacesuit"
+                }
+            ],
+            action: false
+        },
+        channel: undefined,
+        user: "0x01",
+        role: "user",
+        service: "Mixer",
+        target: undefined
+    });
+});
+
+test("should convert link to url", async t => {
+    t.deepEqual(await mixer.convert(link), <CactusScope>{
+        packet: {
+            type: "message",
+            text: [
+                {
+                    type: "url",
+                    data: "google.com"
+                }
+            ],
+            action: false
+        },
+        channel: undefined,
+        user: "0x01",
+        role: "user",
+        service: "Mixer",
+        target: undefined,
+    });
+});
+
+test("should convert tag to tag", async t => {
+    t.deepEqual(await mixer.convert(tag), <CactusScope>{
+        packet: {
+            type: "message",
+            text: [
+                {
+                    type: "tag",
+                    data: "0x01"
+                }
+            ],
+            action: false
+        },
+        channel: undefined,
+        user: "0x01",
+        role: "user",
+        service: "Mixer",
+        target: undefined
+    });
 });

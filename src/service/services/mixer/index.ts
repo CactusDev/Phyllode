@@ -113,15 +113,15 @@ export class MixerHandler extends Service {
     }
 
     public async convert(packet: any): Promise<CactusScope> {
-        if (!!packet.message) {
+        if (packet.message) {
             const message = packet.message.message;
             const meta = packet.message.meta;
 
             if (message.length < 1) {
-                // This is bad, and a Mixer bug.
+                // This would be bad, and a Mixer bug.
                 throw new Error("No message");
             }
-            let messageComponents: Component[] = []
+            let messageComponents: Component[] = [];
 
             // Parse each piece of the message
             message.forEach(async (msg: MixerChatMessage) => {

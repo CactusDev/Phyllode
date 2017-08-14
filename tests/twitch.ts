@@ -179,3 +179,10 @@ test("service status can be changed, and retrieved", async t => {
 test("should add channel to twitch handler", async t => {
     twitch.addChannel("test").catch(e => t.fail()).then(() => t.pass());
 });
+
+test("can only 'connect' once", async t => {
+    twitch.setStatus(ServiceStatus.CONNECTING);
+    t.true(await twitch.connect("abc"));
+    twitch.setStatus(ServiceStatus.READY);
+    t.false(await twitch.connect("abc"));
+});
