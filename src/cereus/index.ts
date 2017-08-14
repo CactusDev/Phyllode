@@ -102,7 +102,7 @@ export class Cereus {
         try {
             message = JSON.parse(await response.readBody());
         } catch (e) {
-            Logger.error("Cereus", e);
+            Logger.error("Cereus", `Invalid JSON: ${e}`);
             return null;
         }
         if (!message || message.length < 1) {

@@ -3,6 +3,7 @@ import { AuthenticationData } from "./services/mixer/authentication";
 import { Config } from "../config";
 import { Subject } from "rxjs";
 import { Cereus } from "../cereus";
+import { Logger } from "../logger";
 
 /**
  * Authentication info for a named bot.
@@ -41,8 +42,6 @@ export enum ServiceStatus {
  */
 export abstract class Service {
 
-    public status: ServiceStatus;
-
     /**
      * Name of the service.
      *
@@ -68,12 +67,34 @@ export abstract class Service {
      * @type {ServiceStatus}
      * @memberof Service
      */
-    protected _status: ServiceStatus;
-    protected _channel: string;
-
+    protected status: ServiceStatus = ServiceStatus.CONNECTING;
+    protected channel: string;
 
     constructor(protected cereus: Cereus) {
 
+    }
+
+    protected reverseEmojis(emojis: Emojis): ReverseEmojis {
+        let reversed: ReverseEmojis = {};
+
+        for (let k of Object.keys(emojis)) {
+            const v = emojis[k];
+            reversed[v.standard] = k;
+        }
+
+        for (let k of Object.keys(emojis)) {
+            const v = emojis[k];
+            if (!v.alternatives) {
+                continue;
+            }
+            for (let alt of v.alternatives) {
+                if (!reversed[alt]) {
+                    reversed[alt] = k;
+                }
+            }
+        }
+
+        return reversed;
     }
 
     /**
@@ -145,5 +166,41 @@ export abstract class Service {
      * @abstract
      * @memberof Service
      */
-    public abstract async reauthenticate(data?: AuthenticationData): Promise<void>;
+    public async reauthenticate(data?: AuthenticationData): Promise<void> {
+        return;
+    }
+
+    /**
+     * Add a channel to the service handler, if supported.
+     *
+     * This method should only be implemented by services that support adding channels to the same handler,
+     * like Twitch.
+     *
+     * @param {string} channel the extra channel to join
+     * @memberof Service
+     */
+    public async addChannel(channel: string): Promise<void> {
+        Logger.error("Services", `${this.serviceName}: Unsupported operation: Cannot add channels to handler.`);
+    }
+
+    /**
+     * Set the status of the service, and log it.
+     *
+     * @param {ServiceStatus} status the new status of the service.
+     * @memberof Service
+     */
+    public setStatus(status: ServiceStatus) {
+        Logger.info("Services", `${this.serviceName}: Setting status to ${ServiceStatus[status]} from ${ServiceStatus[this.status]}`);
+        this.status = status;
+    }
+
+    /**
+     * Get the current status of the service
+     *
+     * @returns {ServiceStatus} the status of the service, in enum form.
+     * @memberof Service
+     */
+    public getStatus(): ServiceStatus {
+        return this.status;
+    }
 }

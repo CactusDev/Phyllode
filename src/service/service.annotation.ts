@@ -1,15 +1,21 @@
 
 import { Logger } from "../logger";
 
-export function Service(name: string) {
+export interface ServiceOptions {
+    singleInstance?: boolean;
+}
+
+export function Service(name: string, options?: ServiceOptions) {
     return (target: Function) => {
         if (Reflect.hasMetadata("annotation:service:registration", target)) {
-            throw new Error("Service already registered.");
+            Logger.error("Services", `Attempt to reregister service ${name} on ${target.name}.`);
+            return;
         }
         Reflect.defineMetadata("annotation:service:registration", Service, target);
 
         target.prototype.serviceName = name;
         target.prototype.registered = true;
-        Logger.info("Services", `Service "${name}" has been registered!`);
+        target.prototype.singleInstance = options ? options.singleInstance !== undefined ? options.singleInstance : false : false;
+        Logger.info("Services", `"${name}" has been registered!`);
     };
 }

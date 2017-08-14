@@ -4,7 +4,7 @@ import { Cereus } from "../../../cereus";
 import { Service, ServiceStatus } from "../../service";
 import { ChatSocket } from "mixer-chat";
 
-import { emojis } from "./emoji";
+import { mixerEmojis } from "./emoji";
 
 import { Carina } from "carina";
 import * as ws from "ws";
@@ -25,8 +25,6 @@ type Role = "user" | "moderator" | "owner" | "subscriber" | "banned";
 @ServiceAnnotation("Mixer")
 export class MixerHandler extends Service {
 
-    protected _status: ServiceStatus = ServiceStatus.AUTHENTICATING;
-
     private chat: ChatSocket;
     private httpc: httpm.HttpClient = new httpm.HttpClient("aerophyl");
 
@@ -35,23 +33,18 @@ export class MixerHandler extends Service {
         Authorization: ""
     }
 
-    private reversedEmoji: Emojis = {};
+    private reversedEmojis: ReverseEmojis = {};
 
     private carina: Carina;
 
     private botName = "";
-    private channel = "";
 
     private botId = 0;
 
     constructor(protected cereus: Cereus) {
         super(cereus);
 
-        // Emoji stuff
-        for (let k of Object.keys(emojis)) {
-            const v = emojis[k];
-            this.reversedEmoji[v] = k;
-        }
+        this.reversedEmojis = this.reverseEmojis(mixerEmojis);
     }
 
     public async connect(oauthKey: string, refresh?: string, expiry?: number): Promise<boolean> {
@@ -73,7 +66,7 @@ export class MixerHandler extends Service {
         }
         let json = JSON.parse(await nameResult.readBody());
         channelId = json.id;
-        this._channel = json.token;
+        this.channel = json.token;
         await this.setupCarinaEvents(channelId);
 
         const userResult = await this.httpc.get(`${this.base}/users/current`, this.headers);
@@ -95,7 +88,7 @@ export class MixerHandler extends Service {
             return false;
         }
         this.chat.on("ChatMessage", async message => {
-            Logger.info("Messages", `${this._channel}(Mixer): ${message.message.message}`);
+            Logger.info("Messages", `${this.channel}(Mixer): ${message.message.message}`);
             let converted = await this.convert(message);
             if (converted.user === this.botName) {
                 return;
@@ -131,10 +124,25 @@ export class MixerHandler extends Service {
             // Parse each piece of the message
             message.forEach(async (msg: MixerChatMessage) => {
                 const trimmed = msg.text.trim();
-                let type: "text" | "emoji" | "tag" | "url" | "variable" = "text";
+                let type: "text" | "emoji" | "tag" | "url" = "text";
 
-                if (!!emojis[trimmed]) {
-                    type = "emoji";
+                switch (msg.type) {
+                    case "emoticon": {
+                        type = "emoji";
+                        break;
+                    }
+                    case "inaspacesuit": {
+                        type = "emoji";
+                        break;
+                    }
+                    case "link": {
+                        type = "url";
+                        break;
+                    }
+                    case "tag": {
+                        type = "tag";
+                        break;
+                    }
                 }
 
                 messageComponents.push({
@@ -151,7 +159,7 @@ export class MixerHandler extends Service {
                     text: messageComponents,
                     action: !!meta.me
                 },
-                channel: this._channel,
+                channel: this.channel,
                 user: packet.user_name,
                 role: role,
                 target: meta.whisper,
@@ -178,13 +186,12 @@ export class MixerHandler extends Service {
                     message += "/me ";
                 }
 
-                for (let messagePacket of scope.packet.text) {
-                    if (messagePacket.type === "emoji") {
-                        const emoji = await this.getEmoji(messagePacket.data.trim()) ||
-                                      await this.getEmoji(`:${messagePacket.data.trim()}`);
+                for (let component of scope.packet.text) {
+                    if (component.type === "emoji") {
+                        const emoji = await this.getEmoji(component.data.trim());
                         message += ` ${emoji}`;
                     } else {
-                        message += ` ${messagePacket.data}`;
+                        message += ` ${component.data}`;
                     }
                 }
 
@@ -242,16 +249,8 @@ export class MixerHandler extends Service {
         Logger.error("Services", "Reconnected to channel " + this.channel);
     }
 
-    public get status(): ServiceStatus {
-        return this._status;
-    }
-
-    public set status(status: ServiceStatus) {
-        this._status = status;
-    }
-
     public async getEmoji(name: string): Promise<string> {
-        return emojis[name] || this.reversedEmoji[name] || "";
+        return this.reversedEmojis[name] || `:${name}:`;
     }
 
     /**
@@ -273,7 +272,7 @@ export class MixerHandler extends Service {
             };
             const scope: CactusScope = {
                 packet: packet,
-                channel: this._channel,
+                channel: this.channel,
                 user: data.user.username,
                 // role: "we don't get this",  // hnng
                 service: this.serviceName
@@ -291,9 +290,8 @@ export class MixerHandler extends Service {
             };
             const scope: CactusScope = {
                 packet: packet,
-                channel: this._channel,
+                channel: this.channel,
                 user: data.hoster.token,
-                // role: "we don't get this",  // hnng
                 service: this.serviceName
             };
             this.events.next(scope);
@@ -309,9 +307,8 @@ export class MixerHandler extends Service {
             };
             const scope: CactusScope = {
                 packet: packet,
-                channel: this._channel,
+                channel: this.channel,
                 user: data.hoster.token,
-                // role: "we don't get this",  // hnng
                 service: this.serviceName
             };
             this.events.next(scope);
@@ -327,9 +324,8 @@ export class MixerHandler extends Service {
             };
             const scope: CactusScope = {
                 packet: packet,
-                channel: this._channel,
+                channel: this.channel,
                 user: data.username,
-                // role: "we don't get this",  // hnng
                 service: this.serviceName
             };
             this.events.next(scope);
@@ -345,9 +341,8 @@ export class MixerHandler extends Service {
             };
             const scope: CactusScope = {
                 packet: packet,
-                channel: this._channel,
+                channel: this.channel,
                 user: data.username,
-                // role: "we don't get this",  // hnng
                 service: this.serviceName
             };
             this.events.next(scope);
