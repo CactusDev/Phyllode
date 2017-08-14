@@ -153,11 +153,20 @@ interface CactusScope {
     service: Service;
 }
 
+interface Emoji {
+    standard: string;
+    alternatives?: string[];
+}
+
 /**
  * Emoji mappings for service emoji mapping files
  *
  * @interface Emojis
  */
 interface Emojis {
-    [name: string]: string
+    [name: string]: Emoji;
+}
+
+interface ReverseEmojis {
+    [name: string]: string;
 }
