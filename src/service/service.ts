@@ -51,6 +51,8 @@ export abstract class Service {
      * @memberof Service
      */
     public serviceName: string;
+    public registered: boolean;
+    public singleInstance: boolean;
 
     /**
      * Events from any sort of service event system
