@@ -76,6 +76,26 @@ export abstract class Service {
 
     }
 
+    protected reverseEmojis(emojis: Emojis): ReverseEmojis {
+        let reversed: ReverseEmojis = {};
+
+        for (let k of Object.keys(emojis)) {
+            const v = emojis[k];
+            reversed[v.standard] = k;
+        }
+
+        for (let k of Object.keys(emojis)) {
+            const v = emojis[k];
+            for (let alt of v.alternatives) {
+                if (!(alt in Object.keys(reversed))) {
+                    reversed[alt] = k;
+                }
+            }
+        }
+
+        return reversed;
+    }
+
     /**
      * Inital connection to the server.
      *
