@@ -175,24 +175,20 @@ describe("Service", () => {
         });
 
         // This might look like it does nothing, but it's important.
-        it("should convert the ':cactus' emote into '🌵'", (done) => {
-            mixer.getEmoji(":cactus").should.eventually.be.equal("🌵").notify(done);
+        it("should convert the 'cactus' placeholder into the ':cactus' emoji", (done) => {
+            mixer.getEmoji("cactus").should.eventually.be.equal(":cactus").notify(done);
         });
 
-        it("should convert the ':mappa' emote into '.sarcasm'", (done) => {
-            mixer.getEmoji(":mappa").should.eventually.be.equal(".sarcasm").notify(done);
-        });
-
-        it("should convert the '.sarcasm' placeholder into ':mappa'", (done) => {
-            mixer.getEmoji(".sarcasm").should.eventually.be.equal(":mappa").notify(done);            
+        it("should convert the '.sarcasm' placeholder into the ':mappa' emoji ", (done) => {
+            mixer.getEmoji(".sarcasm").should.eventually.be.equal(":mappa").notify(done);
         });
 
         it("should omit the 'TESTING' emote.", (done) => {
-            mixer.getEmoji("TESTING").should.eventually.be.equal("").notify(done);           
+            mixer.getEmoji("TESTING").should.eventually.be.equal(":TESTING:").notify(done);
         })
 
-        it("should convert the ':D' emote into 😃", (done) => {
-            mixer.getEmoji(":D").should.eventually.be.equal("😃").notify(done);
+        it("should convert the 'green_heart' placeholder into the '<3' emoji", (done) => {
+            mixer.getEmoji("green_heart").should.eventually.be.equal("<3").notify(done);
         });
 
         it("should convert the 'Mod' role to 'moderator'", (done) => {
@@ -216,7 +212,7 @@ describe("Service", () => {
         });
 
         it("should convert the 'SPAM' role to 'user'", (done) => {
-            mixer.convertRole("SPAM").should.eventually.be.equal("user").notify(done);            
+            mixer.convertRole("SPAM").should.eventually.be.equal("user").notify(done);
         });
     });
 
@@ -231,20 +227,16 @@ describe("Service", () => {
                 .should.eventually.be.equal(JSON.stringify(twitchWhisperConverted)).notify(done);
             });
 
-        it("should convert the 'Kappa' emote into '.sarcasm'", (done) => {
-            twitch.getEmoji("Kappa").should.eventually.be.equal(".sarcasm").notify(done);
+        it("should convert the '.sarcasm' placeholder into the 'Kappa' emoji", (done) => {
+            twitch.getEmoji(".sarcasm").should.eventually.be.equal("Kappa").notify(done);
         });
 
-        it("should convert the '.sarcasm' placeholder into 'Kappa'", (done) => {
-            twitch.getEmoji(".sarcasm").should.eventually.be.equal("Kappa").notify(done);            
+        it("should omit the 'cactus' placeholder", (done) => {
+            twitch.getEmoji("cactus").should.eventually.be.equal(":cactus:").notify(done);
         });
 
-        it("should convert the 'cactus' emote into '🌵'", (done) => {
-            twitch.getEmoji("cactus").should.eventually.be.equal("🌵").notify(done);
-        });
-
-        it("should convert the ':D' emote into 😃", (done) => {
-            twitch.getEmoji(":D").should.eventually.be.equal("😃").notify(done);
+        it("should convert the 'smile' placeholder into the ':D' emoji", (done) => {
+            twitch.getEmoji("smile").should.eventually.be.equal(":D").notify(done);
         });
 
         it("should convert the 'Mod' role to 'moderator'", (done) => {
@@ -260,7 +252,7 @@ describe("Service", () => {
         });
 
         it("should convert the 'SPAM' role to 'user'", (done) => {
-            twitch.convertRole("SPAM").should.eventually.be.equal("user").notify(done);            
+            twitch.convertRole("SPAM").should.eventually.be.equal("user").notify(done);
         });
     });
 });
