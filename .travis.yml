@@ -4,14 +4,10 @@ node_js:
   - '7.10'
 before_install:
   - npm install -g typescript
-  - npm install
-  - npm install istanbul coveralls
-  - npm install istanbul coveralls -g
 script:
-  - tsc
-  - npm run travis
+  - "npm run test"
 branches:
   only:
     - master
-after_script:
-  - "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
+after_success:
+  - "./node_modules/.bin/nyc report --reporter=text-lcov | ./node_modules/.bin/coveralls"

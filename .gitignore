@@ -65,3 +65,4 @@ typings/
 dist/
 local.yml
 coverage/
+.nyc_output

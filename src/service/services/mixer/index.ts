@@ -13,6 +13,8 @@ import * as httpm from "typed-rest-client/HttpClient";
 import { Service as ServiceAnnotation } from "../../service.annotation";
 import { Logger } from "../../../logger";
 
+import { eatSpaces } from "../../../util";
+
 type Role = "user" | "moderator" | "owner" | "subscriber" | "banned";
 
 /**
@@ -123,7 +125,7 @@ export class MixerHandler extends Service {
 
             // Parse each piece of the message
             message.forEach(async (msg: MixerChatMessage) => {
-                const trimmed = msg.text.trim();
+                const trimmed = await eatSpaces(msg.text);
                 let type: "text" | "emoji" | "tag" | "url" = "text";
 
                 switch (msg.type) {
@@ -147,7 +149,7 @@ export class MixerHandler extends Service {
 
                 messageComponents.push({
                     type: type,
-                    data: msg.text
+                    data: trimmed
                 });
             });
 
@@ -162,7 +164,7 @@ export class MixerHandler extends Service {
                 channel: this.channel,
                 user: packet.user_name,
                 role: role,
-                target: meta.whisper,
+                target: packet.target,
                 service: this.serviceName
             }
 
@@ -173,15 +175,12 @@ export class MixerHandler extends Service {
     }
 
     public async invert(...scopes: CactusScope[]): Promise<string[]> {
-
         let results: string[] = [];
 
         for (let scope of scopes) {
-
             let message = "";
 
             if (scope.packet.type === "message") {
-
                 if (scope.packet.action) {
                     message += "/me ";
                 }
@@ -195,10 +194,8 @@ export class MixerHandler extends Service {
                     }
                 }
 
-                results.push(message.trim());
+                results.push(await eatSpaces(message));
             }
-
-            // return "FLAMING THINGS";
         }
 
         return results;

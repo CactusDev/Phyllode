@@ -96,7 +96,7 @@ export class DiscordHandler extends Service {
             channel: channel,
             user: "Innectic",
             role: role,
-            service: this.serviceName
+            service: "Discord"
         }
         return scope;
     }
