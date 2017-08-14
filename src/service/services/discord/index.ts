@@ -1,7 +1,7 @@
 
 import { Cereus } from "../../../cereus";
 import { Service, ServiceStatus } from "../../service";
-import { emojis } from "./emoji";
+import { discordEmojis } from "./emoji";
 
 import * as httpm from "typed-rest-client/HttpClient";
 import * as discord from "discord.js";
@@ -14,7 +14,7 @@ const isUrl = require("is-url");
 @ServiceAnnotation("Discord")
 export class DiscordHandler extends Service {
 
-    private reversedEmoji: Emojis = {};
+    private reversedEmojis: ReverseEmojis = {};
     private oauth = "";
 
     private client: discord.Client;
@@ -22,10 +22,7 @@ export class DiscordHandler extends Service {
     constructor(protected cereus: Cereus) {
         super(cereus);
 
-        for (let k of Object.keys(emojis)) {
-            const v = emojis[k];
-            this.reversedEmoji[v] = k;
-        }
+        this.reversedEmojis = this.reverseEmojis(discordEmojis);
     }
 
     public async connect(oauthKey: string, refresh?: string, expiry?: number): Promise<boolean> {
@@ -70,31 +67,25 @@ export class DiscordHandler extends Service {
         const guild = packet[1];
         const channel = packet[2];
 
-        let current = "";
-
         for (let segment of segments) {
-            if (emojis[segment]) {
-                finished.push({
-                    "type": "text",
-                    data: current
-                });
-                finished.push({
-                    "type": "emoji",
-                    data: emojis[segment]
-                });
+            let segmentType: "text" | "emoji" | "url" = "text";
+            let segmentData: any;
+
+            if (discordEmojis[segment]) {
+                // This is bad. See same code in Twitch handler for full explanation.
+                segmentType = "emoji";
+                segmentData = discordEmojis[segment];
             } else if (isUrl(segment)) {
-                finished.push({
-                    "type": "url",
-                    data: segment
-                });
+                segmentType = "url";
+                segmentData = segment;
             } else {
-                current += ` ${segment}`;
+                segmentData = segment;
             }
+            finished.push({
+                "type": segmentType,
+                data: segmentData
+            });
         }
-        finished.push({
-            "type": "text",
-            data: current.trim()
-        });
 
         const scope: CactusScope = {
             packet: {
@@ -114,7 +105,7 @@ export class DiscordHandler extends Service {
         let finished: string[] = []
         for (let scope of scopes) {
             if (scope.packet.type === "message") {
-                let packet = (<CactusMessagePacket> scope.packet);
+                let packet = (<CactusMessagePacket>scope.packet);
                 let message = "";
 
                 if (packet.action) {
@@ -140,7 +131,7 @@ export class DiscordHandler extends Service {
     }
 
     public async getEmoji(name: string): Promise<string> {
-        return emojis[name] || this.reversedEmoji[name] || "";
+        return this.reversedEmojis[name] || `:${name}:`;
     }
 
     public async sendMessage(message: CactusScope) {

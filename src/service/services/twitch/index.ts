@@ -1,7 +1,7 @@
 import { Config } from "../../../config";
 import { Cereus } from "../../../cereus";
 import { Service, ServiceStatus } from "../../service";
-import { emojis } from "./emoji";
+import { twitchEmojis } from "./emoji";
 
 import { Service as ServiceAnnotation } from "../../service.annotation";
 import { Logger } from "../../../logger";
@@ -15,16 +15,13 @@ export class TwitchHandler extends Service {
     private instance: any;
 
     private oauth = "";
-    private reversedEmoji: Emojis = {};
+
+    private reversedEmojis: ReverseEmojis = {};
 
     constructor(protected cereus: Cereus) {
         super(cereus);
 
-        // Emoji stuff
-        for (let k of Object.keys(emojis)) {
-            const v = emojis[k];
-            this.reversedEmoji[v] = k;
-        }
+        this.reversedEmojis = this.reverseEmojis(twitchEmojis);
     }
 
     public async connect(oauthKey: string, refresh?: string, expiry?: number): Promise<boolean> {
@@ -118,9 +115,15 @@ export class TwitchHandler extends Service {
             let segmentType: "text" | "emoji" | "url" = "text";
             let segmentData: any;
 
-            if (emojis[segment]) {
+            if (twitchEmojis[segment]) {
+                // TODO: Make independent of twitchEmojis.
+                // For example, Cereus should ban users for emoji spam
+                // regarldess of whether or not the emoji has been stored in
+                // twitchEmojis.
+                // Twitch packets give information about emoji location, which
+                // can be used to solve this.
                 segmentType = "emoji";
-                segmentData = emojis[segment];
+                segmentData = twitchEmojis[segment];
             } else if (isUrl(segment)) {
                 segmentType = "url";
                 segmentData = segment;
@@ -192,7 +195,7 @@ export class TwitchHandler extends Service {
     }
 
     public async getEmoji(name: string): Promise<string> {
-        return emojis[name] || this.reversedEmoji[name] || "";
+        return this.reversedEmojis[name] || `:${name}:`;
     }
 
     public async sendMessage(message: CactusScope) {

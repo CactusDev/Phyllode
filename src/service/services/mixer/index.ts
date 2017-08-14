@@ -4,7 +4,7 @@ import { Cereus } from "../../../cereus";
 import { Service, ServiceStatus } from "../../service";
 import { ChatSocket } from "mixer-chat";
 
-import { emojis } from "./emoji";
+import { mixerEmojis } from "./emoji";
 
 import { Carina } from "carina";
 import * as ws from "ws";
@@ -33,7 +33,7 @@ export class MixerHandler extends Service {
         Authorization: ""
     }
 
-    private reversedEmoji: Emojis = {};
+    private reversedEmojis: ReverseEmojis = {};
 
     private carina: Carina;
 
@@ -44,11 +44,7 @@ export class MixerHandler extends Service {
     constructor(protected cereus: Cereus) {
         super(cereus);
 
-        // Emoji stuff
-        for (let k of Object.keys(emojis)) {
-            const v = emojis[k];
-            this.reversedEmoji[v] = k;
-        }
+        this.reversedEmojis = this.reverseEmojis(mixerEmojis);
     }
 
     public async connect(oauthKey: string, refresh?: string, expiry?: number): Promise<boolean> {
@@ -128,10 +124,25 @@ export class MixerHandler extends Service {
             // Parse each piece of the message
             message.forEach(async (msg: MixerChatMessage) => {
                 const trimmed = msg.text.trim();
-                let type: "text" | "emoji" | "tag" | "url" | "variable" = "text";
+                let type: "text" | "emoji" | "tag" | "url" = "text";
 
-                if (!!emojis[trimmed]) {
-                    type = "emoji";
+                switch (msg.type) {
+                    case "emoticon": {
+                        type = "emoji";
+                        break;
+                    }
+                    case "inaspacesuit": {
+                        type = "emoji";
+                        break;
+                    }
+                    case "link": {
+                        type = "url";
+                        break;
+                    }
+                    case "tag": {
+                        type = "tag";
+                        break;
+                    }
                 }
 
                 messageComponents.push({
@@ -175,13 +186,12 @@ export class MixerHandler extends Service {
                     message += "/me ";
                 }
 
-                for (let messagePacket of scope.packet.text) {
-                    if (messagePacket.type === "emoji") {
-                        const emoji = await this.getEmoji(messagePacket.data.trim()) ||
-                                      await this.getEmoji(`:${messagePacket.data.trim()}`);
+                for (let component of scope.packet.text) {
+                    if (component.type === "emoji") {
+                        const emoji = await this.getEmoji(component.data.trim());
                         message += ` ${emoji}`;
                     } else {
-                        message += ` ${messagePacket.data}`;
+                        message += ` ${component.data}`;
                     }
                 }
 
@@ -240,7 +250,7 @@ export class MixerHandler extends Service {
     }
 
     public async getEmoji(name: string): Promise<string> {
-        return emojis[name] || this.reversedEmoji[name] || "";
+        return this.reversedEmojis[name] || `:${name}:`;
     }
 
     /**
