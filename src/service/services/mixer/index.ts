@@ -189,13 +189,12 @@ export class MixerHandler extends Service {
                     message += "/me ";
                 }
 
-                for (let messagePacket of scope.packet.text) {
-                    if (messagePacket.type === "emoji") {
-                        const emoji = await this.getEmoji(messagePacket.data.trim()) ||
-                            await this.getEmoji(`:${messagePacket.data.trim()}`);
+                for (let component of scope.packet.text) {
+                    if (component.type === "emoji") {
+                        const emoji = await this.getEmoji(component.data.trim());
                         message += ` ${emoji}`;
                     } else {
-                        message += ` ${messagePacket.data}`;
+                        message += ` ${component.data}`;
                     }
                 }
 
@@ -262,7 +261,7 @@ export class MixerHandler extends Service {
     }
 
     public async getEmoji(name: string): Promise<string> {
-        return this.reversedEmojis[name] || ":${name}:";
+        return this.reversedEmojis[name] || `:${name}:`;
     }
 
     /**

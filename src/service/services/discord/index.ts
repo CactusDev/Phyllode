@@ -129,7 +129,7 @@ export class DiscordHandler extends Service {
     }
 
     public async getEmoji(name: string): Promise<string> {
-        return this.reversedEmojis[name] || ":${name}:";
+        return this.reversedEmojis[name] || `:${name}:`;
     }
 
     public async sendMessage(message: CactusScope) {
