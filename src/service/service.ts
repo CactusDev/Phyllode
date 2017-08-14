@@ -86,8 +86,11 @@ export abstract class Service {
 
         for (let k of Object.keys(emojis)) {
             const v = emojis[k];
+            if (!v.alternatives) {
+                continue;
+            }
             for (let alt of v.alternatives) {
-                if (!(alt in Object.keys(reversed))) {
+                if (!reversed[alt]) {
                     reversed[alt] = k;
                 }
             }
