@@ -143,7 +143,9 @@ export abstract class Service {
      * @abstract
      * @memberof Service
      */
-    public abstract async reauthenticate(data?: AuthenticationData): Promise<void>;
+    public async reauthenticate(data?: AuthenticationData): Promise<void> {
+        return;
+    }
 
     /**
      * Add a channel to the service handler, if supported.

@@ -162,8 +162,4 @@ export class DiscordHandler extends Service {
     public async convertRole(role: string): Promise<Role> {
         return "owner"; // TODO: needs api
     }
-
-    public async reauthenticate() {
-        Logger.warn("Services", "Discord: Skipping reauthentication");
-    }
 }

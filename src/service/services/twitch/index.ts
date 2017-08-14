@@ -215,8 +215,4 @@ export class TwitchHandler extends Service {
         }
         return "user";
     }
-
-    public async reauthenticate() {
-        Logger.warn("Services", "Twitch: Skipping reauthentication");
-    }
 }
