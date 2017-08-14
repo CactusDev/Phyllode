@@ -56,7 +56,7 @@ export class MixerAuthenticator extends EventEmitter {
         // Emit to the rest of the app that accounts with that name need to reconnect with the new token
         console.log("Last refresh", result.refresh_token);
         this.emit("mixer:reauthenticate", result, account);
-        Logger.info("Services", `Mixer: Reauthenticating in ${result.expires_in} seconds.`);
+        Logger.info("Services", `Mixer: Reauthenticating '${account}' in ${result.expires_in} seconds.`);
         setTimeout(() => this.refreshToken(result.refresh_token, account), result.expires_in * 1000)
     }
 

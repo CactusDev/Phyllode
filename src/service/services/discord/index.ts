@@ -26,7 +26,7 @@ export class DiscordHandler extends Service {
     }
 
     public async connect(oauthKey: string, refresh?: string, expiry?: number): Promise<boolean> {
-        if (this.status === ServiceStatus.READY) {
+        if (this.setStatus(ServiceStatus.READY)) {
             return false;
         }
         this.oauth = oauthKey;
@@ -109,9 +109,8 @@ export class DiscordHandler extends Service {
                 let message = "";
 
                 if (packet.action) {
-                    message += "/me";
+                    message += "_";
                 }
-
                 for (let msg of packet.text) {
                     if (message == null) {
                         continue;
@@ -119,8 +118,11 @@ export class DiscordHandler extends Service {
                     if (msg.type === "emoji") {
                         message += await this.getEmoji(msg.data.trim());
                     } else {
-                        message += msg.data;
+                        message += " " + msg.data;
                     }
+                }
+                if (packet.action) {
+                    message += "_";
                 }
                 finished.push(message.trim());
             }
@@ -150,17 +152,5 @@ export class DiscordHandler extends Service {
 
     public async convertRole(role: string): Promise<Role> {
         return "owner"; // TODO: needs api
-    }
-
-    public async reauthenticate() {
-        Logger.warn("Services", "Discord: Skipping reauthentication");
-    }
-
-    public get status(): ServiceStatus {
-        return this._status;
-    }
-
-    public set status(state: ServiceStatus) {
-        this._status = state;
     }
 }

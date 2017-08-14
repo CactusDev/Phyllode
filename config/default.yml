@@ -12,3 +12,6 @@ core:
       redirectURI: "localhost/callback"
     discord:
       auth: ""
+  cereus:
+    url: "http://localhost:5023"
+    response_endpoint: "response"

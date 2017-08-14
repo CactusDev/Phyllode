@@ -19,12 +19,11 @@ export class Cereus {
 
     private httpc: httpm.HttpClient = new httpm.HttpClient("aerophyl-cereus-handler");
 
-    constructor(private serviceHandler: ServiceHandler) {
+    constructor(private serviceHandler: ServiceHandler, protected responseUrl: string) {
 
     }
 
     public async parseServiceMessage(scope: CactusScope): Promise<CactusScope> {
-
         if (scope.packet.type === "message") {
             const components = scope.packet.text;
             if (!components || components.some(e => !e.data)) {
@@ -33,8 +32,7 @@ export class Cereus {
 
             // Does this packet-set actually need to be parsed?
             // Packets that don't contain a variable don't need to be parsed twice.
-            const shouldParse = components.some(e => e.data.includes("%"));
-            if (!shouldParse) {
+            if (!components.some(e => e.data.includes("%"))) {
                 return scope;
             }
 
@@ -95,7 +93,7 @@ export class Cereus {
      * @memberof Cereus
      */
     public async handle(packet: CactusScope): Promise<CactusScope[]> {
-        const response = await this.httpc.post("http://151.80.89.161:6023/response", JSON.stringify(packet));
+        const response = await this.httpc.post(this.responseUrl, JSON.stringify(packet));
         if (response.message.statusCode === 404) {
             Logger.error("Cereus", "Invalid packet sent: '" + JSON.stringify(packet) + "'");
             return null;
@@ -104,7 +102,7 @@ export class Cereus {
         try {
             message = JSON.parse(await response.readBody());
         } catch (e) {
-            Logger.error("Cereus", e);
+            Logger.error("Cereus", `Invalid JSON: ${e}`);
             return null;
         }
         if (!message || message.length < 1) {

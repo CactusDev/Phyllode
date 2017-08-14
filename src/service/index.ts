@@ -20,23 +20,7 @@ interface IChannel {
 }
 
 // THIS IS ONLY TEMP DATA UNTIL WE HAVE A MODEL IN STONE
-const channels: IChannel[] = [
-    // {
-    //     channel: "innectic",
-    //     service: "Mixer",
-    //     botUser: 25873
-    // },
-    {
-        channel: "CactusDev",
-        service: "Discord",
-        botUser: "CactusBot"
-    }
-    // {
-    //     channel: "Innectic",
-    //     service: "Twitch",
-    //     botUser: "cactusbotdev"
-    // }
-]
+let channels: IChannel[] = [];
 
 const services: ServiceMapping = {
     mixer: MixerHandler,
@@ -96,7 +80,7 @@ export class ServiceHandler {
      * @returns {Promise<boolean>} if the connection was successful.
      */
     public async connectChannel(channel: IChannel, service: Service, name: string): Promise<ConnectionTristate> {
-        service.status = ServiceStatus.CONNECTING;
+        service.setStatus(ServiceStatus.CONNECTING);
         const authInfo: { [service: string]: string } = this.config.core.authentication.cactusbotdev;
 
         if (!this.keysInRotation[channel.botUser]) {
@@ -105,27 +89,28 @@ export class ServiceHandler {
             } else if (name === "discord") {
                 this.keysInRotation[channel.botUser.toString()] = this.config.core.oauth.discord.auth;
             }
+            await new Promise<any>((resolve, reject) => setTimeout(() => resolve(), 100));
         }
         // Attempt to connect to the service
         const connected = await service.connect(this.keysInRotation[channel.botUser.toString()]);
         if (!connected) {
             return ConnectionTristate.FALSE;
         }
-        service.status = ServiceStatus.AUTHENTICATING;
+        service.setStatus(ServiceStatus.AUTHENTICATING);
 
         // Attempt to authenticate
         const authenticated = await service.authenticate(channel.channel, channel.botUser);
         if (!authenticated) {
             return ConnectionTristate.FAILED;
         }
-        service.status = ServiceStatus.READY;
+        service.setStatus(ServiceStatus.READY);
 
         if (!this.channels[channel.channel]) {
             this.channels[channel.channel] = [service];
         } else {
             this.channels[channel.channel].push(service);
         }
-        Logger.info("Services", `Connected to channel ${channel.channel}.`);
+        Logger.info("Services", `Connected to channel ${channel.channel} on service ${service.serviceName}.`);
         return ConnectionTristate.TRUE;
     }
 
@@ -136,8 +121,25 @@ export class ServiceHandler {
      */
     public async connectAllChannels() {
         await this.loadAllChannels();
-        const cereus = new Cereus(this);
+        const cereus = new Cereus(this, `${this.config.core.cereus.url}/${this.config.core.cereus.response_endpoint}`);
+        // TODO: this will become a call to the api getting the auth information for whatever account is being used for the current
+        //       authenticating account.
         const authInfo: {[service: string]: string} = this.config.core.authentication.cactusbotdev;
+
+        mixerAuthenticator.on("mixer:reauthenticate", async (data: AuthenticationData, user: string) => {
+            this.keysInRotation[user] = data.access_token;
+            if (!this.connected["mixer"][user]) {
+                return;
+            }
+            for (let connected of this.connected["mixer"][user]) {
+                const disconnected = await connected.disconnect();
+                if (!disconnected) {
+                    Logger.error("Services", "Unable to disconnect from Mixer.");
+                    continue;
+                }
+                await connected.reauthenticate(data);
+            }
+        });
 
         for (let channel of channels) {
             // TODO: This is only temp until the api supports the things I need
@@ -157,10 +159,9 @@ export class ServiceHandler {
                 Logger.warn("Services", "Failed to authenticate!");
                 return;
             } else if (connected === ConnectionTristate.FALSE) {
-                Logger.warn("Services", "Unable to connect to service.");
+                Logger.warn("Services", `Unable to connect to ${channel.service}.`);
                 return;
             }
-            Logger.info("Services", "Connected.");
             // Add to the connected channels
             if (!this.connected[name]) {
                 this.connected[name] = {};
@@ -170,6 +171,8 @@ export class ServiceHandler {
             }
             this.connected[name][channel.botUser].push(service);
             // Listen for event packets
+
+            // Cleanup: This should become just one observable that's being listened and pushed to.
             Logger.info("Events", "Attempting to listen for events...");
             service.events.subscribe(
                 async (scope: CactusScope) => {
@@ -187,21 +190,6 @@ export class ServiceHandler {
             );
             Logger.info("Events", "Listening for events!");
         }
-
-        mixerAuthenticator.on("mixer:reauthenticate", async (data: AuthenticationData, user: string) => {
-            this.keysInRotation[user] = data.access_token;
-            if (!this.connected["mixer"][user]) {
-                return;
-            }
-            for (let connected of this.connected["mixer"][user]) {
-                const disconnected = await connected.disconnect();
-                if (!disconnected) {
-                    Logger.error("Services", "Unable to disconnect from Mixer.");
-                    continue;
-                }
-                await connected.reauthenticate(data);
-            }
-        });
     }
 
     public async sendServiceMessage(channel: string, service: string, message: CactusScope) {
@@ -218,7 +206,27 @@ export class ServiceHandler {
     }
 
     private async loadAllChannels() {
-        // This does nothing right now. This needs an api to exist before
-        // anything can really happen here.
+        channels = [
+            {
+                channel: "innectic",
+                service: "Mixer",
+                botUser: 25873
+            },
+            {
+                channel: "2cubed",
+                service: "Mixer",
+                botUser: 25873
+            },
+            {
+                channel: "CactusDev",
+                service: "Discord",
+                botUser: "CactusBot"
+            },
+            {
+                channel: "Innectic",
+                service: "Twitch",
+                botUser: "cactusbotdev"
+            }
+        ]
     }
 }

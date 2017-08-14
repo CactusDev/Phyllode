@@ -1,6 +1,5 @@
 import { ServiceHandler } from "./service";
 import { Injectable } from "@angular/core";
-import { LoggerInstance } from "winston";
 
 import { Logger } from "./logger";
 
@@ -30,8 +29,9 @@ export class Core {
     }
 
     public async stop() {
-        Logger.info("Core", "Disconnecting from all channels...");
+        Logger.info("Core", "Removing spines...");
         await this.serviceHandler.disconnectAllChannels();
+        Logger.info("Core", "Done!");
         process.exit(0);
     }
 }

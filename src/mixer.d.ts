@@ -1,3 +1,4 @@
+
 /**
  * Response from the Mixer service chat socket
  *

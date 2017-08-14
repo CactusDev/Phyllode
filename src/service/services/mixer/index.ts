@@ -25,8 +25,6 @@ type Role = "user" | "moderator" | "owner" | "subscriber" | "banned";
 @ServiceAnnotation("Mixer")
 export class MixerHandler extends Service {
 
-    protected _status: ServiceStatus = ServiceStatus.AUTHENTICATING;
-
     private chat: ChatSocket;
     private httpc: httpm.HttpClient = new httpm.HttpClient("aerophyl");
 
@@ -40,7 +38,6 @@ export class MixerHandler extends Service {
     private carina: Carina;
 
     private botName = "";
-    private channel = "";
 
     private botId = 0;
 
@@ -69,7 +66,7 @@ export class MixerHandler extends Service {
         }
         let json = JSON.parse(await nameResult.readBody());
         channelId = json.id;
-        this._channel = json.token;
+        this.channel = json.token;
         await this.setupCarinaEvents(channelId);
 
         const userResult = await this.httpc.get(`${this.base}/users/current`, this.headers);
@@ -91,7 +88,7 @@ export class MixerHandler extends Service {
             return false;
         }
         this.chat.on("ChatMessage", async message => {
-            Logger.info("Messages", `${this._channel}(Mixer): ${message.message.message}`);
+            Logger.info("Messages", `${this.channel}(Mixer): ${message.message.message}`);
             let converted = await this.convert(message);
             if (converted.user === this.botName) {
                 return;
@@ -162,7 +159,7 @@ export class MixerHandler extends Service {
                     text: messageComponents,
                     action: !!meta.me
                 },
-                channel: this._channel,
+                channel: this.channel,
                 user: packet.user_name,
                 role: role,
                 target: meta.whisper,
@@ -252,14 +249,6 @@ export class MixerHandler extends Service {
         Logger.error("Services", "Reconnected to channel " + this.channel);
     }
 
-    public get status(): ServiceStatus {
-        return this._status;
-    }
-
-    public set status(status: ServiceStatus) {
-        this._status = status;
-    }
-
     public async getEmoji(name: string): Promise<string> {
         return this.reversedEmojis[name] || `:${name}:`;
     }
@@ -283,7 +272,7 @@ export class MixerHandler extends Service {
             };
             const scope: CactusScope = {
                 packet: packet,
-                channel: this._channel,
+                channel: this.channel,
                 user: data.user.username,
                 // role: "we don't get this",  // hnng
                 service: this.serviceName
@@ -301,9 +290,8 @@ export class MixerHandler extends Service {
             };
             const scope: CactusScope = {
                 packet: packet,
-                channel: this._channel,
+                channel: this.channel,
                 user: data.hoster.token,
-                // role: "we don't get this",  // hnng
                 service: this.serviceName
             };
             this.events.next(scope);
@@ -319,9 +307,8 @@ export class MixerHandler extends Service {
             };
             const scope: CactusScope = {
                 packet: packet,
-                channel: this._channel,
+                channel: this.channel,
                 user: data.hoster.token,
-                // role: "we don't get this",  // hnng
                 service: this.serviceName
             };
             this.events.next(scope);
@@ -337,9 +324,8 @@ export class MixerHandler extends Service {
             };
             const scope: CactusScope = {
                 packet: packet,
-                channel: this._channel,
+                channel: this.channel,
                 user: data.username,
-                // role: "we don't get this",  // hnng
                 service: this.serviceName
             };
             this.events.next(scope);
@@ -355,9 +341,8 @@ export class MixerHandler extends Service {
             };
             const scope: CactusScope = {
                 packet: packet,
-                channel: this._channel,
+                channel: this.channel,
                 user: data.username,
-                // role: "we don't get this",  // hnng
                 service: this.serviceName
             };
             this.events.next(scope);

@@ -19,6 +19,10 @@ export class Config {
             discord: {
                 auth: string;
             }
+        };
+        cereus: {
+            url: string;
+            response_endpoint: string;
         }
     }
 }
