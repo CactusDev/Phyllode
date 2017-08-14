@@ -5,6 +5,12 @@ node_js:
 before_install:
   - npm install -g typescript
   - npm install
+  - npm install nyc coveralls
 script:
   - tsc
   - npm test
+after_success:
+  - "./node_modules/.bin/nyc report --reporter=text-lcov | ./node_modules/.bin/coveralls"
+branches:
+  only:
+    - master
