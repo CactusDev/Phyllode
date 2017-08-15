@@ -65,7 +65,6 @@ export class MixerAuthenticator extends EventEmitter {
         extraData["grant_type"] = requestType;
 
         const result = await axios.post(request, extraData)
-        console.log(result.data.refresh_token);
         if (result.status !== 200) {
             throw new Error("Request for Mixer authentication was NON-200!");
         }

@@ -109,6 +109,6 @@ export class Cereus {
         if (!message || message.length < 1) {
             return null;
         }
-        return message;  // XXX: Do we need all the responses?
+        return message;
     }
 }

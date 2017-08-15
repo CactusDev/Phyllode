@@ -65,9 +65,8 @@ export class MixerHandler extends Service {
         if (nameResult.status !== 200) {
             return false;
         }
-        let json = nameResult.data;
-        channelId = json.id;
-        this.channel = json.token;
+        channelId = nameResult.data.id;
+        this.channel = nameResult.data.token;
         await this.setupCarinaEvents(channelId);
 
         const userResult = await axios.get(`${this.base}/users/current`, {headers: this.headers});
@@ -81,10 +80,9 @@ export class MixerHandler extends Service {
             // This is bad
             return false;
         }
-        const body: MixerChatResponse = result.data;
-        this.chat = new ChatSocket(body.endpoints).boot();
+        this.chat = new ChatSocket(result.data.endpoints).boot();
 
-        const isAuthed = await this.chat.auth(channelId, botId, body.authkey);
+        const isAuthed = await this.chat.auth(channelId, botId, result.data.authkey);
         if (!isAuthed) {
             return false;
         }
