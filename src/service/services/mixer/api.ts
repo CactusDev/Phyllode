@@ -13,7 +13,7 @@ export class MixerAPI {
     }
 
     public async getChannelId(channelName: string, headers?: any): Promise<number> {
-        const result = await axios.get(`${this.baseURL}/channels/${channelName}?fields=id`);
+        const result = await axios.get(`${this.baseURL}/channels/${channelName}`);
         if (result.status !== 200) {
             return -1;
         }
@@ -21,19 +21,19 @@ export class MixerAPI {
     }
 
     public async getUserId(channelName: string, headers?: any): Promise<number> {
-        const result = await axios.get(`${this.baseURL}/channels/${channelName}?fields=userId`);
+        const result = await axios.get(`${this.baseURL}/channels/${channelName}`);
         if (result.status !== 200) {
             return -1;
         }
         return result.data.userId;
     }
 
-    public async getChannelName(channelName: string, headers?: any): Promise<string> {
-        const result = await axios.get(`${this.baseURL}/channels/${channelName}?fields=token`);
+    public async getChannelName(channelId: number, headers?: any): Promise<string> {
+        const result = await axios.get(`${this.baseURL}/channels/${channelId}`);
         if (result.status !== 200) {
             return "";
         }
-        return result.data.userId;
+        return result.data.token;
     }
 
     public async getCurrentUserName(headers: any): Promise<string> {

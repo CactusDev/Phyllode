@@ -352,7 +352,7 @@ const cereusResponseBase: CactusScope[] = [
                 },
                 {
                     data: "green_heart",
-                    type:"emoji"
+                    type: "emoji"
                 }
             ],
             action: false,
