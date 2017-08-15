@@ -8,7 +8,7 @@ import { mixerEmojis } from "./emoji";
 
 import { Carina } from "carina";
 import * as ws from "ws";
-import * as httpm from "typed-rest-client/HttpClient";
+import { default as axios } from "axios";
 
 import { Service as ServiceAnnotation } from "../../service.annotation";
 import { Logger } from "../../../logger";
@@ -28,7 +28,6 @@ type Role = "user" | "moderator" | "owner" | "subscriber" | "banned";
 export class MixerHandler extends Service {
 
     private chat: ChatSocket;
-    private httpc: httpm.HttpClient = new httpm.HttpClient("aerophyl");
 
     private base = "https://mixer.com/api/v1";
     private headers = {
@@ -62,27 +61,27 @@ export class MixerHandler extends Service {
         let channelId: number;
         this.botId = botId;
         this.channel = channelRaw.toString();
-        const nameResult = await this.httpc.get(`${this.base}/channels/${channelRaw}`);
-        if (nameResult.message.statusCode !== 200) {
+        const nameResult = await axios.get(`${this.base}/channels/${channelRaw}`);
+        if (nameResult.status !== 200) {
             return false;
         }
-        let json = JSON.parse(await nameResult.readBody());
+        let json = nameResult.data;
         channelId = json.id;
         this.channel = json.token;
         await this.setupCarinaEvents(channelId);
 
-        const userResult = await this.httpc.get(`${this.base}/users/current`, this.headers);
-        if (userResult.message.statusCode !== 200) {
+        const userResult = await axios.get(`${this.base}/users/current`, {headers: this.headers});
+        if (userResult.status !== 200) {
             return false;
         }
-        this.botName = JSON.parse(await userResult.readBody()).username;
+        this.botName = userResult.data.username;
 
-        const result = await this.httpc.get(`${this.base}/chats/${channelId}`, this.headers);
-        if (result.message.statusCode !== 200) {
+        const result = await axios.get(`${this.base}/chats/${channelId}`, {headers: this.headers});
+        if (result.status !== 200) {
             // This is bad
             return false;
         }
-        const body: MixerChatResponse = JSON.parse(await result.readBody());
+        const body: MixerChatResponse = result.data;
         this.chat = new ChatSocket(body.endpoints).boot();
 
         const isAuthed = await this.chat.auth(channelId, botId, body.authkey);

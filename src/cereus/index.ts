@@ -4,7 +4,7 @@ import { Logger } from "../logger";
 
 import { Subject } from "rxjs";
 import { eatSpaces } from "../util";
-import * as httpm from "typed-rest-client/HttpClient";
+import { default as axios } from "axios";
 
 export const messages: Subject<CactusMessagePacket> = new Subject();
 
@@ -18,10 +18,7 @@ const validVariables: string[] = ["COUNT", "CHANNEL", "USER"];
  */
 export class Cereus {
 
-    private httpc: httpm.HttpClient = new httpm.HttpClient("aerophyl-cereus-handler");
-
     constructor(private serviceHandler: ServiceHandler, protected responseUrl: string) {
-
     }
 
     public async parseServiceMessage(scope: CactusScope): Promise<CactusScope> {
@@ -95,16 +92,18 @@ export class Cereus {
      * @memberof Cereus
      */
     public async handle(packet: CactusScope): Promise<CactusScope[]> {
-        const response = await this.httpc.post(this.responseUrl, JSON.stringify(packet));
-        if (response.message.statusCode === 404) {
+        const response = await axios.get(this.responseUrl, {
+            data: JSON.stringify(packet)
+        });
+        if (response.status === 404) {
             Logger.error("Cereus", "Invalid packet sent: '" + JSON.stringify(packet) + "'");
             return null;
         }
         let message: CactusScope[];
         try {
-            message = JSON.parse(await response.readBody());
+            message = response.data;
         } catch (e) {
-            Logger.error("Cereus", `Invalid JSON: ${e}`);
+            Logger.error("Cereus", `Invalid JSON`);
             return null;
         }
         if (!message || message.length < 1) {

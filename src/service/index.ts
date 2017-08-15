@@ -89,7 +89,7 @@ export class ServiceHandler {
             } else if (name === "discord") {
                 this.keysInRotation[channel.botUser.toString()] = this.config.core.oauth.discord.auth;
             }
-            await new Promise<any>((resolve, reject) => setTimeout(() => resolve(), 100));
+            await new Promise<any>((resolve, reject) => setTimeout(() => resolve(), 5000));
         }
         // Attempt to connect to the service
         const connected = await service.connect(this.keysInRotation[channel.botUser.toString()]);
@@ -212,21 +212,21 @@ export class ServiceHandler {
                 service: "Mixer",
                 botUser: 25873
             },
-            {
-                channel: "2cubed",
-                service: "Mixer",
-                botUser: 25873
-            },
-            {
-                channel: "CactusDev",
-                service: "Discord",
-                botUser: "CactusBot"
-            },
-            {
-                channel: "Innectic",
-                service: "Twitch",
-                botUser: "cactusbotdev"
-            }
+            // {
+            //     channel: "2cubed",
+            //     service: "Mixer",
+            //     botUser: 25873
+            // },
+            // {
+            //     channel: "CactusDev",
+            //     service: "Discord",
+            //     botUser: "CactusBot"
+            // },
+            // {
+            //     channel: "Innectic",
+            //     service: "Twitch",
+            //     botUser: "cactusbotdev"
+            // }
         ]
     }
 }
