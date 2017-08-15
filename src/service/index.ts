@@ -89,7 +89,7 @@ export class ServiceHandler {
             } else if (name === "discord") {
                 this.keysInRotation[channel.botUser.toString()] = this.config.core.oauth.discord.auth;
             }
-            await new Promise<any>((resolve, reject) => setTimeout(() => resolve(), 5000));
+            await new Promise<any>((resolve, reject) => setTimeout(() => resolve(), 100));
         }
         // Attempt to connect to the service
         const connected = await service.connect(this.keysInRotation[channel.botUser.toString()]);
@@ -121,7 +121,7 @@ export class ServiceHandler {
      */
     public async connectAllChannels() {
         await this.loadAllChannels();
-        const cereus = new Cereus(this, `${this.config.core.cereus.url}/${this.config.core.cereus.response_endpoint}`);
+        const cereus = new Cereus(`${this.config.core.cereus.url}/${this.config.core.cereus.response_endpoint}`);
         // TODO: this will become a call to the api getting the auth information for whatever account is being used for the current
         //       authenticating account.
         const authInfo: {[service: string]: string} = this.config.core.authentication.cactusbotdev;

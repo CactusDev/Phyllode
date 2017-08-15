@@ -1,9 +1,11 @@
 
 import { test } from "ava";
-
 import { Cereus } from "../src/cereus";
+import { default as axios } from "axios";
 
-const cereus = new Cereus(null, "");
+const mockAdapter = require("axios-mock-adapter");
+const cereus = new Cereus("response");
+let mockAPI = new mockAdapter(axios);
 
 const packet: CactusScope = {
     packet: {
@@ -137,3 +139,19 @@ test("events packets should be ignored", async t => {
     const result = await cereus.parseServiceMessage(eventPacket);
     t.deepEqual(result, eventPacket);
 });
+
+test("should error from invalid json", async t => {
+    mockAPI.onGet("/response").reply(200, "");
+    t.is(await cereus.handle(eventPacket), null);
+});
+
+test("should return 404 from invalid data", async t => {
+    mockAPI.onGet("/response").reply(404, []);
+    t.is(await cereus.handle(eventPacket), null);
+});
+
+test("should return nothing when cereus gives an empty list", async t => {
+    mockAPI.onGet("/response").reply(200, []);
+    t.is(await cereus.handle(eventPacket), null);
+});
+

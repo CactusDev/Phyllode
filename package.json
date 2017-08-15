@@ -34,18 +34,19 @@
     "winston": "^2.3.1"
   },
   "devDependencies": {
-    "typescript": "^2.4.1",
-    "tslint": "^5.5.0",
-    "mocha": "^3.5.0",
-    "nyc": "^11.1.0",
-    "ava": "^0.21.0",
     "@angular/core": "4.0.3",
     "@types/config": "0.0.32",
     "@types/node": "^8.0.13",
     "@types/winston": "^2.3.4",
     "@types/ws": "^3.0.2",
+    "ava": "^0.21.0",
+    "axios-mock-adapter": "^1.9.0",
+    "coveralls": "^2.13.1",
     "istanbul": "^0.4.5",
-    "coveralls": "^2.13.1"
+    "mocha": "^3.5.0",
+    "nyc": "^11.1.0",
+    "tslint": "^5.5.0",
+    "typescript": "^2.4.1"
   },
   "ava": {
     "files": [

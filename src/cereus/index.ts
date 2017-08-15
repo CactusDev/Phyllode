@@ -1,4 +1,3 @@
-import { ServiceHandler } from "../service";
 
 import { Logger } from "../logger";
 
@@ -18,7 +17,7 @@ const validVariables: string[] = ["COUNT", "CHANNEL", "USER"];
  */
 export class Cereus {
 
-    constructor(private serviceHandler: ServiceHandler, protected responseUrl: string) {
+    constructor(protected responseUrl: string) {
     }
 
     public async parseServiceMessage(scope: CactusScope): Promise<CactusScope> {
