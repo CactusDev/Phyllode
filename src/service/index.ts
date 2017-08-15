@@ -121,7 +121,7 @@ export class ServiceHandler {
      */
     public async connectAllChannels() {
         await this.loadAllChannels();
-        const cereus = new Cereus(this, `${this.config.core.cereus.url}/${this.config.core.cereus.response_endpoint}`);
+        const cereus = new Cereus(`${this.config.core.cereus.url}/${this.config.core.cereus.response_endpoint}`);
         // TODO: this will become a call to the api getting the auth information for whatever account is being used for the current
         //       authenticating account.
         const authInfo: {[service: string]: string} = this.config.core.authentication.cactusbotdev;
@@ -212,21 +212,21 @@ export class ServiceHandler {
                 service: "Mixer",
                 botUser: 25873
             },
-            {
-                channel: "2cubed",
-                service: "Mixer",
-                botUser: 25873
-            },
-            {
-                channel: "CactusDev",
-                service: "Discord",
-                botUser: "CactusBot"
-            },
-            {
-                channel: "Innectic",
-                service: "Twitch",
-                botUser: "cactusbotdev"
-            }
+            // {
+            //     channel: "2cubed",
+            //     service: "Mixer",
+            //     botUser: 25873
+            // },
+            // {
+            //     channel: "CactusDev",
+            //     service: "Discord",
+            //     botUser: "CactusBot"
+            // },
+            // {
+            //     channel: "Innectic",
+            //     service: "Twitch",
+            //     botUser: "cactusbotdev"
+            // }
         ]
     }
 }

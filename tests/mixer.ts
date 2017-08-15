@@ -5,8 +5,12 @@ import "reflect-metadata";
 import { test } from "ava";
 import { MixerHandler } from "../src/service/services";
 import { ServiceStatus } from "../src/service/service";
+import { Cereus } from "../src/cereus";
+import { default as axios } from "axios";
 
-const mixer = new MixerHandler(null);
+const mockAdapter = require("axios-mock-adapter");
+const cereus = new Cereus("/response");
+const mixer = new MixerHandler(cereus);
 
 const mixerChatConverted: CactusScope = {
     packet: {
@@ -118,8 +122,8 @@ const multiEmoji: CactusScope = {
         action: false // TODO
     },
     channel: undefined,
-    user: "Innectic",
-    role: "owner",
+    user: "0x01",
+    role: "user",
     service: "Mixer"
 }
 
@@ -186,6 +190,8 @@ const tag = {
     ],
     "user_name": "0x01"
 }
+
+let mockAPI = new mockAdapter(axios);
 
 test("has the proper name", async t => {
     t.is(mixer.serviceName, "Mixer");
@@ -326,4 +332,42 @@ test("should convert tag to tag", async t => {
         service: "Mixer",
         target: undefined
     });
+});
+
+const cereusResponseBase: CactusScope[] = [
+    {
+        service: "Mixer",
+        channel: undefined,
+        user: "0x01",
+        role: "user",
+        packet: {
+            text: [
+                {
+                    data: "Cactus love! ",
+                    type: "text"
+                },
+                {
+                    data: "cactus",
+                    type: "emoji"
+                },
+                {
+                    data: "green_heart",
+                    type:"emoji"
+                }
+            ],
+            action: false,
+            type: "message"
+        },
+        target: undefined
+    }
+]
+
+test("should convert a Cereus packet into Mixer format", async t => {
+    mockAPI.onGet("/response").reply(200, cereusResponseBase);
+
+    const response = (await cereus.handle(multiEmoji))[0];  // Only need the first thing
+    delete multiEmoji["channel"];
+    t.deepEqual(multiEmoji, response);
+    const inverted = await mixer.invert(response);
+    t.deepEqual(inverted, ["Cactus love! :cactus <3"]);
 });

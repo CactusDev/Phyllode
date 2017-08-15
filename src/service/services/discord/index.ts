@@ -3,7 +3,7 @@ import { Cereus } from "../../../cereus";
 import { Service, ServiceStatus } from "../../service";
 import { discordEmojis } from "./emoji";
 
-import * as httpm from "typed-rest-client/HttpClient";
+import { default as axios } from "axios";
 import * as discord from "discord.js";
 
 import { Service as ServiceAnnotation } from "../../service.annotation";

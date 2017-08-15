@@ -1,5 +1,5 @@
 
-import * as httpm from "typed-rest-client/HttpClient";
+import { default as axios } from "axios";
 
 import { EventEmitter } from "events";
 import { Logger } from "../../../logger";
@@ -24,8 +24,6 @@ export interface AuthenticationData {
 export class MixerAuthenticator extends EventEmitter {
 
     private mixerURL = "https://mixer.com/api/v1";
-    private httpc: httpm.HttpClient = new httpm.HttpClient("aerophyl");
-
     private headers: any = {};
 
     /**
@@ -66,10 +64,10 @@ export class MixerAuthenticator extends EventEmitter {
         extraData["client_secret"] = this.headers["client_secret"];
         extraData["grant_type"] = requestType;
 
-        const result = await this.httpc.post(request, JSON.stringify(extraData));
-        if (result.message.statusCode !== 200) {
+        const result = await axios.post(request, extraData)
+        if (result.status !== 200) {
             throw new Error("Request for Mixer authentication was NON-200!");
         }
-        return JSON.parse(await result.readBody());
+        return result.data;
     }
 }

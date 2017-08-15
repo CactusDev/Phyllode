@@ -3,8 +3,14 @@ import "reflect-metadata";
 import { test } from "ava";
 import { TwitchHandler } from "../src/service/services";
 import { ServiceStatus } from "../src/service/service";
+import { default as axios } from "axios";
+import { Cereus } from "../src/cereus";
 
+const mockAdapter = require("axios-mock-adapter");
+const cereus = new Cereus("/response");
 const twitch = new TwitchHandler(null);
+
+let mockAPI = new mockAdapter(axios);
 
 const twitchChatPacket: any = [
     // Message
@@ -15,7 +21,7 @@ const twitchChatPacket: any = [
             broadcaster: "1"
         },
         color: "#2E8B57",
-        "display-name": "Innectic",
+        "display-name": "0x01",
         emotes: null,
         id: "8b67ba96-0f5a-45c6-b265-b07091dbbcc7",
         mod: false,
@@ -28,7 +34,7 @@ const twitchChatPacket: any = [
         "user-type": null,
         "emotes-raw": null,
         "badges-raw": "broadcaster/1",
-        username: "innectic",
+        username: "0x01",
         "message-type": "chat"
     }
 ]
@@ -44,7 +50,7 @@ const twitchChatConverted: any = {
         ],
         action: false
     },
-    user: "Innectic",
+    user: "0x01",
     role: "owner",
     service: "Twitch",
     channel: undefined
@@ -55,7 +61,7 @@ const twitchWhisperPacket: any = [
     {
         badges: null,
         color: "#2E8B57",
-        "display-name": "Innectic",
+        "display-name": "0x01",
         emotes: null,
         "message-id": "11",
         "thread-id": "82607708_124841066",
@@ -64,7 +70,7 @@ const twitchWhisperPacket: any = [
         "user-type": null,
         "emotes-raw": null,
         "badges-raw": null,
-        username: "innectic",
+        username: "0x01",
         "message-type": "whisper",
     }
 ]
@@ -80,10 +86,10 @@ const twitchWhisperConverted: CactusScope = {
         ],
         action: false
     },
-    user: "Innectic",
+    user: "0x01",
     role: "user",
     service: "Twitch",
-    target: "innectic",
+    target: "0x01",
     channel: undefined
 };
 
@@ -116,9 +122,9 @@ const multiEmoji: CactusScope = {
         action: false // TODO
     },
     channel: "456",
-    user: "Innectic",
+    user: "0x01",
     role: "owner",
-    service: "Discord"
+    service: "Twitch"
 }
 
 test("has the proper name", async t => {
@@ -186,3 +192,42 @@ test("can only 'connect' once", async t => {
     twitch.setStatus(ServiceStatus.READY);
     t.false(await twitch.connect("abc"));
 });
+
+const cereusResponseBase: CactusScope[] = [
+    {
+        service: "Twitch",
+        channel: undefined,
+        user: "0x01",
+        role: "owner",
+        packet: {
+            text: [
+                {
+                    data: "Cactus love! ",
+                    type: "text"
+                },
+                {
+                    data: "cactus",
+                    type: "emoji"
+                },
+                {
+                    data: "green_heart",
+                    type:"emoji"
+                }
+            ],
+            action: false,
+            type: "message"
+        },
+        target: undefined
+    }
+]
+
+test("should convert a Cereus packet into Twitch format", async t => {
+    mockAPI.onGet("/response").reply(200, cereusResponseBase);
+
+    const response = (await cereus.handle(multiEmoji))[0];  // Only need the first thing
+    delete multiEmoji["channel"];
+    t.deepEqual(multiEmoji, response);
+    const inverted = await twitch.invert(response);
+    t.deepEqual(inverted, ["Cactus love! :cactus: <3"]);
+});
+
