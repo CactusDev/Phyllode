@@ -63,3 +63,8 @@ test("TestService3 shouldn't have single instance", t => {
 test("TestService4 shouldn't be singleInstance", t => {
     t.is(TestService4.prototype.singleInstance, false);
 });
+
+test("TestService4 shouldn't do anything on reauth", async t => {
+    await TestService4.prototype.reauthenticate();
+    t.pass();
+});
