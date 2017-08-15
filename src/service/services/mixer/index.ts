@@ -15,6 +15,8 @@ import { Logger } from "../../../logger";
 
 import { eatSpaces } from "../../../util";
 
+import { MixerAPI } from "./api";
+
 type Role = "user" | "moderator" | "owner" | "subscriber" | "banned";
 
 /**
@@ -36,16 +38,20 @@ export class MixerHandler extends Service {
 
     private reversedEmojis: ReverseEmojis = {};
 
-    private carina: Carina;
-
     private botName = "";
-
     private botId = 0;
+
+    private carina: Carina;
+    private api: MixerAPI;
 
     constructor(protected cereus: Cereus) {
         super(cereus);
 
         this.reversedEmojis = this.reverseEmojis(mixerEmojis);
+    }
+
+    public async initialize() {
+        this.api = new MixerAPI("https://mixer.com/api/v1");
     }
 
     public async connect(oauthKey: string, refresh?: string, expiry?: number): Promise<boolean> {
@@ -58,31 +64,20 @@ export class MixerHandler extends Service {
     }
 
     public async authenticate(channelRaw: string | number, botId: number): Promise<boolean> {
-        let channelId: number;
         this.botId = botId;
-        this.channel = channelRaw.toString();
-        const nameResult = await axios.get(`${this.base}/channels/${channelRaw}`);
-        if (nameResult.status !== 200) {
-            return false;
-        }
-        channelId = nameResult.data.id;
-        this.channel = nameResult.data.token;
-        await this.setupCarinaEvents(channelId);
 
-        const userResult = await axios.get(`${this.base}/users/current`, {headers: this.headers});
-        if (userResult.status !== 200) {
-            return false;
+        if (<any>channelRaw instanceof String) {
+            this.channel = await this.api.getChannelId(<string>channelRaw);
+        } else {
+            this.channel = <number>channelRaw;
         }
-        this.botName = userResult.data.username;
+        await this.setupCarinaEvents(this.channel);
 
-        const result = await axios.get(`${this.base}/chats/${channelId}`, {headers: this.headers});
-        if (result.status !== 200) {
-            // This is bad
-            return false;
-        }
-        this.chat = new ChatSocket(result.data.endpoints).boot();
+        this.botName = await this.api.getCurrentUserName(this.headers);
+        const chat = await this.api.getChats(this.channel, this.headers);
+        this.chat = new ChatSocket(chat.endpoints).boot();
 
-        const isAuthed = await this.chat.auth(channelId, botId, result.data.authkey);
+        const isAuthed = await this.chat.auth(this.channel, botId, chat.authkey);
         if (!isAuthed) {
             return false;
         }
@@ -158,7 +153,7 @@ export class MixerHandler extends Service {
                     text: messageComponents,
                     action: !!meta.me
                 },
-                channel: this.channel,
+                channel: <string>this.channel,
                 user: packet.user_name,
                 role: role,
                 target: packet.target,
@@ -266,9 +261,8 @@ export class MixerHandler extends Service {
             };
             const scope: CactusScope = {
                 packet: packet,
-                channel: this.channel,
+                channel: <string>this.channel,
                 user: data.user.username,
-                // role: "we don't get this",  // hnng
                 service: this.serviceName
             };
             this.events.next(scope);
@@ -284,7 +278,7 @@ export class MixerHandler extends Service {
             };
             const scope: CactusScope = {
                 packet: packet,
-                channel: this.channel,
+                channel: <string>this.channel,
                 user: data.hoster.token,
                 service: this.serviceName
             };
@@ -301,7 +295,7 @@ export class MixerHandler extends Service {
             };
             const scope: CactusScope = {
                 packet: packet,
-                channel: this.channel,
+                channel: <string>this.channel,
                 user: data.hoster.token,
                 service: this.serviceName
             };
@@ -318,7 +312,7 @@ export class MixerHandler extends Service {
             };
             const scope: CactusScope = {
                 packet: packet,
-                channel: this.channel,
+                channel: <string>this.channel,
                 user: data.username,
                 service: this.serviceName
             };
@@ -335,7 +329,7 @@ export class MixerHandler extends Service {
             };
             const scope: CactusScope = {
                 packet: packet,
-                channel: this.channel,
+                channel: <string>this.channel,
                 user: data.username,
                 service: this.serviceName
             };
