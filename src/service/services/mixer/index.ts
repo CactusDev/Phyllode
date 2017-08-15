@@ -24,7 +24,7 @@ type Role = "user" | "moderator" | "owner" | "subscriber" | "banned";
  * @class MixerHandler
  * @implements {Service}
  */
-@ServiceAnnotation("Mixer")
+@ServiceAnnotation("Mixer", {singleInstance: true})
 export class MixerHandler extends Service {
 
     private chat: ChatSocket;
