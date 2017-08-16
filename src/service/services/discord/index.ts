@@ -9,9 +9,11 @@ import * as discord from "discord.js";
 import { Service as ServiceAnnotation } from "../../service.annotation";
 import { Logger } from "../../../logger";
 
+import { eatSpaces } from "../../../util";
+
 const isUrl = require("is-url");
 
-@ServiceAnnotation("Discord")
+@ServiceAnnotation("Discord", {singleInstance: true})
 export class DiscordHandler extends Service {
 
     private reversedEmojis: ReverseEmojis = {};
@@ -26,7 +28,7 @@ export class DiscordHandler extends Service {
     }
 
     public async connect(oauthKey: string, refresh?: string, expiry?: number): Promise<boolean> {
-        if (this.setStatus(ServiceStatus.READY)) {
+        if (this.getStatus() === ServiceStatus.READY) {
             return false;
         }
         this.oauth = oauthKey;
@@ -37,7 +39,7 @@ export class DiscordHandler extends Service {
         this.client = new discord.Client();
 
         this.client.on("ready", () => {
-            Logger.info("Services", "Connected to Discord Guild '" + channel + "' on account " + botId);
+            Logger.info("Services", `Connected to Discord Guild '${channel}' on account '${botId}'`);
             this.client.user.setGame("CactusBot");
         });
 
@@ -63,7 +65,8 @@ export class DiscordHandler extends Service {
         // TODO: Needs the api to be able to determine what role a user is.
         const role: Role = "owner";
         const finished: Component[] = [];
-        const segments = packet[0].split(" ");
+        const rawMessage: string = packet[0];
+        const segments = rawMessage.split(" ");
         const guild = packet[1];
         const channel = packet[2];
 
@@ -91,7 +94,7 @@ export class DiscordHandler extends Service {
             packet: {
                 "type": "message",
                 text: finished,
-                action: false // TODO
+                action: rawMessage.startsWith("_") && rawMessage.endsWith("_")
             },
             channel: channel,
             user: "Innectic",
@@ -108,23 +111,22 @@ export class DiscordHandler extends Service {
                 let packet = (<CactusMessagePacket>scope.packet);
                 let message = "";
 
-                if (packet.action) {
-                    message += "_";
-                }
                 for (let msg of packet.text) {
-                    if (message == null) {
+                    if (!msg) {
                         continue;
                     }
                     if (msg.type === "emoji") {
                         message += await this.getEmoji(msg.data.trim());
                     } else {
-                        message += " " + msg.data;
+                        message += ` ${msg.data}`;
                     }
                 }
                 if (packet.action) {
-                    message += "_";
+                    message = await eatSpaces(`_${message}_`);
                 }
-                finished.push(message.trim());
+                if (message && message.trim() !== "") {
+                    finished.push(message.trim());
+                }
             }
         }
         return finished;

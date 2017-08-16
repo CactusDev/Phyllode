@@ -70,10 +70,14 @@ export abstract class Service {
      * @memberof Service
      */
     protected status: ServiceStatus = ServiceStatus.CONNECTING;
-    protected channel: string;
+    protected channel: string | number;  // Ideally, we want everything to be a number. But this might not be possible in some cases
 
     constructor(protected cereus: Cereus) {
 
+    }
+
+    public async initialize() {
+        return;
     }
 
     /**
