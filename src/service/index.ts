@@ -175,8 +175,8 @@ export class ServiceHandler {
             // Cleanup: This should become just one observable that's being listened and pushed to.
             Logger.info("Events", "Attempting to listen for events...");
             service.events.subscribe(
-                async (scope: CactusScope) => {
-                    const responses = await cereus.handle(scope);
+                async (context: CactusContext) => {
+                    const responses = await cereus.handle(context);
                     if (!responses) {
                         return;
                     }
@@ -192,7 +192,7 @@ export class ServiceHandler {
         }
     }
 
-    public async sendServiceMessage(channel: string, service: string, message: CactusScope) {
+    public async sendServiceMessage(channel: string, service: string, message: CactusContext) {
         this.channels[channel].filter(e => e.serviceName.toLowerCase() === service.toLowerCase())
             .forEach(async channelService => await channelService.sendMessage(message));
     }

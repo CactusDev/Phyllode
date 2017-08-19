@@ -13,7 +13,7 @@ const messagePacket = [
     "456"
 ]
 
-const convertedMessage: CactusScope = {
+const convertedMessage: CactusContext = {
     packet: {
         "type": "message",
         text: [{
@@ -28,7 +28,7 @@ const convertedMessage: CactusScope = {
     service: "Discord"
 }
 
-const multiEmoji: CactusScope = {
+const multiEmoji: CactusContext = {
     packet: {
         "type": "message",
         text: [
@@ -44,7 +44,7 @@ const multiEmoji: CactusScope = {
     service: "Discord"
 }
 
-const urlSegment: CactusScope = {
+const urlSegment: CactusContext = {
     channel: "456",
     packet: {
         action: false,
@@ -58,7 +58,7 @@ const urlSegment: CactusScope = {
     service: "Discord"
 }
 
-const emojiSegment: CactusScope = {
+const emojiSegment: CactusContext = {
     channel: "456",
     packet: {
         action: false,
@@ -72,7 +72,7 @@ const emojiSegment: CactusScope = {
     service: "Discord"
 }
 
-const eventPacket: CactusScope = {
+const eventPacket: CactusContext = {
     packet: {
         type: "event",
         kind: {
@@ -87,7 +87,7 @@ const eventPacket: CactusScope = {
     channel: undefined,
 }
 
-const nullConvertedMessage: CactusScope = {
+const nullConvertedMessage: CactusContext = {
     packet: {
         "type": "message",
         text: [null],

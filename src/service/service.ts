@@ -57,10 +57,10 @@ export abstract class Service {
     /**
      * Events from any sort of service event system
      *
-     * @type {Subject<CactusScope>}
+     * @type {Subject<CactusContext>}
      * @memberof Service
      */
-    public events: Subject<CactusScope> = new Subject();
+    public events: Subject<CactusContext> = new Subject();
 
 
     /**
@@ -111,27 +111,27 @@ export abstract class Service {
      * Convert a service packet into a Cactus formatted packet
      *
      * @param {*} packet the packet from the service
-     * @returns {Promise<CactusScope>} the packet in the CactusBot format
+     * @returns {Promise<CactusContext>} the packet in the CactusBot format
      * @memberof Service
      */
-    public abstract async convert(packet: any): Promise<CactusScope>;
+    public abstract async convert(packet: any): Promise<CactusContext>;
 
     /**
      * Convert from a CactusPacket back into a service packet
      *
-     * @param {CactusScope} packet the packet to convert
+     * @param {CactusContext} packet the packet to convert
      * @returns {Promise<string>} the service packet
      * @memberof Service
      */
-    public abstract async invert(...packet: CactusScope[]): Promise<string[]>;
+    public abstract async invert(...packet: CactusContext[]): Promise<string[]>;
 
     /**
      * Send a mesasge to the service
      *
-     * @param {CactusScope} message the message to send
+     * @param {CactusContext} message the message to send
      * @memberof Service
      */
-    public abstract async sendMessage(message: CactusScope): Promise<void>;
+    public abstract async sendMessage(message: CactusContext): Promise<void>;
 
     /**
      * Convert from the service role to the Cactus version of the role.

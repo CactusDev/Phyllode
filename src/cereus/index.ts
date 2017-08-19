@@ -20,22 +20,22 @@ export class Cereus {
     constructor(protected responseUrl: string) {
     }
 
-    public async parseServiceMessage(scope: CactusScope): Promise<CactusScope> {
-        if (scope.packet.type !== "message") {
-            return scope;
+    public async parseServiceMessage(context: CactusContext): Promise<CactusContext> {
+        if (context.packet.type !== "message") {
+            return context;
         }
-        const components = scope.packet.text;
+        const components = context.packet.text;
         if (!components || components.some(e => !e.data)) {
-            return scope;
+            return context;
         }
 
         // Does this packet-set actually need to be parsed?
         // Packets that don't contain a variable don't need to be parsed twice.
         if (!components.some(e => e.data.includes("%"))) {
-            return scope;
+            return context;
         }
 
-        for (let packet of scope.packet.text) {
+        for (let packet of context.packet.text) {
             // We only care about components that can contain a variable, the text type.
             if (packet.type !== "text") {
                 continue;
@@ -78,19 +78,19 @@ export class Cereus {
                 }
             }
             // Now that we're done, set all the packets to the new ones.
-            (<CactusMessagePacket> scope.packet).text = packets;
+            (<CactusMessagePacket> context.packet).text = packets;
         };
-        return scope;
+        return context;
     }
 
     /**
      * Send a service packet to Cereus, and then give the response back.
      *
-     * @param {CactusScope} packet the packet to send.
-     * @returns {Promise<CactusScope[]>} the response from Cereus
+     * @param {CactusContext} packet the packet to send.
+     * @returns {Promise<CactusContext[]>} the response from Cereus
      * @memberof Cereus
      */
-    public async handle(packet: CactusScope): Promise<CactusScope[]> {
+    public async handle(packet: CactusContext): Promise<CactusContext[]> {
         const response = await axios.get(this.responseUrl, {
             data: JSON.stringify(packet)
         });
@@ -98,7 +98,7 @@ export class Cereus {
             Logger.error("Cereus", "Invalid packet sent: '" + JSON.stringify(packet) + "'");
             return null;
         }
-        let message: CactusScope[];
+        let message: CactusContext[];
         try {
             message = response.data;
         } catch (e) {

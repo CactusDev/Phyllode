@@ -79,7 +79,7 @@ export class TwitchHandler extends Service {
         return true;
     }
 
-    public async convert(packet: any): Promise<CactusScope> {
+    public async convert(packet: any): Promise<CactusContext> {
         const message: any = packet[0];
         const state: any = packet[1];
         const channel: string = packet[2];
@@ -140,7 +140,7 @@ export class TwitchHandler extends Service {
             target = state.username;
         }
 
-        const scope: CactusScope = {
+        const context: CactusContext = {
             packet: {
                 "type": "message",
                 text: finished,
@@ -153,17 +153,17 @@ export class TwitchHandler extends Service {
         };
 
         if (target) {
-            scope.target = target;
+            context.target = target;
         }
 
-        return scope;
+        return context;
     }
 
-    public async invert(...scopes: CactusScope[]): Promise<string[]> {
+    public async invert(...contexts: CactusContext[]): Promise<string[]> {
         let finished: string[] = [];
-        for (let scope of scopes) {
-            if (scope.packet.type === "message") {
-                let packet = (<CactusMessagePacket>scope.packet);
+        for (let context of contexts) {
+            if (context.packet.type === "message") {
+                let packet = (<CactusMessagePacket>context.packet);
                 let messages = packet.text;
                 let chatMessage = "";
 
@@ -193,7 +193,7 @@ export class TwitchHandler extends Service {
         return this.reversedEmojis[name] || `:${name}:`;
     }
 
-    public async sendMessage(message: CactusScope) {
+    public async sendMessage(message: CactusContext) {
         const inverted = await this.invert(message);
         inverted.forEach(packet => {
             if (message.target) {
