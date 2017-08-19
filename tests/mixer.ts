@@ -12,7 +12,7 @@ const mockAdapter = require("axios-mock-adapter");
 const cereus = new Cereus("/response");
 const mixer = new MixerHandler(cereus);
 
-const mixerChatConverted: CactusScope = {
+const mixerChatConverted: CactusContext = {
     packet: {
         type: "message",
         text: [
@@ -30,7 +30,7 @@ const mixerChatConverted: CactusScope = {
     target: undefined  // What in tarnation 2
 }
 
-const mixerChatActionConverted: CactusScope = {
+const mixerChatActionConverted: CactusContext = {
     packet: {
         type: "message",
         text: [
@@ -48,7 +48,7 @@ const mixerChatActionConverted: CactusScope = {
     target: undefined  // What in tarnation 2
 }
 
-const mixerWhisperConverted: CactusScope = {
+const mixerWhisperConverted: CactusContext = {
     packet: {
         type: "message",
         text: [
@@ -111,7 +111,7 @@ const mixerChatPacket = {
     }
 }
 
-const multiEmoji: CactusScope = {
+const multiEmoji: CactusContext = {
     packet: {
         "type": "message",
         text: [
@@ -255,7 +255,7 @@ test("should error when given 0 length mesages", async t => {
 });
 
 test("should convert emoticon to emoji", async t => {
-    t.deepEqual(await mixer.convert(emoticon), <CactusScope>{
+    t.deepEqual(await mixer.convert(emoticon), <CactusContext>{
         packet: {
             type: "message",
             text: [
@@ -275,7 +275,7 @@ test("should convert emoticon to emoji", async t => {
 });
 
 test("should convert inaspacesuit to emoji", async t => {
-    t.deepEqual(await mixer.convert(inASpaceSuit), <CactusScope>{
+    t.deepEqual(await mixer.convert(inASpaceSuit), <CactusContext>{
         packet: {
             type: "message",
             text: [
@@ -295,7 +295,7 @@ test("should convert inaspacesuit to emoji", async t => {
 });
 
 test("should convert link to url", async t => {
-    t.deepEqual(await mixer.convert(link), <CactusScope>{
+    t.deepEqual(await mixer.convert(link), <CactusContext>{
         packet: {
             type: "message",
             text: [
@@ -315,7 +315,7 @@ test("should convert link to url", async t => {
 });
 
 test("should convert tag to tag", async t => {
-    t.deepEqual(await mixer.convert(tag), <CactusScope>{
+    t.deepEqual(await mixer.convert(tag), <CactusContext>{
         packet: {
             type: "message",
             text: [
@@ -334,7 +334,7 @@ test("should convert tag to tag", async t => {
     });
 });
 
-const cereusResponseBase: CactusScope[] = [
+const cereusResponseBase: CactusContext[] = [
     {
         service: "Mixer",
         channel: undefined,

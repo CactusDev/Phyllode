@@ -144,7 +144,7 @@ type Service = string;
 
 type Role = "banned" | "user" | "subscriber" | "moderator" | "owner";
 
-interface CactusScope {
+interface CactusContext {
     packet: CactusPacket;
     channel: Channel;
     user?: User;

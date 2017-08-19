@@ -104,7 +104,7 @@ export class MixerHandler extends Service {
         return true;
     }
 
-    public async convert(packet: any): Promise<CactusScope> {
+    public async convert(packet: any): Promise<CactusContext> {
         if (packet.message) {
             const message = packet.message.message;
             const meta = packet.message.meta;
@@ -147,7 +147,7 @@ export class MixerHandler extends Service {
 
             let role = await this.convertRole(packet.user_roles[0].toLowerCase());
 
-            let scope: CactusScope = {
+            let context: CactusContext = {
                 packet: {
                     type: "message",
                     text: messageComponents,
@@ -160,24 +160,24 @@ export class MixerHandler extends Service {
                 service: this.serviceName
             }
 
-            return scope;
+            return context;
 
         }
         return null;
     }
 
-    public async invert(...scopes: CactusScope[]): Promise<string[]> {
+    public async invert(...contexts: CactusContext[]): Promise<string[]> {
         let results: string[] = [];
 
-        for (let scope of scopes) {
+        for (let context of contexts) {
             let message = "";
 
-            if (scope.packet.type === "message") {
-                if (scope.packet.action) {
+            if (context.packet.type === "message") {
+                if (context.packet.action) {
                     message += "/me ";
                 }
 
-                for (let component of scope.packet.text) {
+                for (let component of context.packet.text) {
                     if (component.type === "emoji") {
                         const emoji = await this.getEmoji(component.data.trim());
                         message += ` ${emoji}`;
@@ -193,19 +193,19 @@ export class MixerHandler extends Service {
         return results;
     }
 
-    public async sendMessage(scope: CactusScope) {
+    public async sendMessage(context: CactusContext) {
         if (!this.chat.isConnected()) {
             throw new Error("Not connected to chat.");
         }
 
-        const finalMessage: string[] = await this.invert(scope);
+        const finalMessage: string[] = await this.invert(context);
         finalMessage.forEach(async msg => {
             let method = "msg"
             let args = []
 
-            if (scope.target) {
+            if (context.target) {
                 method = "whisper";
-                args.push(scope.target);
+                args.push(context.target);
             }
             args.push(msg);
             this.chat.call(method, args);
@@ -259,13 +259,13 @@ export class MixerHandler extends Service {
                     success: data.following
                 }
             };
-            const scope: CactusScope = {
+            const context: CactusContext = {
                 packet: packet,
                 channel: <string>this.channel,
                 user: data.user.username,
                 service: this.serviceName
             };
-            this.events.next(scope);
+            this.events.next(context);
         });
 
         this.carina.subscribe<MixerHostedPacket>(`channel:${id}:hosted`, async data => {
@@ -276,13 +276,13 @@ export class MixerHandler extends Service {
                     success: true
                 }
             };
-            const scope: CactusScope = {
+            const context: CactusContext = {
                 packet: packet,
                 channel: <string>this.channel,
                 user: data.hoster.token,
                 service: this.serviceName
             };
-            this.events.next(scope);
+            this.events.next(context);
         });
 
         this.carina.subscribe<MixerHostedPacket>(`channel:${id}:unhosted`, async data => {
@@ -293,13 +293,13 @@ export class MixerHandler extends Service {
                     success: false
                 }
             };
-            const scope: CactusScope = {
+            const context: CactusContext = {
                 packet: packet,
                 channel: <string>this.channel,
                 user: data.hoster.token,
                 service: this.serviceName
             };
-            this.events.next(scope);
+            this.events.next(context);
         });
 
         this.carina.subscribe<MixerSubscribePacket>(`channel:${id}:subscribed`, async data => {
@@ -310,13 +310,13 @@ export class MixerHandler extends Service {
                     streak: 1
                 }
             };
-            const scope: CactusScope = {
+            const context: CactusContext = {
                 packet: packet,
                 channel: <string>this.channel,
                 user: data.username,
                 service: this.serviceName
             };
-            this.events.next(scope);
+            this.events.next(context);
         });
 
         this.carina.subscribe<MixerResubscribePacket>(`channel:${id}:resubShared`, async data => {
@@ -327,13 +327,13 @@ export class MixerHandler extends Service {
                     streak: data.totalMonths
                 }
             };
-            const scope: CactusScope = {
+            const context: CactusContext = {
                 packet: packet,
                 channel: <string>this.channel,
                 user: data.username,
                 service: this.serviceName
             };
-            this.events.next(scope);
+            this.events.next(context);
         });
     }
 }

@@ -75,7 +75,7 @@ const twitchWhisperPacket: any = [
     }
 ]
 
-const twitchWhisperConverted: CactusScope = {
+const twitchWhisperConverted: CactusContext = {
     packet: {
         type: "message",
         text: [
@@ -93,7 +93,7 @@ const twitchWhisperConverted: CactusScope = {
     channel: undefined
 };
 
-const twitchChatActionConverted: CactusScope = {
+const twitchChatActionConverted: CactusContext = {
     packet: {
         type: "message",
         text: [
@@ -111,7 +111,7 @@ const twitchChatActionConverted: CactusScope = {
     target: "CactusBotDev"
 }
 
-const multiEmoji: CactusScope = {
+const multiEmoji: CactusContext = {
     packet: {
         "type": "message",
         text: [
@@ -193,7 +193,7 @@ test("can only 'connect' once", async t => {
     t.false(await twitch.connect("abc"));
 });
 
-const cereusResponseBase: CactusScope[] = [
+const cereusResponseBase: CactusContext[] = [
     {
         service: "Twitch",
         channel: undefined,

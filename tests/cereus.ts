@@ -7,7 +7,7 @@ const mockAdapter = require("axios-mock-adapter");
 const cereus = new Cereus("response");
 let mockAPI = new mockAdapter(axios);
 
-const packet: CactusScope = {
+const packet: CactusContext = {
     packet: {
         type: "message",
         text: [
@@ -25,7 +25,7 @@ const packet: CactusScope = {
     target: "CactusBotDev"
 }
 
-const argPacket: CactusScope = {
+const argPacket: CactusContext = {
     packet: {
         type: "message",
         text: [
@@ -47,7 +47,7 @@ const argPacket: CactusScope = {
     target: "CactusBotDev"
 }
 
-const argPacketFinished: CactusScope = {
+const argPacketFinished: CactusContext = {
     packet: {
         type: "message",
         text: [
@@ -69,7 +69,7 @@ const argPacketFinished: CactusScope = {
     target: "CactusBotDev"
 }
 
-const noTextPacket: CactusScope = {
+const noTextPacket: CactusContext = {
     packet: {
         type: "message",
         text: [],
@@ -82,7 +82,7 @@ const noTextPacket: CactusScope = {
     target: "CactusBotDev"
 }
 
-const emptyDataPacket: CactusScope = {
+const emptyDataPacket: CactusContext = {
     packet: {
         type: "message",
         text: [
@@ -100,7 +100,7 @@ const emptyDataPacket: CactusScope = {
     target: "CactusBotDev"
 }
 
-const eventPacket: CactusScope = {
+const eventPacket: CactusContext = {
     packet: {
         type: "event",
         kind: {
