@@ -23,6 +23,12 @@ export class Config {
         cereus: {
             url: string;
             response_endpoint: string;
-        }
+        };
+        redis: {
+            db: number;
+            host: string;
+            port: number;
+            password: string;
+        };
     }
 }

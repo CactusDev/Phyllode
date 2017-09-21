@@ -15,3 +15,8 @@ core:
   cereus:
     url: "http://localhost:5023"
     response_endpoint: "response"
+  redis:
+    db: 0
+    host: "localhost"
+    port: 5439
+    password: ""

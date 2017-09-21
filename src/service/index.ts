@@ -6,6 +6,7 @@ import { Config } from "../config";
 import { Logger } from "../logger";
 
 import { MixerAuthenticator, AuthenticationData } from "./services/mixer/authentication";
+import { RedisController } from "cactus-stl";
 
 export const mixerAuthenticator: MixerAuthenticator = new MixerAuthenticator();
 
@@ -66,7 +67,7 @@ export class ServiceHandler {
 
     private keysInRotation: {[account: string]: string} = {};
 
-    constructor(private config: Config) {
+    constructor(private config: Config, private redis: RedisController) {
         mixerAuthenticator.setup(this.config.core.oauth.mixer.clientId,
                                  this.config.core.oauth.mixer.clientSecret,
                                  this.config.core.oauth.mixer.redirectURI);
@@ -110,6 +111,14 @@ export class ServiceHandler {
         } else {
             this.channels[channel.channel].push(service);
         }
+
+        // Let Redis know that we're connected to this channel.
+        const status = {
+            connected: true,
+            reconnecting: false,
+            botUser: channel.botUser
+        };
+        this.redis.set(`status:${name}:${channel.channel}`, JSON.stringify(status));
         Logger.info("Services", `Connected to channel ${channel.channel} on service ${service.serviceName}.`);
         return ConnectionTristate.TRUE;
     }
@@ -137,7 +146,22 @@ export class ServiceHandler {
                     Logger.error("Services", "Unable to disconnect from Mixer.");
                     continue;
                 }
+                // After disconnect, update Redis.
+                let status = {
+                    connected: false,
+                    reconnecting: true,
+                    botUser: user
+                };
+                this.redis.set(`status:${name}:${connected.channel}`, JSON.stringify(status));
+
                 await connected.reauthenticate(data);
+
+                status = {
+                    connected: true,
+                    reconnecting: false,
+                    botUser: user
+                };
+                this.redis.set(`status:${name}:${connected.channel}`, JSON.stringify(status));
             }
         });
 
@@ -146,13 +170,14 @@ export class ServiceHandler {
             if (channel.service === "Twitch" && !this.keysInRotation[channel.botUser]) {
                 this.keysInRotation[channel.botUser] = authInfo.twitch;
             }
+
             const name: string = channel.service.toLowerCase();
-            // This line is the reason I don't sleep at night.
             const service: Service = new (services[name].bind(this, cereus, this.config));
             // Make sure it's a valid service
             if (!service) {
                 throw new Error("Attempted to use service that doesn't exist.");
             }
+
             // Connect to the channel
             const connected = await this.connectChannel(channel, service, name);
             if (connected === ConnectionTristate.FAILED) {
@@ -166,6 +191,7 @@ export class ServiceHandler {
             if (!this.connected[name]) {
                 this.connected[name] = {};
             }
+
             if (!this.connected[name][channel.botUser]) {
                 this.connected[name][channel.botUser] = [];
             }
@@ -201,6 +227,13 @@ export class ServiceHandler {
         Object.keys(this.channels).forEach(async channel => {
             this.channels[channel].forEach(async service => {
                 await service.disconnect();
+                // After disconnect, update Redis.
+                const status = {
+                    connected: false,
+                    reconnecting: false,
+                    botUser: service.channel
+                };
+                this.redis.set(`status:${name}:${service.channel}`, JSON.stringify(status));
             });
         });
     }
