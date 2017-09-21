@@ -53,6 +53,7 @@ export abstract class Service {
     public serviceName: string;
     public registered: boolean;
     public singleInstance: boolean;
+    public channel: string | number;  // Ideally, we want everything to be a number. But this might not be possible in some cases
 
     /**
      * Events from any sort of service event system
@@ -62,7 +63,6 @@ export abstract class Service {
      */
     public events: Subject<CactusContext> = new Subject();
 
-
     /**
      * The current status of the service handler.
      *
@@ -70,13 +70,12 @@ export abstract class Service {
      * @memberof Service
      */
     protected status: ServiceStatus = ServiceStatus.CONNECTING;
-    protected channel: string | number;  // Ideally, we want everything to be a number. But this might not be possible in some cases
 
     constructor(protected cereus: Cereus) {
 
     }
 
-    public async initialize() {
+    public async initialize(): Promise<void> {
         return;
     }
 

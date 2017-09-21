@@ -18,19 +18,19 @@ const injector = ReflectiveInjector.resolveAndCreate([
         useValue: nconf
     },
     {
-        provide: ServiceHandler,
-        deps: [Config],
-        useFactory: (config: Config) => {
-            const serviceHandler = new ServiceHandler(config);
-            return serviceHandler;
-        }
-    },
-    {
         provide: RedisController,
         deps: [Config],
         useFactory: (config: Config) => {
             const redisController = new RedisController(config.core.redis);
             return redisController;
+        }
+    },
+    {
+        provide: ServiceHandler,
+        deps: [Config, RedisController],
+        useFactory: (config: Config, redis: RedisController) => {
+            const serviceHandler = new ServiceHandler(config, redis);
+            return serviceHandler;
         }
     },
     Core
