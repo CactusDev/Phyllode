@@ -10,6 +10,7 @@ import { ServiceHandler } from "./service";
 import * as nconf from "config";
 import { Config } from "./config";
 
+import { RedisController } from "cactus-stl";
 
 const injector = ReflectiveInjector.resolveAndCreate([
     {
@@ -22,6 +23,14 @@ const injector = ReflectiveInjector.resolveAndCreate([
         useFactory: (config: Config) => {
             const serviceHandler = new ServiceHandler(config);
             return serviceHandler;
+        }
+    },
+    {
+        provide: RedisController,
+        deps: [Config],
+        useFactory: (config: Config) => {
+            const redisController = new RedisController(config.core.redis);
+            return redisController;
         }
     },
     Core
