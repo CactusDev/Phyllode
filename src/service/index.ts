@@ -64,6 +64,7 @@ export class ServiceHandler {
 
     private channels: Channels = {};
     private connected: ConnectedServices = {};
+    private cereus: Cereus;
 
     private keysInRotation: {[account: string]: string} = {};
 
@@ -77,8 +78,9 @@ export class ServiceHandler {
      * Connect to a new channel.
      *
      * @param channel the channel to connect to.
-     * @param service the type of service to be handled.
-     * @returns {Promise<boolean>} if the connection was successful.
+     * @param service an instance of the platform handler to be used
+     * @param name    the name of the service the user is on
+     * @returns {Promise<ConnectionTristate>} the status of the connection
      */
     public async connectChannel(channel: IChannel, service: Service, name: string): Promise<ConnectionTristate> {
         service.setStatus(ServiceStatus.CONNECTING);
@@ -123,6 +125,20 @@ export class ServiceHandler {
         return ConnectionTristate.TRUE;
     }
 
+    public async watchForNewChannels() {
+        await this.redis.subscribe("aerophyl:channel:add", async (msg: string) => {
+            const message: IChannel = JSON.parse(msg);
+
+            if (!message) {
+                Logger.error("Core", "Got nothing from Redis?");
+                return;
+            }
+
+            const service: Service = new (services[message.service].bind(this, this.cereus, this.config));
+            this.connectChannel(message, service, message.service);
+        });
+    }
+
     /**
      * Connect all the channels to their respective services
      *
@@ -131,6 +147,7 @@ export class ServiceHandler {
     public async connectAllChannels() {
         await this.loadAllChannels();
         const cereus = new Cereus(`${this.config.core.cereus.url}/${this.config.core.cereus.response_endpoint}`);
+        this.cereus = cereus;
         // TODO: this will become a call to the api getting the auth information for whatever account is being used for the current
         //       authenticating account.
         const authInfo: {[service: string]: string} = this.config.core.authentication.cactusbotdev;

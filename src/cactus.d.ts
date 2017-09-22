@@ -153,6 +153,12 @@ interface CactusContext {
     service: Service;
 }
 
+interface CactusAddChannel {
+    channel: string;
+    botName: string;
+    service: Service;
+}
+
 interface Emoji {
     standard: string;
     alternatives?: string[];
