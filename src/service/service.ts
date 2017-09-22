@@ -35,7 +35,7 @@ export enum ServiceStatus {
 }
 
 /**
- * Base services that other services implement
+ * Base service that other services implement
  *
  * @export
  * @interface Service

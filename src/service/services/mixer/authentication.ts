@@ -59,7 +59,7 @@ export class MixerAuthenticator extends EventEmitter {
     }
 
     private async request(requestType: "refresh_token" | "authorization_code", extraData: Data): Promise<AuthenticationData> {
-        let request = `${this.mixerURL}/oauth/token`;
+        const request = `${this.mixerURL}/oauth/token`;
         extraData["client_id"] = this.headers["client_id"];
         extraData["client_secret"] = this.headers["client_secret"];
         extraData["grant_type"] = requestType;

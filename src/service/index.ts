@@ -122,6 +122,13 @@ export class ServiceHandler {
         await this.loadAllChannels();
         Logger.info("Services", "Done! Starting connections...");
 
+        mixerAuthenticator.on("mixer:reauthenticate", (data: AuthenticationData, account: string) => {
+            Logger.info("Services", `Mixer: Reauthenticating ${account}...`);
+            Object.keys(this.connected["mixer"]).forEach(channel =>
+                this.connected["mixer"][channel].forEach(async service =>
+                    await service.reauthenticate(data)));
+        });
+
         // TODO: Needs the api
         this.keysInRotation["25873"] = this.config.core.authentication.cactusbotdev.mixer;
 
