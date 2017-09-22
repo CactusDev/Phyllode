@@ -170,3 +170,4 @@ interface Emojis {
 interface ReverseEmojis {
     [name: string]: string;
 }
+
