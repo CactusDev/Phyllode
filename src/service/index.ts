@@ -8,8 +8,6 @@ import { Logger } from "../logger";
 import { MixerAuthenticator, AuthenticationData } from "./services/mixer/authentication";
 import { RedisController } from "cactus-stl";
 
-export const mixerAuthenticator: MixerAuthenticator = new MixerAuthenticator();
-
 interface ServiceMapping {
     [name: string]: typeof Service
 }
@@ -54,20 +52,23 @@ export enum ConnectionTristate {
 export class ServiceHandler {
 
     private connected: ConnectedServices = {};
+    private mixerAuthenticator: MixerAuthenticator;
+    private cereus: Cereus;
 
     private keysInRotation: {[account: string]: string} = {};
 
     constructor(private config: Config, private redis: RedisController) {
-        mixerAuthenticator.setup(this.config.core.oauth.mixer.clientId,
-                                 this.config.core.oauth.mixer.clientSecret,
-                                 this.config.core.oauth.mixer.redirectURI);
+        this.mixerAuthenticator = new MixerAuthenticator(this.config.core.oauth.mixer.clientId,
+                                                    this.config.core.oauth.mixer.clientSecret,
+                                                    this.config.core.oauth.mixer.redirectURI);
     }
 
     /**
      * Connect to a given channel on a service
      *
-     * @param {string} channel The name of the channel to connect to
-     * @param {string} service the service to use as the agent
+     * @param {string} channel        the name of the channel to connect to
+     * @param {string|number} botId   the id of the bot that's joining the channel
+     * @param {string} serviceName    the name of the service that's begin connected to
      */
     public async connectToChannel(channel: string, botId: string | number, serviceName: string) {
         // Find OAuth for this botId
@@ -78,7 +79,7 @@ export class ServiceHandler {
         }
 
         serviceName = serviceName.toLowerCase();
-        const service: Service = new (services[serviceName].bind(this));
+        const service: Service = new(services[serviceName].bind(this, this.cereus));
         
         // Initialize the service
         Logger.info("services", `Initializing instance for ${channel}...`);
@@ -118,29 +119,31 @@ export class ServiceHandler {
     }
 
     public async connectAllChannels() {
+        this.cereus = new Cereus(this.config.core.cereus.url + "/" +
+            this.config.core.cereus.response_endpoint);
+
         Logger.info("Services", "Loading channels...");
         await this.loadAllChannels();
         Logger.info("Services", "Done! Starting connections...");
 
-        mixerAuthenticator.on("mixer:reauthenticate", (data: AuthenticationData, account: string) => {
+        this.mixerAuthenticator.on("mixer:reauthenticate", (data: AuthenticationData, account: string) => {
             Logger.info("Services", `Mixer: Reauthenticating ${account}...`);
             Object.keys(this.connected["mixer"]).forEach(channel =>
                 this.connected["mixer"][channel].forEach(async service =>
                     await service.reauthenticate(data)));
+            Logger.info("Services", `Mixer: Finished reauthentication for ${account}!`);
         });
 
         // TODO: Needs the api
         this.keysInRotation["25873"] = this.config.core.authentication.cactusbotdev.mixer;
 
-        channels.forEach(async channel => {
-            await this.connectToChannel(channel.channel, channel.botUser, channel.service);
-        });
+        channels.forEach(async channel => await this.connectToChannel(channel.channel, channel.botUser, channel.service));
     }
 
     /**
      * Broadcast a message to all connected channels.
      *
-     * @param {string} mesasge the message to broadcast
+     * @param {string} mesasge  the message to broadcast
      * @param {string?} service the service that should be broadcasted to
      */
     public async broadcastMessage(message: CactusContext, service?: string) {
@@ -149,12 +152,24 @@ export class ServiceHandler {
                 this.connected[serviceName][channel].forEach(async service => await service.sendMessage(message))));
     }
 
-    public async sendMessageToChannel(channel: string, service: string, message: CactusContext) {
+    /**
+     * Send a message to a channel
+     *
+     * @param {string}         channel the channel to send the message to
+     * @param {CactusContext}  message the message to send
+     * @param {string?}        service the service to send the mesage to
+     */
+    public async sendMessageToChannel(channel: string, message: CactusContext, service?: string) {
         Object.keys(this.connected).filter(serviceName => serviceName == service).forEach(async serviceName =>
             Object.keys(this.connected[serviceName]).filter(ch => ch == channel).forEach(async channel =>
                 this.connected[serviceName][channel].forEach(async service => await service.sendMessage(message))));
     }
 
+    /**
+     * Disconnect from all connected channels.
+     *
+     * @param {string?} reason the reason that the disconnection is happening
+     */
     public async disconnectAllChannels(reason?: string) {
         Object.keys(this.connected).forEach(channel => {
             Object.keys(this.connected[channel]).forEach(serviceName => 

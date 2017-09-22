@@ -34,7 +34,9 @@ export class MixerAuthenticator extends EventEmitter {
      * @param {string} redirect the redirect URI for the OAuth client
      * @memberof MixerAuthenticator
      */
-    public async setup(clientId: string, clientSecret: string, redirect: string) {
+    constructor(clientId: string, clientSecret: string, redirect: string) {
+        super();
+
         this.headers["client_id"] = clientId;
         this.headers["client_secret"] = clientSecret;
         this.headers["redirect_uri"] = redirect;

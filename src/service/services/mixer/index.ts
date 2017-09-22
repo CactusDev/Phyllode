@@ -19,6 +19,13 @@ import { MixerAPI } from "./api";
 
 type Role = "user" | "moderator" | "owner" | "subscriber" | "banned";
 
+const TYPE_MAP: any = {
+    emoticon: "emoji",
+    inaspacesuit: "emoji",
+    link: "url",
+    tag: "tag"
+}
+
 /**
  * Handle the Mixer service.
  *
@@ -105,65 +112,45 @@ export class MixerHandler extends Service {
     }
 
     public async convert(packet: any): Promise<CactusContext> {
-        if (packet.message) {
-            const message = packet.message.message;
-            const meta = packet.message.meta;
-
-            if (message.length < 1) {
-                // This would be bad, and a Mixer bug.
-                throw new Error("No message");
-            }
-            let messageComponents: Component[] = [];
-
-            // Parse each piece of the message
-            message.forEach(async (msg: MixerChatMessage) => {
-                const trimmed = await eatSpaces(msg.text);
-                let type: "text" | "emoji" | "tag" | "url" = "text";
-
-                switch (msg.type) {
-                    case "emoticon": {
-                        type = "emoji";
-                        break;
-                    }
-                    case "inaspacesuit": {
-                        type = "emoji";
-                        break;
-                    }
-                    case "link": {
-                        type = "url";
-                        break;
-                    }
-                    case "tag": {
-                        type = "tag";
-                        break;
-                    }
-                }
-
-                messageComponents.push({
-                    type: type,
-                    data: trimmed
-                });
-            });
-
-            let role = await this.convertRole(packet.user_roles[0].toLowerCase());
-
-            let context: CactusContext = {
-                packet: {
-                    type: "message",
-                    text: messageComponents,
-                    action: !!meta.me
-                },
-                channel: <string>this.channel,
-                user: packet.user_name,
-                role: role,
-                target: packet.target,
-                service: this.serviceName
-            }
-
-            return context;
-
+        if (!packet.message) {
+            return null;
         }
-        return null;
+        const message = packet.message.message;
+        const meta = packet.message.meta;
+
+        if (message.length < 1) {
+            // This would be bad, and a Mixer bug.
+            throw new Error("No message");
+        }
+        let messageComponents: Component[] = [];
+
+        // Parse each piece of the message
+        message.forEach(async (msg: MixerChatMessage) => {
+            const trimmed = await eatSpaces(msg.text);
+            let type: "text" | "emoji" | "tag" | "url" | "text" = TYPE_MAP[msg.type];
+
+            messageComponents.push({
+                type: type,
+                data: trimmed
+            });
+        });
+
+        let role = await this.convertRole(packet.user_roles[0].toLowerCase());
+
+        let context: CactusContext = {
+            packet: {
+                type: "message",
+                text: messageComponents,
+                action: !!meta.me
+            },
+            channel: <string>this.channel,
+            user: packet.user_name,
+            role: role,
+            target: packet.target,
+            service: this.serviceName
+        }
+
+        return context;
     }
 
     public async invert(...contexts: CactusContext[]): Promise<string[]> {
@@ -226,16 +213,16 @@ export class MixerHandler extends Service {
     public async reauthenticate(data: AuthenticationData) {
         const disconnected = await this.disconnect();
         if (!disconnected) {
-            Logger.error("Services", "Unable to disconnect from service 'Mixer'.");
+            Logger.error("Services", "Mixer: Unable to disconnect");
             return;
         }
         const connected = await this.connect(data.access_token);
         const authenticated = await this.authenticate(this.channel, this.botId);
         if (!connected || !authenticated) {
-            Logger.error("Services", "Unable to connected to channel " + this.channel);
+            Logger.error("Services", `Mixer: Unable to reconnect to ${this.channel}`);
             return;
         }
-        Logger.error("Services", "Reconnected to channel " + this.channel);
+        Logger.error("Services", `Reconnected to channel ${this.channel}`);
     }
 
     public async getEmoji(name: string): Promise<string> {

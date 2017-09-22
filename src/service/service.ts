@@ -190,22 +190,14 @@ export abstract class Service {
     protected reverseEmojis(emojis: Emojis): ReverseEmojis {
         let reversed: ReverseEmojis = {};
 
-        for (let k of Object.keys(emojis)) {
-            const v = emojis[k];
-            reversed[v.standard] = k;
-        }
-
-        for (let k of Object.keys(emojis)) {
-            const v = emojis[k];
-            if (!v.alternatives) {
-                continue;
-            }
-            for (let alt of v.alternatives) {
+        Object.keys(emojis).forEach(k => reversed[emojis[k].standard] = k);
+        Object.keys(emojis).filter(k => !!emojis[k].alternatives).forEach(k => {
+            emojis[k].alternatives.forEach(alt => {
                 if (!reversed[alt]) {
                     reversed[alt] = k;
                 }
-            }
-        }
+            })
+        });
 
         return reversed;
     }
