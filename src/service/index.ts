@@ -96,13 +96,15 @@ export class ServiceHandler {
         service.setStatus(ServiceStatus.READY);
 
         // Now that we're connected, and ready for things, update the status in Redis.
-        const data: ChannelStatus = {
+        const key = `channel:${service.serviceName.toLowerCase()}:${service.channel}`;
+        // After disconnect, update Redis.
+        const status: ChannelStatus = {
             connected: true,
             reconnecting: false,
-            botUser: botId,
+            botUser: service.botId,
             controllerId: "todo"
         };
-        this.redis.set(`channel:${serviceName}:${channel}`, JSON.stringify(data));
+        await this.redis.set(key, JSON.stringify(status));
         // Update internal cache
         if (!this.connected[serviceName]) {
             this.connected[serviceName] = {};
@@ -147,17 +149,19 @@ export class ServiceHandler {
     }
 
     public async disconnectAllChannels(reason?: string) {
-        Object.keys(this.connected).forEach(async channel => {
+        Object.keys(this.connected).forEach(channel => {
             Object.keys(this.connected[channel]).forEach(serviceName => 
                 this.connected[channel][serviceName].forEach(async service => {
                     await service.disconnect();
+                    const key = `channel:${service.serviceName.toLowerCase()}:${service.channel}`;
                     // After disconnect, update Redis.
-                    const status = {
+                    const status: ChannelStatus = {
                         connected: false,
                         reconnecting: false,
-                        botUser: service.channel
+                        botUser: service.botId,
+                        controllerId: "todo"
                     };
-                    this.redis.set(`status:${name}:${service.channel}`, JSON.stringify(status));
+                    await this.redis.set(key, JSON.stringify(status));
                 }));
         });
     }

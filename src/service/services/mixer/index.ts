@@ -39,7 +39,6 @@ export class MixerHandler extends Service {
     private reversedEmojis: ReverseEmojis = {};
 
     private botName = "";
-    private botId = 0;
 
     private carina: Carina;
     private api: MixerAPI;

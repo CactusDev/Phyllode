@@ -54,6 +54,7 @@ export abstract class Service {
     public registered: boolean;
     public singleInstance: boolean;
     public channel: string | number;  // Ideally, we want everything to be a number. But this might not be possible in some cases
+    public botId: number;
 
     /**
      * Events from any sort of service event system
