@@ -66,11 +66,12 @@ export class MixerHandler extends Service {
     public async authenticate(channelRaw: string | number, botId: number): Promise<boolean> {
         this.botId = botId;
 
-        if (<any>channelRaw instanceof String) {
-            this.channel = await this.api.getChannelId(<string>channelRaw);
-        } else {
+        if (+channelRaw) {
             this.channel = <number>channelRaw;
+        } else {
+            this.channel = await this.api.getChannelId(<string>channelRaw);
         }
+
         await this.setupCarinaEvents(this.channel);
 
         this.botName = await this.api.getCurrentUserName(this.headers);

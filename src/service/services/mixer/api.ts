@@ -1,5 +1,6 @@
 
 import { default as axios } from "axios";
+import { Logger } from "../../../logger";
 
 export interface Chats {
     authkey: string;
@@ -45,7 +46,14 @@ export class MixerAPI {
     }
 
     public async getChats(channel: number, headers: any): Promise<Chats> {
-        const result = await axios.get(`${this.baseURL}/chats/${channel}`, {headers: headers});
+        let result = {status: 201, data: ""};
+
+        try {
+            result = await axios.get(`${this.baseURL}/chats/${channel}`, {headers: headers});
+        } catch (e) {
+            return null;
+        }
+
         if (result.status !== 200) {
             // This is bad
             return null;

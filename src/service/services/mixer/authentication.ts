@@ -64,10 +64,14 @@ export class MixerAuthenticator extends EventEmitter {
         extraData["client_secret"] = this.headers["client_secret"];
         extraData["grant_type"] = requestType;
 
-        const result = await axios.post(request, extraData)
-        if (result.status !== 200) {
-            throw new Error("Request for Mixer authentication was NON-200!");
+        try {
+            const result = await axios.post(request, extraData);
+            if (result.status !== 200) {
+                throw new Error("Request for Mixer authentication was NON-200!");
+            }
+            return result.data;
+        } catch (e) {
+            console.error(e);
         }
-        return result.data;
     }
 }

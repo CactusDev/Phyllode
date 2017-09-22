@@ -82,11 +82,13 @@ export class ServiceHandler {
      */
     public async connectChannel(channel: IChannel, service: Service, name: string): Promise<ConnectionTristate> {
         service.setStatus(ServiceStatus.CONNECTING);
+        await service.initialize();
         const authInfo: { [service: string]: string } = this.config.core.authentication.cactusbotdev;
 
         if (!this.keysInRotation[channel.botUser]) {
             if (name === "mixer") {
-                await mixerAuthenticator.refreshToken(authInfo.mixer, channel.botUser.toString());
+                //await mixerAuthenticator.refreshToken(authInfo.mixer, channel.botUser.toString());
+                this.keysInRotation[channel.botUser.toString()] = authInfo.mixer;
             } else if (name === "discord") {
                 this.keysInRotation[channel.botUser.toString()] = this.config.core.oauth.discord.auth;
             }
