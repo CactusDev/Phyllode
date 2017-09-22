@@ -119,8 +119,10 @@ export class ServiceHandler {
     }
 
     public async connectAllChannels() {
+        Logger.info("cereus", "Creating Cereus instance...");
         this.cereus = new Cereus(this.config.core.cereus.url + "/" +
             this.config.core.cereus.response_endpoint);
+        Logger.info("cereus", "Created.");
 
         Logger.info("Services", "Loading channels...");
         await this.loadAllChannels();

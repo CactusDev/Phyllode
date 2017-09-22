@@ -91,23 +91,13 @@ export class Cereus {
      * @memberof Cereus
      */
     public async handle(packet: CactusContext): Promise<CactusContext[]> {
-        const response = await axios.get(this.responseUrl, {
-            data: JSON.stringify(packet)
-        });
+        const data = JSON.stringify(packet);
+        const response = await axios.get(this.responseUrl, { data });
         if (response.status === 404) {
             Logger.error("Cereus", "Invalid packet sent: '" + JSON.stringify(packet) + "'");
             return null;
         }
-        let message: CactusContext[];
-        try {
-            message = response.data;
-        } catch (e) {
-            Logger.error("Cereus", `Invalid JSON`);
-            return null;
-        }
-        if (!message || message.length < 1) {
-            return null;
-        }
-        return message;
+        const message: CactusContext[] = !!response.data ? response.data : null;
+        return !message || message.length ? null : message;
     }
 }

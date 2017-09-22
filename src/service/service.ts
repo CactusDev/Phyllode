@@ -191,13 +191,8 @@ export abstract class Service {
         let reversed: ReverseEmojis = {};
 
         Object.keys(emojis).forEach(k => reversed[emojis[k].standard] = k);
-        Object.keys(emojis).filter(k => !!emojis[k].alternatives).forEach(k => {
-            emojis[k].alternatives.forEach(alt => {
-                if (!reversed[alt]) {
-                    reversed[alt] = k;
-                }
-            })
-        });
+        Object.keys(emojis).filter(k => !!emojis[k].alternatives).forEach(k =>
+            emojis[k].alternatives.filter(alt => !!reversed[alt]).forEach(alt => reversed[alt] = k));
 
         return reversed;
     }
