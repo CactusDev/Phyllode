@@ -34,7 +34,9 @@ export class MixerAuthenticator extends EventEmitter {
      * @param {string} redirect the redirect URI for the OAuth client
      * @memberof MixerAuthenticator
      */
-    public async setup(clientId: string, clientSecret: string, redirect: string) {
+    constructor(clientId: string, clientSecret: string, redirect: string) {
+        super();
+
         this.headers["client_id"] = clientId;
         this.headers["client_secret"] = clientSecret;
         this.headers["redirect_uri"] = redirect;
@@ -59,15 +61,19 @@ export class MixerAuthenticator extends EventEmitter {
     }
 
     private async request(requestType: "refresh_token" | "authorization_code", extraData: Data): Promise<AuthenticationData> {
-        let request = `${this.mixerURL}/oauth/token`;
+        const request = `${this.mixerURL}/oauth/token`;
         extraData["client_id"] = this.headers["client_id"];
         extraData["client_secret"] = this.headers["client_secret"];
         extraData["grant_type"] = requestType;
 
-        const result = await axios.post(request, extraData)
-        if (result.status !== 200) {
-            throw new Error("Request for Mixer authentication was NON-200!");
+        try {
+            const result = await axios.post(request, extraData);
+            if (result.status !== 200) {
+                throw new Error("Request for Mixer authentication was NON-200!");
+            }
+            return result.data;
+        } catch (e) {
+            console.error(e);
         }
-        return result.data;
     }
 }

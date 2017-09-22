@@ -153,12 +153,6 @@ interface CactusContext {
     service: Service;
 }
 
-interface CactusAddChannel {
-    channel: string;
-    botName: string;
-    service: Service;
-}
-
 interface Emoji {
     standard: string;
     alternatives?: string[];
@@ -176,3 +170,4 @@ interface Emojis {
 interface ReverseEmojis {
     [name: string]: string;
 }
+

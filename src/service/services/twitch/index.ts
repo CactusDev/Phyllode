@@ -15,9 +15,7 @@ const isUrl = require("is-url");
 export class TwitchHandler extends Service {
 
     private instance: any;
-
     private oauth = "";
-
     private reversedEmojis: ReverseEmojis = {};
 
     constructor(protected cereus: Cereus) {
@@ -44,7 +42,7 @@ export class TwitchHandler extends Service {
             },
             identity: {
                 username: botId,
-                password: `oauth:${this.oauth}`
+                password: `oauth:${this.oauth.replace("oauth:", "")}`
             },
             channels: [channel]  // TODO: See the above todo.
         }
@@ -67,10 +65,9 @@ export class TwitchHandler extends Service {
             // Now that we know it's not us, then we can start parsing.
             const converted = await this.convert([message, state, fromChannel]);
             const responses = await this.cereus.handle(await this.cereus.parseServiceMessage(converted));
-            if (!responses) {
-                return;
+            if (responses) {
+                responses.forEach(async response => await this.sendMessage(response));
             }
-            responses.forEach(async response => await this.sendMessage(response));
         });
         return true;
     }
@@ -177,8 +174,6 @@ export class TwitchHandler extends Service {
                             const emoji = await this.getEmoji(msg.data.trim());
                             chatMessage += ` ${emoji}`;
                         } else {
-                            // HACK: Only kind of a hack, but for some reason all the ACTIONs contain this.
-                            //       Can the replace be removed?
                             chatMessage += ` ${msg.data.replace("\u0001", "")}`;
                         }
                     }
