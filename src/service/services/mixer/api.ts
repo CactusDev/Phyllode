@@ -46,13 +46,7 @@ export class MixerAPI {
     }
 
     public async getChats(channel: number, headers: any): Promise<Chats> {
-        let result = {status: 201, data: ""};
-
-        try {
-            result = await axios.get(`${this.baseURL}/chats/${channel}`, {headers: headers});
-        } catch (e) {
-            return null;
-        }
+        const result = await axios.get(`${this.baseURL}/chats/${channel}`, {headers: headers});
 
         if (result.status !== 200) {
             // This is bad

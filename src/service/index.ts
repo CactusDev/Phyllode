@@ -15,7 +15,7 @@ interface ServiceMapping {
 }
 
 interface IChannel {
-    channel: string | number;
+    channel: string;
     service: "Mixer" | "Twitch" | "Discord";
     botUser: string | number;
 }
@@ -28,15 +28,6 @@ const services: ServiceMapping = {
     twitch: TwitchHandler,
     discord: DiscordHandler
 };
-
-/**
- * Channel is a channel on a service that is currently being tracked.
- *
- * @interface Channel
- */
-interface Channels {
-    [channelUuid: string]: Service[]
-}
 
 interface ConnectedServices {
     [service: string]: {
@@ -62,7 +53,6 @@ export enum ConnectionTristate {
  */
 export class ServiceHandler {
 
-    private channels: Channels = {};
     private connected: ConnectedServices = {};
 
     private keysInRotation: {[account: string]: string} = {};
@@ -74,169 +64,101 @@ export class ServiceHandler {
     }
 
     /**
-     * Connect to a new channel.
+     * Connect to a given channel on a service
      *
-     * @param channel the channel to connect to.
-     * @param service the type of service to be handled.
-     * @returns {Promise<boolean>} if the connection was successful.
+     * @param {string} channel The name of the channel to connect to
+     * @param {string} service the service to use as the agent
      */
-    public async connectChannel(channel: IChannel, service: Service, name: string): Promise<ConnectionTristate> {
-        service.setStatus(ServiceStatus.CONNECTING);
+    public async connectToChannel(channel: string, botId: string | number, serviceName: string) {
+        // Find OAuth for this botId
+        const oauth = this.keysInRotation[botId];
+        if (!oauth) {
+            // TODO: Get the auth. Needs the API
+            console.log("Can't get keys");
+        }
+
+        serviceName = serviceName.toLowerCase();
+        const service: Service = new (services[serviceName].bind(this));
+        
+        // Initialize the service
+        Logger.info("services", `Initializing instance for ${channel}...`);
         await service.initialize();
-        const authInfo: { [service: string]: string } = this.config.core.authentication.cactusbotdev;
-
-        if (!this.keysInRotation[channel.botUser]) {
-            if (name === "mixer") {
-                //await mixerAuthenticator.refreshToken(authInfo.mixer, channel.botUser.toString());
-                this.keysInRotation[channel.botUser.toString()] = authInfo.mixer;
-            } else if (name === "discord") {
-                this.keysInRotation[channel.botUser.toString()] = this.config.core.oauth.discord.auth;
-            }
-            await new Promise<any>((resolve, reject) => setTimeout(() => resolve(), 100));
-        }
-        // Attempt to connect to the service
-        const connected = await service.connect(this.keysInRotation[channel.botUser.toString()]);
-        if (!connected) {
-            return ConnectionTristate.FALSE;
-        }
         service.setStatus(ServiceStatus.AUTHENTICATING);
+        
+        // Connect to the service
+        Logger.info("services", `Connecting instance for ${channel}...`);
+        await service.connect(oauth);
+        service.setStatus(ServiceStatus.CONNECTING);
 
-        // Attempt to authenticate
-        const authenticated = await service.authenticate(channel.channel, channel.botUser);
-        if (!authenticated) {
-            return ConnectionTristate.FAILED;
-        }
+        // Authenticate to the service
+        Logger.info("services", `Authenticating instance for ${channel}...`);
+        await service.authenticate(channel, botId);
         service.setStatus(ServiceStatus.READY);
 
-        if (!this.channels[channel.channel]) {
-            this.channels[channel.channel] = [service];
-        } else {
-            this.channels[channel.channel].push(service);
-        }
-
-        // Let Redis know that we're connected to this channel.
-        const status = {
+        // Now that we're connected, and ready for things, update the status in Redis.
+        const data: ChannelStatus = {
             connected: true,
             reconnecting: false,
-            botUser: channel.botUser
+            botUser: botId,
+            controllerId: "todo"
         };
-        this.redis.set(`status:${name}:${channel.channel}`, JSON.stringify(status));
-        Logger.info("Services", `Connected to channel ${channel.channel} on service ${service.serviceName}.`);
-        return ConnectionTristate.TRUE;
+        this.redis.set(`channel:${serviceName}:${channel}`, JSON.stringify(data));
+        // Update internal cache
+        if (!this.connected[serviceName]) {
+            this.connected[serviceName] = {};
+        }
+
+        if (this.connected[serviceName][channel]) {
+            this.connected[serviceName][channel].push(service);
+        } else {
+            this.connected[serviceName][channel] = [service];
+        }
+    }
+
+    public async connectAllChannels() {
+        Logger.info("Services", "Loading channels...");
+        await this.loadAllChannels();
+        Logger.info("Services", "Done! Starting connections...");
+
+        // TODO: Needs the api
+        this.keysInRotation["25873"] = this.config.core.authentication.cactusbotdev.mixer;
+
+        channels.forEach(async channel => {
+            await this.connectToChannel(channel.channel, channel.botUser, channel.service);
+        });
     }
 
     /**
-     * Connect all the channels to their respective services
+     * Broadcast a message to all connected channels.
      *
-     * @memberof ServiceHandler
+     * @param {string} mesasge the message to broadcast
+     * @param {string?} service the service that should be broadcasted to
      */
-    public async connectAllChannels() {
-        await this.loadAllChannels();
-        const cereus = new Cereus(`${this.config.core.cereus.url}/${this.config.core.cereus.response_endpoint}`);
-        // TODO: this will become a call to the api getting the auth information for whatever account is being used for the current
-        //       authenticating account.
-        const authInfo: {[service: string]: string} = this.config.core.authentication.cactusbotdev;
-
-        mixerAuthenticator.on("mixer:reauthenticate", async (data: AuthenticationData, user: string) => {
-            this.keysInRotation[user] = data.access_token;
-            if (!this.connected["mixer"][user]) {
-                return;
-            }
-            for (let connected of this.connected["mixer"][user]) {
-                const disconnected = await connected.disconnect();
-                if (!disconnected) {
-                    Logger.error("Services", "Unable to disconnect from Mixer.");
-                    continue;
-                }
-                // After disconnect, update Redis.
-                let status = {
-                    connected: false,
-                    reconnecting: true,
-                    botUser: user
-                };
-                this.redis.set(`status:${name}:${connected.channel}`, JSON.stringify(status));
-
-                await connected.reauthenticate(data);
-
-                status = {
-                    connected: true,
-                    reconnecting: false,
-                    botUser: user
-                };
-                this.redis.set(`status:${name}:${connected.channel}`, JSON.stringify(status));
-            }
-        });
-
-        for (let channel of channels) {
-            // TODO: This is only temp until the api supports the things I need
-            if (channel.service === "Twitch" && !this.keysInRotation[channel.botUser]) {
-                this.keysInRotation[channel.botUser] = authInfo.twitch;
-            }
-
-            const name: string = channel.service.toLowerCase();
-            const service: Service = new (services[name].bind(this, cereus, this.config));
-            // Make sure it's a valid service
-            if (!service) {
-                throw new Error("Attempted to use service that doesn't exist.");
-            }
-
-            // Connect to the channel
-            const connected = await this.connectChannel(channel, service, name);
-            if (connected === ConnectionTristate.FAILED) {
-                Logger.warn("Services", "Failed to authenticate!");
-                return;
-            } else if (connected === ConnectionTristate.FALSE) {
-                Logger.warn("Services", `Unable to connect to ${channel.service}.`);
-                return;
-            }
-            // Add to the connected channels
-            if (!this.connected[name]) {
-                this.connected[name] = {};
-            }
-
-            if (!this.connected[name][channel.botUser]) {
-                this.connected[name][channel.botUser] = [];
-            }
-            this.connected[name][channel.botUser].push(service);
-            // Listen for event packets
-
-            // Cleanup: This should become just one observable that's being listened and pushed to.
-            Logger.info("Events", "Attempting to listen for events...");
-            service.events.subscribe(
-                async (context: CactusContext) => {
-                    const responses = await cereus.handle(context);
-                    if (!responses) {
-                        return;
-                    }
-                    responses.forEach(async response => {
-                        Logger.info("Events", `${channel.channel} (${channel.service}): ${response}`);
-                        this.sendServiceMessage(channel.channel.toString(), channel.service, response);
-                    })
-                },
-                (error) => Logger.error("Events", error),
-                () => Logger.info("Events", "Done listening for events.")
-            );
-            Logger.info("Events", "Listening for events!");
-        }
+    public async broadcastMessage(message: CactusContext, service?: string) {
+        Object.keys(this.connected).filter(serviceName => service && serviceName == service).forEach(async serviceName =>
+            Object.keys(this.connected[serviceName]).forEach(async channel =>
+                this.connected[serviceName][channel].forEach(async service => await service.sendMessage(message))));
     }
 
-    public async sendServiceMessage(channel: string, service: string, message: CactusContext) {
-        this.channels[channel].filter(e => e.serviceName.toLowerCase() === service.toLowerCase())
-            .forEach(async channelService => await channelService.sendMessage(message));
+    public async sendMessageToChannel(channel: string, service: string, message: CactusContext) {
+        Object.keys(this.connected).filter(serviceName => serviceName == service).forEach(async serviceName =>
+            Object.keys(this.connected[serviceName]).filter(ch => ch == channel).forEach(async channel =>
+                this.connected[serviceName][channel].forEach(async service => await service.sendMessage(message))));
     }
 
-    public async disconnectAllChannels() {
-        Object.keys(this.channels).forEach(async channel => {
-            this.channels[channel].forEach(async service => {
-                await service.disconnect();
-                // After disconnect, update Redis.
-                const status = {
-                    connected: false,
-                    reconnecting: false,
-                    botUser: service.channel
-                };
-                this.redis.set(`status:${name}:${service.channel}`, JSON.stringify(status));
-            });
+    public async disconnectAllChannels(reason?: string) {
+        Object.keys(this.connected).forEach(async channel => {
+            Object.keys(this.connected[channel]).forEach(serviceName => 
+                this.connected[channel][serviceName].forEach(async service => {
+                    await service.disconnect();
+                    // After disconnect, update Redis.
+                    const status = {
+                        connected: false,
+                        reconnecting: false,
+                        botUser: service.channel
+                    };
+                    this.redis.set(`status:${name}:${service.channel}`, JSON.stringify(status));
+                }));
         });
     }
 
@@ -246,22 +168,7 @@ export class ServiceHandler {
                 channel: "innectic",
                 service: "Mixer",
                 botUser: 25873
-            },
-            // {
-            //     channel: "2cubed",
-            //     service: "Mixer",
-            //     botUser: 25873
-            // },
-            // {
-            //     channel: "CactusDev",
-            //     service: "Discord",
-            //     botUser: "CactusBot"
-            // },
-            // {
-            //     channel: "Innectic",
-            //     service: "Twitch",
-            //     botUser: "cactusbotdev"
-            // }
+            }
         ]
     }
 }
