@@ -171,3 +171,26 @@ interface ReverseEmojis {
     [name: string]: string;
 }
 
+interface ProxyMessage {
+    botInfo: {
+        botId: number;
+        username: string;
+    };
+
+    channel: string;
+    meta: any;
+    parts: string[];
+    service: string;
+    source: string;
+}
+
+interface ProxyResponse {
+    channel: string;
+    message: string[];
+    service: string;
+
+    meta: {
+        action: boolean;
+        target?: string;
+    }
+}

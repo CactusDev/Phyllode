@@ -5,7 +5,7 @@ import "reflect-metadata";
 
 import { ReflectiveInjector } from "@angular/core";
 import { Core } from "./core";
-import { ServiceHandler } from "./service";
+import { RabbitHandler } from "./rabbit";
 
 import * as nconf from "config";
 import { Config } from "./config";
@@ -21,16 +21,16 @@ const injector = ReflectiveInjector.resolveAndCreate([
         provide: RedisController,
         deps: [Config],
         useFactory: (config: Config) => {
-            const redisController = new RedisController(config.core.redis);
+            const redisController = new RedisController(config.redis);
             return redisController;
         }
     },
     {
-        provide: ServiceHandler,
-        deps: [Config, RedisController],
-        useFactory: (config: Config, redis: RedisController) => {
-            const serviceHandler = new ServiceHandler(config, redis);
-            return serviceHandler;
+        provide: RabbitHandler,
+        deps: [Config],
+        useFactory: (config: Config) => {
+            const rabbit = new RabbitHandler(config);
+            return rabbit;
         }
     },
     Core

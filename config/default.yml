@@ -1,22 +1,20 @@
 core:
   api_url: "https://cactus.exoz.one/api/"
-  # This stuff is all temp until the api supports it
-  authentication:
-    cactusbotdev:
-      twitch: ""
-      mixer: ""  # This should be the last refresh token that you had.
-  oauth:
-    mixer:
-      clientId: ""
-      clientSecret: ""
-      redirectURI: "localhost/callback"
-    discord:
-      auth: ""
   cereus:
     url: "http://localhost:5023"
     response_endpoint: "response"
-  redis:
-    db: 0
-    host: "localhost"
-    port: 5439
-    password: ""
+
+redis:
+  db: 0
+  host: "localhost"
+  port: 6379
+  password: ""
+
+rabbitmq:
+  host: ""
+  port: 5743
+  username: ""
+  password: ""
+  queues:
+    messages: "messages"
+    events: "events"
