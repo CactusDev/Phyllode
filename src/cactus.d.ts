@@ -186,7 +186,7 @@ interface ProxyMessage {
 
 interface ProxyResponse {
     channel: string;
-    message: string[];
+    message: string;
     service: string;
 
     meta: {

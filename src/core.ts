@@ -3,7 +3,9 @@ import { Injectable } from "@angular/core";
 import { Logger } from "./logger";
 import { RedisController } from "cactus-stl";
 import { RabbitHandler } from "./rabbit";
+
 import { TwitchParser } from "./parsers";
+import { Cereus } from "./cereus";
 
 /**
  * Start all the Core services.
@@ -16,7 +18,7 @@ export class Core {
 
     private twitchParser: TwitchParser;
 
-    constructor(private redis: RedisController, private rabbit: RabbitHandler) {
+    constructor(private redis: RedisController, private rabbit: RabbitHandler, private cereus: Cereus) {
         this.twitchParser = new TwitchParser();
     }
 
@@ -37,7 +39,14 @@ export class Core {
 
             this.rabbit.on("service:message", async (message: ProxyMessage) => {
                 const result = await this.twitchParser.parse(message);
-                console.log(JSON.stringify(await this.twitchParser.synthesize(result)));
+
+                // Ask cereus what we should do
+                const response = await this.cereus.handle(await this.cereus.parseServiceMessage(result));
+                if (!response || response.length === 0) {
+                    return;
+                }
+                const synth = await this.twitchParser.synthesize(response);
+                synth.forEach(async s => await this.rabbit.queueResponse(s));
             });
         } catch (e) {
             Logger.error("core", e);
@@ -48,11 +57,21 @@ export class Core {
     }
 
     public async stop() {
-        Logger.info("Core", "Disconnecting from Redis...");
-        this.redis.disconnect().then(() => {
+        try {
+            Logger.info("Core", "Disconnecting from Redis...");
+            await this.redis.disconnect()
             Logger.info("Core", "Disconnected from Redis.");
-            process.exit(0);
-        })
-        .catch((error: string) => Logger.error("Core", error));
+        } catch (e) {
+            Logger.error("Core", e);
+        }
+
+        try {
+            Logger.info("Core", "Disconnecting from RabbitMQ...");
+            await this.rabbit.disconnect();
+            Logger.info("Core", "Disconnected from RabbitMQ!");
+        } catch (e) {
+            Logger.error("Core", e);
+        }
+        process.exit(0);
     }
 }

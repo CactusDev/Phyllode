@@ -2,6 +2,8 @@
 import { AbstractServiceParser } from ".";
 import { twitchEmojis } from "./emoji/twitch";
 
+import { eatSpaces } from "../util";
+
 const isUrl = require("is-url");
 
 export class TwitchParser extends AbstractServiceParser {
@@ -79,7 +81,7 @@ export class TwitchParser extends AbstractServiceParser {
 				text: components,
 				action: isAction
 			},
-			channel: message.channel,
+			channel: message.channel.replace("#", ""),
 			user: state["display-name"],
 			role: role,
 			service: message.service,
@@ -89,46 +91,47 @@ export class TwitchParser extends AbstractServiceParser {
 		return context;
 	}
 
-	public async synthesize(...messages: CactusContext[]): Promise<ProxyResponse> {
-		let completed: string[] = [];
+	public async synthesize(messages: CactusContext[]): Promise<ProxyResponse[]> {
 		let action = false;
 		let channel = "";
 		let service = "";
 		let target = "";
 
+		let responses: ProxyResponse[] = [];
+
 		for (let message of messages) {
+			let finished = "";
 			if (message.packet.type === "message") {
 				let packet = <CactusMessagePacket> message.packet;
-				let finished = "";
 				for (let msg of packet.text) {
 					if (!msg) {
 						continue;
 					}
 					action = packet.action;
-					channel = message.channel;
+					channel = message.channel.replace("#", "");
 					service = message.service;
 					target = message.target;
+					
 					if (msg.type === "emoji") {
-						const emoji = await this.getEmoji((<any> msg.data).standard);
+						const emoji = await this.getEmoji(msg.data);
 						finished += ` ${emoji}`;
 						continue;
 					}
 					finished += " " + msg.data;
 				}
-				completed.push(finished);
+				const response: ProxyResponse = {
+					channel,
+					service,
+					meta: {
+						action,
+						target
+					},
+					message: await eatSpaces(finished)
+				};
+				responses.push(response);
 			}
 		}
 
-		const response: ProxyResponse = {
-			channel,
-			service,
-			meta: {
-				action,
-				target
-			},
-			message: completed
-		}
-
-		return response;
+		return responses;
 	}
 }

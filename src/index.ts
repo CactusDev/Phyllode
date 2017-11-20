@@ -6,6 +6,7 @@ import "reflect-metadata";
 import { ReflectiveInjector } from "@angular/core";
 import { Core } from "./core";
 import { RabbitHandler } from "./rabbit";
+import { Cereus } from "./cereus";
 
 import * as nconf from "config";
 import { Config } from "./config";
@@ -31,6 +32,13 @@ const injector = ReflectiveInjector.resolveAndCreate([
         useFactory: (config: Config) => {
             const rabbit = new RabbitHandler(config);
             return rabbit;
+        }
+    },
+    {
+        provide: Cereus,
+        deps: [Config],
+        useFactory: (config: Config) => {
+            return new Cereus(`${config.core.cereus.url}/${config.core.cereus.response_endpoint}`);
         }
     },
     Core

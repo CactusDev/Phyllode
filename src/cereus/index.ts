@@ -98,6 +98,6 @@ export class Cereus {
             return null;
         }
         const message: CactusContext[] = !!response.data ? response.data : null;
-        return !message || message.length ? null : message;
+        return !message || message.length === 0 ? null : message;
     }
 }
