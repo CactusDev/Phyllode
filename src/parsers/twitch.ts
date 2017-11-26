@@ -81,7 +81,7 @@ export class TwitchParser extends AbstractServiceParser {
 				text: components,
 				action: isAction
 			},
-			channel: message.channel.replace("#", ""),
+			channel: message.channel,
 			user: state["display-name"],
 			role: role,
 			service: message.service,
@@ -108,7 +108,7 @@ export class TwitchParser extends AbstractServiceParser {
 						continue;
 					}
 					action = packet.action;
-					channel = message.channel.replace("#", "");
+					channel = message.channel;
 					service = message.service;
 					target = message.target;
 					
