@@ -11,6 +11,6 @@ export function Event(handlerName: string) {
 		}
 
 		Reflect.defineMetadata(HANDLED_EVENT_METADATA_KEY, handlerName, target);
-		Logger.log("core", `Registered handler for event ${handlerName}.`);
+		Logger.info("core", `Registered handler for event ${handlerName}.`);
 	}
 }

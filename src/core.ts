@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
 
-import { Logger } from "./logger";
+import { Logger } from "cactus-stl";
 import { RedisController } from "cactus-stl";
 import { RabbitHandler } from "./rabbit";
 

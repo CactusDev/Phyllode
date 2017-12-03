@@ -1,5 +1,4 @@
-import { Logger } from "./logger";
-Logger.setup();
+import { Logger } from "cactus-stl";
 
 import "reflect-metadata";
 

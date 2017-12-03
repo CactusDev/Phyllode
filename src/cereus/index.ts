@@ -1,5 +1,5 @@
 
-import { Logger } from "../logger";
+import { Logger } from "cactus-stl";
 
 import { Subject } from "rxjs";
 import { eatSpaces } from "../util";
