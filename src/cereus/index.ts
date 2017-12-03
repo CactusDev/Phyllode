@@ -29,8 +29,6 @@ export class Cereus {
             return context;
         }
 
-        console.log(JSON.stringify(components));
-
         // Does this packet-set actually need to be parsed?
         // Packets that don't contain a variable don't need to be parsed twice.
         if (!components.some(e => e.data.includes("%"))) {

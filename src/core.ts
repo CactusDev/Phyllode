@@ -4,7 +4,6 @@ import { Logger } from "cactus-stl";
 import { RedisController } from "cactus-stl";
 import { RabbitHandler } from "./rabbit";
 
-import { TwitchParser, MixerParser } from "./parsers";
 import { Cereus } from "./cereus";
 
 /**
@@ -16,12 +15,7 @@ import { Cereus } from "./cereus";
 @Injectable()
 export class Core {
 
-    private twitchParser: TwitchParser;
-    private mixerParser: MixerParser;
-
     constructor(private redis: RedisController, private rabbit: RabbitHandler, private cereus: Cereus) {
-        this.twitchParser = new TwitchParser();
-        this.mixerParser = new MixerParser();
     }
 
     /**
@@ -41,25 +35,9 @@ export class Core {
 
             this.rabbit.on("service:message", async (message: ProxyMessage) => {
                 if (message.service === "Twitch") {
-                    const result = await this.twitchParser.parse(message);
 
-                    // Ask cereus what we should do
-                    const response = await this.cereus.handle(await this.cereus.parseServiceMessage(result));
-                    if (!response || response.length === 0) {
-                        return;
-                    }
-                    const synth = await this.twitchParser.synthesize(response);
-                    synth.forEach(async s => await this.rabbit.queueResponse(s));
                 } else if (message.service === "Mixer") {
-                    const result = await this.mixerParser.parse(message);
 
-                    // Ask cereus what we should do
-                    const response = await this.cereus.handle(await this.cereus.parseServiceMessage(result));
-                    if (!response || response.length === 0) {
-                        return;
-                    }
-                    const synth = await this.mixerParser.synthesize(response);
-                    synth.forEach(async s => await this.rabbit.queueResponse(s));
                 }
             });
         } catch (e) {

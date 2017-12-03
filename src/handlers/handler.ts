@@ -35,7 +35,7 @@ export class HandlerController {
 			const registered = this.registeredHandlers[MESSAGE_HANDLER] || [];
 			registered.forEach(async executor => {
 				executor({
-					service: message.service,
+					service: message.service.toLowerCase(),
 					channel: message.channel,
 					data: message
 				});

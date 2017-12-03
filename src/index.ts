@@ -12,9 +12,9 @@ import { Config } from "./config";
 
 import { RedisController } from "cactus-stl";
 import { HandlerController } from "./handlers/handler";
-import { EventHandler } from "./handlers";
+import { EventHandler, HANDLERS } from "./handlers";
 
-const injector = ReflectiveInjector.resolveAndCreate([
+const injectorParts = [
     {
         provide: Config,
         useValue: nconf
@@ -43,7 +43,13 @@ const injector = ReflectiveInjector.resolveAndCreate([
         }
     },
     Core
-]);
+];
+
+for (let handler of HANDLERS) {
+    injectorParts.push(handler);
+}
+
+const injector = ReflectiveInjector.resolveAndCreate(injectorParts);
 
 const rabbit: RabbitHandler = injector.get(RabbitHandler);
 const controller = new HandlerController(rabbit);
