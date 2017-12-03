@@ -26,6 +26,7 @@
     "config": "^1.26.1",
     "is-url": "^1.2.2",
     "js-yaml": "^3.9.0",
+    "reflect-annotations": "^2.3.0",
     "reflect-metadata": "0.1.8",
     "rxjs": "^5.4.2"
   },

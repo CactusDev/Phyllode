@@ -52,8 +52,10 @@ for (let handler of HANDLERS) {
 const injector = ReflectiveInjector.resolveAndCreate(injectorParts);
 
 const rabbit: RabbitHandler = injector.get(RabbitHandler);
+rabbit.connect();
 const controller = new HandlerController(rabbit);
 controller.setup();
+controller.test();
 
 // const core: Core = injector.get(Core);
 // core.start()

@@ -25,10 +25,12 @@ export class HandlerController {
 				continue;
 			}
 			// Valid, put it in our handled list.
-			const event = Reflect.getOwnMetadata(HANDLED_EVENT_METADATA_KEY, handler);
-			const current = this.registeredHandlers[event] || [];
-			current.push(handler);
-			this.registeredHandlers[event] = current;
+			const events = Reflect.getOwnMetadata(HANDLED_EVENT_METADATA_KEY, handler);
+			for (let event of events) {
+				const current = this.registeredHandlers[event.event] || [];
+				current.push(event.function);
+				this.registeredHandlers[event.event] = current;
+			}
 		}
 
 		this.rabbit.on("service:message", async (message: ProxyMessage) => {
@@ -39,6 +41,17 @@ export class HandlerController {
 					channel: message.channel,
 					data: message
 				});
+			});
+		});
+	}
+
+	public async test() {
+		const registered = this.registeredHandlers[MESSAGE_HANDLER] || [];
+		registered.forEach(async executor => {
+			executor({
+				service: "Testing",
+				channel: "Another test",
+				data: "Dank memes 123"
 			});
 		});
 	}
