@@ -9,3 +9,7 @@
 export async function eatSpaces(original: string): Promise<string> {
     return original.trim().replace(/\s+/g, " ");
 }
+
+export function title(original: string): string {
+	return `${original[0].toUpperCase()}${original.substr(1)}`;
+}
