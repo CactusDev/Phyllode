@@ -1,31 +1,38 @@
 
+import { Logger } from "cactus-stl";
+
 import { RabbitHandler } from "../rabbit";
-
 import { title } from "../util";
-
-import { EventHandler, HANDLERS } from "."
+import { EventHandler, HANDLERS, HANDLED_EVENT_METADATA_KEY } from "."
 
 interface RegisteredHandlers {
 	[event: string]: EventExecutor[];
 };
 
-export let registeredHandlers: RegisteredHandlers = {};
-export function registerHandler(event: string, executor: EventExecutor) {
-	const current = registeredHandlers[event] || [];
-	current.push(executor);
-	registeredHandlers[event] = current;
-}
-
 const MESSAGE_HANDLER = "message";
 
 export class HandlerController {
+	private registeredHandlers: RegisteredHandlers = {};
 
 	constructor(private rabbit: RabbitHandler) {
 	}
 
 	public async setup(handlers: any[] = HANDLERS) {
+		// Validate all handlers, and register them.
+		for (let handler of handlers) {
+			if (!Reflect.hasOwnMetadata(HANDLED_EVENT_METADATA_KEY, handler)) {
+				Logger.error("core", "Cannot register a handler of which has no event metadata.");
+				continue;
+			}
+			// Valid, put it in our handled list.
+			const event = Reflect.getOwnMetadata(HANDLED_EVENT_METADATA_KEY, handler);
+			const current = this.registeredHandlers[event] || [];
+			current.push(handler);
+			this.registeredHandlers[event] = current;
+		}
+
 		this.rabbit.on("service:message", async (message: ProxyMessage) => {
-			const registered = registeredHandlers[MESSAGE_HANDLER] || [];
+			const registered = this.registeredHandlers[MESSAGE_HANDLER] || [];
 			registered.forEach(async executor => {
 				executor({
 					service: message.service,

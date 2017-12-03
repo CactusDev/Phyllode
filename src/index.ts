@@ -47,6 +47,7 @@ const injector = ReflectiveInjector.resolveAndCreate([
 
 const rabbit: RabbitHandler = injector.get(RabbitHandler);
 const controller = new HandlerController(rabbit);
+controller.setup();
 
 // const core: Core = injector.get(Core);
 // core.start()
