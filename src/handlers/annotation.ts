@@ -23,7 +23,6 @@ export function EventController() {
 			// into a real event handler
 			for (let decorator of component.methodAnnotations) {
 				if (decorator instanceof EventAnnotation) {
-					console.log(decorator);
 					if (!decorator.handlerName) {
 						Logger.error("core", "Missing the name of the handler.");
 						return;
@@ -44,11 +43,11 @@ export function EventController() {
 						function: eventHandler,
 						event: decorator.handlerName
 					});
-					Reflect.defineMetadata(HANDLED_EVENT_METADATA_KEY, events, target);
 					HANDLERS.push(target);
 					Logger.info("core", `Registered handler for event ${decorator.handlerName}.`);
 				}
 			}
+			Reflect.defineMetadata(HANDLED_EVENT_METADATA_KEY, events, target);
 		}
 	}
 }
