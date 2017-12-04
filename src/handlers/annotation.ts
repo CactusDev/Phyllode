@@ -23,7 +23,7 @@ export function EventController() {
 			for (let decorator of component.methodAnnotations) {
 				if (decorator instanceof EventAnnotation) {
 					if (!decorator.handlerName) {
-						Logger.error("core", "Missing the name of the handler.");
+						Logger.error("Core", "Missing the name of the handler.");
 						return;
 					}
 					// This is an event handling function.
@@ -31,11 +31,11 @@ export function EventController() {
 					// on it.
 					const eventHandler = target.prototype[component.name];
 					if (!eventHandler) {
-						Logger.error("core", "Somehow, the event handler function isn't a thing but I see it?");
+						Logger.error("Core", "Somehow, the event handler function isn't a thing but I see it?");
 						return;
 					}
 					if (Reflect.hasOwnMetadata(HANDLED_EVENT_METADATA_KEY, eventHandler)) {
-						Logger.error("core", `Cannot redefine the handled event for a handler function. Handler function: ${component.name} for the new event: ${decorator.handlerName}`);
+						Logger.error("Core", `Cannot redefine the handled event for a handler function. Handler function: ${component.name} for the new event: ${decorator.handlerName}`);
 						return;
 					}
 					events.push({
@@ -47,7 +47,7 @@ export function EventController() {
 					Reflect.defineMetadata(HANDLED_EVENT_METADATA_KEY, events, target);
 					HANDLERS.push(target);
 
-					Logger.info("core", `Registered handler for event ${decorator.handlerName}.`);
+					Logger.info("Core", `Registered handler for event ${decorator.handlerName}.`);
 				}
 			}
 		}

@@ -12,12 +12,12 @@ import { Config } from "./config";
 
 import { RedisController } from "cactus-stl";
 import { HandlerController } from "./handlers/handler";
-import { EventHandler, HANDLERS, MessageHandler } from "./handlers";
+import { HANDLERS } from "./handlers";
 
 // HACK: For some reason, if I put handlers into the main injector, they don't work.
 // But, if I add them as a child, they work just fine.
 const hackyFix = ReflectiveInjector.resolve(HANDLERS);
-const injector = ReflectiveInjector.resolveAndCreate([
+export const injector = ReflectiveInjector.resolveAndCreate([
     {
         provide: Config,
         useValue: nconf
@@ -44,19 +44,17 @@ const injector = ReflectiveInjector.resolveAndCreate([
         useFactory: (config: Config) => {
             return new Cereus(`${config.core.cereus.url}/${config.core.cereus.response_endpoint}`);
         }
-    }
+    },
+    {
+        provide: HandlerController,
+        deps: [RabbitHandler],
+        useFactory: (rabbit: RabbitHandler) => {
+            return new HandlerController(rabbit);
+        }
+    },
+    Core
 ]).createChildFromResolved(hackyFix);
 
-const message: MessageHandler = injector.get(MessageHandler)
-
-const rabbit: RabbitHandler = injector.get(RabbitHandler);
-rabbit.connect();
-
-const controller = new HandlerController(rabbit);
-controller.setup().then(() => {
-    controller.test();
-});
-
-// const core: Core = injector.get(Core);
-// core.start()
-//     .catch(err => Logger.error("Core", err));
+const core: Core = injector.get(Core);
+core.start()
+    .catch(err => Logger.error("Core", err));

@@ -11,15 +11,16 @@ import { Logger } from "cactus-stl";
 @Injectable()
 export class MessageHandler {
 
-    private twitchParser: TwitchParser = new TwitchParser();
-    private mixerParser: MixerParser = new MixerParser();
+    private twitchParser: TwitchParser;
+    private mixerParser: MixerParser;
 
 	constructor(private cereus: Cereus, private rabbit: RabbitHandler) {
+		this.twitchParser = new TwitchParser();
+		this.mixerParser = new MixerParser();
 	}
     
     @Event("message")
 	public async onServiceMessage(data: EventData) {
-		console.log("Got a message from event!", data);
 		const parser = await this.getParser(data.service);
 		if (!parser) {
 			Logger.error("Message Handler", `No parser for service '${data.service}' exists.`);

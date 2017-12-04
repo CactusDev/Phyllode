@@ -5,6 +5,8 @@ import { RabbitHandler } from "../rabbit";
 import { title } from "../util";
 import { EventHandler, HANDLERS, HANDLED_EVENT_METADATA_KEY, MessageHandler } from "."
 
+import { injector } from "..";
+
 interface RegisteredHandlers {
 	[event: string]: {
 		function: EventExecutor;
@@ -24,7 +26,7 @@ export class HandlerController {
 		// Validate all handlers, and register them.
 		for (let handler of handlers) {
 			if (!Reflect.hasOwnMetadata(HANDLED_EVENT_METADATA_KEY, handler)) {
-				Logger.error("core", "Cannot register a handler of which has no event metadata.");
+				Logger.error("Core", "Cannot register a handler of which has no event metadata.");
 				continue;
 			}
 			// Valid, put it in our handled list.
@@ -39,22 +41,17 @@ export class HandlerController {
 		this.rabbit.on("service:message", async (message: ProxyMessage) => {
 			const registered = this.registeredHandlers[MESSAGE_HANDLER] || [];
 			registered.forEach(async executor => {
-				executor.owner.prototype[executor.function.name]({
-					service: "Testing",
-					channel: "Another test",
-					data: "Dank memes 123"
+				const hackityHack = injector.get(executor.owner);
+				if (!hackityHack) {
+					console.error("Hey Innectic remember when you told yourself that hack wouldn't break?")
+					console.error("Guess what broke.", hackityHack);
+					return;
+				}
+				await hackityHack[executor.function.name]({
+					service: message.service,
+					channel: message.channel,
+					data: message
 				});
-			});
-		});
-	}
-
-	public async test() {
-		const registered = this.registeredHandlers[MESSAGE_HANDLER] || [];
-		registered.forEach(async executor => {
-			executor.owner.prototype[executor.function.name]({
-				service: "Testing",
-				channel: "Another test",
-				data: "Dank memes 123"
 			});
 		});
 	}
