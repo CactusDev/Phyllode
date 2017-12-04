@@ -3,10 +3,13 @@ import { Logger } from "cactus-stl";
 
 import { RabbitHandler } from "../rabbit";
 import { title } from "../util";
-import { EventHandler, HANDLERS, HANDLED_EVENT_METADATA_KEY } from "."
+import { EventHandler, HANDLERS, HANDLED_EVENT_METADATA_KEY, MessageHandler } from "."
 
 interface RegisteredHandlers {
-	[event: string]: EventExecutor[];
+	[event: string]: {
+		function: EventExecutor;
+		owner: any;
+	}[];
 };
 
 const MESSAGE_HANDLER = "message";
@@ -28,7 +31,7 @@ export class HandlerController {
 			const events = Reflect.getOwnMetadata(HANDLED_EVENT_METADATA_KEY, handler);
 			for (let event of events) {
 				const current = this.registeredHandlers[event.event] || [];
-				current.push(event.function);
+				current.push({ function: event.function, owner: event.owner });
 				this.registeredHandlers[event.event] = current;
 			}
 		}
@@ -36,10 +39,10 @@ export class HandlerController {
 		this.rabbit.on("service:message", async (message: ProxyMessage) => {
 			const registered = this.registeredHandlers[MESSAGE_HANDLER] || [];
 			registered.forEach(async executor => {
-				executor({
-					service: message.service.toLowerCase(),
-					channel: message.channel,
-					data: message
+				executor.owner.prototype[executor.function.name]({
+					service: "Testing",
+					channel: "Another test",
+					data: "Dank memes 123"
 				});
 			});
 		});
@@ -48,7 +51,7 @@ export class HandlerController {
 	public async test() {
 		const registered = this.registeredHandlers[MESSAGE_HANDLER] || [];
 		registered.forEach(async executor => {
-			executor({
+			executor.owner.prototype[executor.function.name]({
 				service: "Testing",
 				channel: "Another test",
 				data: "Dank memes 123"

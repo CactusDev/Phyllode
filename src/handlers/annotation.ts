@@ -4,13 +4,12 @@ import { HANDLERS } from "."
 
 import { reflectAnnotations, createAnnotationFactory } from "reflect-annotations";
 
-export const HANDLED_EVENT_METADATA_KEY = "event:handler:handled";
+export const HANDLED_EVENT_METADATA_KEY = "handler:event:handled";
 
 class EventAnnotation {
 	constructor(public handlerName: string) {}
 }
-
-export const Event: any = createAnnotationFactory(EventAnnotation);
+export const Event = createAnnotationFactory(EventAnnotation);
 
 export function EventController() {
 	return (target: Function) => {
@@ -41,13 +40,16 @@ export function EventController() {
 					}
 					events.push({
 						function: eventHandler,
-						event: decorator.handlerName
+						event: decorator.handlerName,
+						owner: target
 					});
+
+					Reflect.defineMetadata(HANDLED_EVENT_METADATA_KEY, events, target);
 					HANDLERS.push(target);
+
 					Logger.info("core", `Registered handler for event ${decorator.handlerName}.`);
 				}
 			}
-			Reflect.defineMetadata(HANDLED_EVENT_METADATA_KEY, events, target);
 		}
 	}
 }
