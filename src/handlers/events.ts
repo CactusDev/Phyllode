@@ -2,12 +2,60 @@
 import { Injectable } from "@angular/core";
 import { Event, EventController } from ".";
 
+import { RedisController, Logger } from "cactus-stl";
+
 @EventController()
 @Injectable()
 export class EventHandler {
 
-    @Event("follow")
+	constructor(private redis: RedisController) {
+
+	}
+
+	// TODO: DON'T CONTINUE ON ANYTHING HERE UNTIL THE HANDLERS SUPPORT RETURNING, AND THEY
+	// CAN HAVE MULTIPLE EVENTS ON ONE HANDLER FUNCTION
+	// TODO: DON'T CONTINUE ON ANYTHING HERE UNTIL THE HANDLERS SUPPORT RETURNING, AND THEY
+	// CAN HAVE MULTIPLE EVENTS ON ONE HANDLER FUNCTION
+	// TODO: DON'T CONTINUE ON ANYTHING HERE UNTIL THE HANDLERS SUPPORT RETURNING, AND THEY
+	// CAN HAVE MULTIPLE EVENTS ON ONE HANDLER FUNCTION
+	// TODO: DON'T CONTINUE ON ANYTHING HERE UNTIL THE HANDLERS SUPPORT RETURNING, AND THEY
+	// CAN HAVE MULTIPLE EVENTS ON ONE HANDLER FUNCTION
+	// TODO: DON'T CONTINUE ON ANYTHING HERE UNTIL THE HANDLERS SUPPORT RETURNING, AND THEY
+	// CAN HAVE MULTIPLE EVENTS ON ONE HANDLER FUNCTION
+	// TODO: DON'T CONTINUE ON ANYTHING HERE UNTIL THE HANDLERS SUPPORT RETURNING, AND THEY
+	// CAN HAVE MULTIPLE EVENTS ON ONE HANDLER FUNCTION
+	// TODO: DON'T CONTINUE ON ANYTHING HERE UNTIL THE HANDLERS SUPPORT RETURNING, AND THEY
+	// CAN HAVE MULTIPLE EVENTS ON ONE HANDLER FUNCTION
+	// TODO: DON'T CONTINUE ON ANYTHING HERE UNTIL THE HANDLERS SUPPORT RETURNING, AND THEY
+	// CAN HAVE MULTIPLE EVENTS ON ONE HANDLER FUNCTION
+	// TODO: DON'T CONTINUE ON ANYTHING HERE UNTIL THE HANDLERS SUPPORT RETURNING, AND THEY
+	// CAN HAVE MULTIPLE EVENTS ON ONE HANDLER FUNCTION
+	// TODO: DON'T CONTINUE ON ANYTHING HERE UNTIL THE HANDLERS SUPPORT RETURNING, AND THEY
+	// CAN HAVE MULTIPLE EVENTS ON ONE HANDLER FUNCTION
+	// TODO: DON'T CONTINUE ON ANYTHING HERE UNTIL THE HANDLERS SUPPORT RETURNING, AND THEY
+	// CAN HAVE MULTIPLE EVENTS ON ONE HANDLER FUNCTION
+
+    @Event("service:channel:follow")
     public async onUserFollowChannel(data: EventData) {
+    	const currentTime = new Date().getMilliseconds();
+    	// Build a cacheable event.
+    	const storedEvent: BasicCachedEvent {
+    		created: currentTime,
+    		updated: currentTime,
+    		ends: currentTime + 4000, // TODO: Make this a configurable thing
+    		data: data.data
+    	};
+
+    	Logger.info("Core", `Caching event 'follow' for channel ${data.channel} on user ${data.data.user}`);
+    }
+
+    @Event("service:channel:subscribe")
+    public async onUserUnsubscribeChannel(data: EventData) {
+
+    }
+
+    @Event("service:channel:host")
+    public async onUserHostChannel(data: EventData) {
 
     }
 }

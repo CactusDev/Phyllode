@@ -30,9 +30,9 @@ export class Core {
             await this.handlerController.setup();
             Logger.info("Core", "Done!");
 
-            // Logger.info("Core", "Connecting to Redis...");
-            // await this.redis.connect();
-            // Logger.info("Core", "Connected to Redis!");
+            Logger.info("Core", "Connecting to Redis...");
+            await this.redis.connect();
+            Logger.info("Core", "Connected to Redis!");
 
             Logger.info("Core", "Attempting to connect to RabbitMQ...");
             await this.rabbit.connect();
