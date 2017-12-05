@@ -25,7 +25,7 @@ export class ExampleEventHandler {
         console.log("There was an event somewhere:", JSON.stringify(data));
     }
 
-    @Event("service:message")
+    @Event("service:channel:message")
     public async onServiceMessage(data: EventData) {
         console.log(`Got a message on ${data.service} in channel ${data.channel}.`, JSON.stringify(data.data));
     }

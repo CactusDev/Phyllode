@@ -19,7 +19,7 @@ export class MessageHandler {
         this.mixerParser = new MixerParser();
     }
     
-    @Event("message")
+    @Event("service:channel:message")
     public async onServiceMessage(data: EventData) {
         const parser = await this.getParser(data.service);
         if (!parser) {

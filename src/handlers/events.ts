@@ -35,11 +35,11 @@ export class EventHandler {
 	// TODO: DON'T CONTINUE ON ANYTHING HERE UNTIL THE HANDLERS SUPPORT RETURNING, AND THEY
 	// CAN HAVE MULTIPLE EVENTS ON ONE HANDLER FUNCTION
 
-    @Event("service:channel:follow")
+    @Event(["service:channel:follow", "service:channel:subscribe", "service:channel:host"])
     public async onUserFollowChannel(data: EventData) {
     	const currentTime = new Date().getMilliseconds();
     	// Build a cacheable event.
-    	const storedEvent: BasicCachedEvent {
+    	const storedEvent: BasicCachedEvent = {
     		created: currentTime,
     		updated: currentTime,
     		ends: currentTime + 4000, // TODO: Make this a configurable thing
@@ -47,15 +47,5 @@ export class EventHandler {
     	};
 
     	Logger.info("Core", `Caching event 'follow' for channel ${data.channel} on user ${data.data.user}`);
-    }
-
-    @Event("service:channel:subscribe")
-    public async onUserUnsubscribeChannel(data: EventData) {
-
-    }
-
-    @Event("service:channel:host")
-    public async onUserHostChannel(data: EventData) {
-
     }
 }

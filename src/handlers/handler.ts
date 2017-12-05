@@ -14,7 +14,7 @@ interface RegisteredHandlers {
     }[];
 };
 
-const MESSAGE_HANDLER = "message";
+const MESSAGE_HANDLER = "service:channel:message";
 
 export class HandlerController {
     private registeredHandlers: RegisteredHandlers = {};
@@ -48,6 +48,7 @@ export class HandlerController {
                     return;
                 }
                 await hackityHack[executor.function.name]({
+                    event: "message",
                     service: message.service,
                     channel: message.channel,
                     data: message
