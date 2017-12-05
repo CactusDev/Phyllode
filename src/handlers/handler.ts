@@ -6,6 +6,7 @@ import { title } from "../util";
 import { EventHandler, HANDLERS, HANDLED_EVENT_METADATA_KEY, MessageHandler } from "."
 
 import { injector } from "..";
+import { StopResponse, EventExecutor } from "./responses"
 
 interface RegisteredHandlers {
     [event: string]: {
@@ -40,6 +41,8 @@ export class HandlerController {
 
         this.rabbit.on("service:message", async (message: ProxyMessage) => {
             const registered = this.registeredHandlers[MESSAGE_HANDLER] || [];
+            registered.push(...this.registeredHandlers["*"] || []);
+
             registered.forEach(async executor => {
                 const hackityHack = injector.get(executor.owner);
                 if (!hackityHack) {
@@ -47,12 +50,19 @@ export class HandlerController {
                     console.error("Guess what broke.", hackityHack);
                     return;
                 }
-                await hackityHack[executor.function.name]({
+                const result = await hackityHack[executor.function.name]({
                     event: "message",
                     service: message.service,
                     channel: message.channel,
                     data: message
                 });
+                if (result) {
+                    if (result instanceof StopResponse){
+                        // If we got a stop result, that generally means there was some sort of a fatal
+                        // error within a handler. In this case, we don't want to continue at all.
+                        return;
+                    }
+                }
             });
         });
     }

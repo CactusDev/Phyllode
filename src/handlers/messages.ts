@@ -7,6 +7,8 @@ import { RabbitHandler } from "../rabbit";
 import { Cereus } from "../cereus";
 import { Logger } from "cactus-stl";
 
+import { StopResponse } from "./responses"
+
 @EventController()
 @Injectable()
 export class MessageHandler {
@@ -17,6 +19,11 @@ export class MessageHandler {
     constructor(private cereus: Cereus, private rabbit: RabbitHandler) {
         this.twitchParser = new TwitchParser();
         this.mixerParser = new MixerParser();
+    }
+
+    @Event("*")
+    public async test(data: EventData) {
+        return new StopResponse();
     }
     
     @Event("service:channel:message")

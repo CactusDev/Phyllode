@@ -5,5 +5,3 @@ interface EventData {
     service: string;
     data: any;
 }
-
-type EventExecutor = (event: EventData) => any | void;
