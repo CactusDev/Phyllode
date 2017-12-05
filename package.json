@@ -1,52 +1,52 @@
 {
-  "name": "phyllode",
-  "version": "1.0.0",
-  "description": "Translates service-packets into the CactusBot format for use by the handler system",
-  "main": "dist/index.js",
-  "scripts": {
-    "test": "tsc && TEST=true nyc ava",
-    "report": "nyc report --reporter=html",
-    "start": "tsc && node dist"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/CactusDev/phyllode.git"
-  },
-  "author": "CactusDev",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/CactusDev/phyllode/issues"
-  },
-  "homepage": "https://github.com/CactusDev/phyllode#readme",
-  "dependencies": {
-    "@types/bluebird": "^3.5.18",
-    "amqp-ts": "^1.4.0",
-    "axios": "^0.16.2",
-    "cactus-stl": "^1.0.10",
-    "config": "^1.26.1",
-    "is-url": "^1.2.2",
-    "js-yaml": "^3.9.0",
-    "reflect-annotations": "^2.3.0",
-    "reflect-metadata": "0.1.8",
-    "rxjs": "^5.4.2"
-  },
-  "devDependencies": {
-    "@angular/core": "4.0.3",
-    "@types/config": "0.0.32",
-    "@types/node": "^8.0.13",
-    "@types/ws": "^3.0.2",
-    "ava": "^0.21.0",
-    "axios-mock-adapter": "^1.9.0",
-    "coveralls": "^2.13.1",
-    "istanbul": "^0.4.5",
-    "mocha": "^3.5.0",
-    "nyc": "^11.1.0",
-    "tslint": "^5.5.0",
-    "typescript": "^2.4.1"
-  },
-  "ava": {
-    "files": [
-      "./dist/tests/*.js"
-    ]
-  }
+    "name": "phyllode",
+    "version": "1.0.0",
+    "description": "Translates service-packets into the CactusBot format for use by the handler system",
+    "main": "dist/index.js",
+    "scripts": {
+        "test": "tsc && TEST=true nyc ava",
+        "report": "nyc report --reporter=html",
+        "start": "tsc && node dist"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/CactusDev/phyllode.git"
+    },
+    "author": "CactusDev",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/CactusDev/phyllode/issues"
+    },
+    "homepage": "https://github.com/CactusDev/phyllode#readme",
+    "dependencies": {
+        "@types/bluebird": "^3.5.18",
+        "amqp-ts": "^1.4.0",
+        "axios": "^0.16.2",
+        "cactus-stl": "^1.0.10",
+        "config": "^1.26.1",
+        "is-url": "^1.2.2",
+        "js-yaml": "^3.9.0",
+        "reflect-annotations": "^2.3.0",
+        "reflect-metadata": "0.1.8",
+        "rxjs": "^5.4.2"
+    },
+    "devDependencies": {
+        "@angular/core": "4.0.3",
+        "@types/config": "0.0.32",
+        "@types/node": "^8.0.13",
+        "@types/ws": "^3.0.2",
+        "ava": "^0.21.0",
+        "axios-mock-adapter": "^1.9.0",
+        "coveralls": "^2.13.1",
+        "istanbul": "^0.4.5",
+        "mocha": "^3.5.0",
+        "nyc": "^11.1.0",
+        "tslint": "^5.5.0",
+        "typescript": "^2.6.2"
+    },
+    "ava": {
+        "files": [
+          "./dist/tests/*.js"
+        ]
+    }
 }

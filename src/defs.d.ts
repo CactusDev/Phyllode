@@ -1,8 +1,8 @@
 
 interface EventData {
-	channel: string;
-	service: string;
-	data: any;
+    channel: string;
+    service: string;
+    data: any;
 }
 
-type EventExecutor = (event: EventData) => void;
+type EventExecutor = (event: EventData) => any | void;

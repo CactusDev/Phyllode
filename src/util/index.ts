@@ -11,5 +11,5 @@ export async function eatSpaces(original: string): Promise<string> {
 }
 
 export function title(original: string): string {
-	return `${original[0].toUpperCase()}${original.substr(1)}`;
+    return `${original[0].toUpperCase()}${original.substr(1)}`;
 }

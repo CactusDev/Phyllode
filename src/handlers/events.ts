@@ -6,8 +6,8 @@ import { Event, EventController } from ".";
 @Injectable()
 export class EventHandler {
 
-	@Event("follow")
-	public async onUserFollowChannel(data: EventData) {
+    @Event("follow")
+    public async onUserFollowChannel(data: EventData) {
 
-	}
+    }
 }
