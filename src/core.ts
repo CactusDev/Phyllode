@@ -1,8 +1,11 @@
-import { ServiceHandler } from "./service";
 import { Injectable } from "@angular/core";
 
-import { Logger } from "./logger";
+import { Logger } from "cactus-stl";
 import { RedisController } from "cactus-stl";
+import { RabbitHandler } from "./rabbit";
+
+import { Cereus } from "./cereus";
+import { HandlerController } from "./handlers/handler";
 
 /**
  * Start all the Core services.
@@ -13,7 +16,7 @@ import { RedisController } from "cactus-stl";
 @Injectable()
 export class Core {
 
-    constructor(private serviceHandler: ServiceHandler, private redis: RedisController) {
+    constructor(private redis: RedisController, private rabbit: RabbitHandler, private cereus: Cereus, private handlerController: HandlerController) {
     }
 
     /**
@@ -22,29 +25,42 @@ export class Core {
      * @memberof Core
      */
     public async start() {
-        Logger.info("Core", "Connecting to Redis...");
-        this.redis.connect().then(() => {
+        try {
+            Logger.info("Core", "Setting up handler controller...");
+            await this.handlerController.setup();
+            Logger.info("Core", "Done!");
+
+            Logger.info("Core", "Connecting to Redis...");
+            await this.redis.connect();
             Logger.info("Core", "Connected to Redis!");
 
-            Logger.info("Core", "Attempting to connect to channels...");
-            this.serviceHandler.connectAllChannels();
-        })
-        .catch((error: string) => Logger.error("Core", error));
+            Logger.info("Core", "Attempting to connect to RabbitMQ...");
+            await this.rabbit.connect();
+            Logger.info("Core", "Connected to RabbitMQ!");
+        } catch (e) {
+            Logger.error("Core", e);
+        }
 
         process.on("SIGTERM", () => this.stop());
         process.on("SIGINT", () => this.stop());
     }
 
     public async stop() {
-        Logger.info("Core", "Removing spines...");
-        await this.serviceHandler.disconnectAllChannels();
-        Logger.info("Core", "Done!");
-
-        Logger.info("Core", "Disconnecting from Redis...");
-        this.redis.disconnect().then(() => {
+        try {
+            Logger.info("Core", "Disconnecting from Redis...");
+            await this.redis.disconnect()
             Logger.info("Core", "Disconnected from Redis.");
-            process.exit(0);
-        })
-        .catch((error: string) => Logger.error("Core", error));
+        } catch (e) {
+            Logger.error("Core", e);
+        }
+
+        try {
+            Logger.info("Core", "Disconnecting from RabbitMQ...");
+            await this.rabbit.disconnect();
+            Logger.info("Core", "Disconnected from RabbitMQ!");
+        } catch (e) {
+            Logger.error("Core", e);
+        }
+        process.exit(0);
     }
 }

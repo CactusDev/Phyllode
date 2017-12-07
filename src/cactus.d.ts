@@ -74,70 +74,6 @@ interface CactusMessagePacket {
     action: boolean;
 }
 
-/**
- * User banned packet
- *
- * @interface CactusBanPacket
- */
-interface CactusBanPacket {
-    type: "ban";
-    duration?: number;
-}
-
-type CactusEvent = FollowEvent | SubscribeEvent | HostEvent | JoinEvent;
-
-/**
- * Follow event. {@param success} is true for a follow and false for an
- * unfollow.
- *
- * @interface FollowEvent
- */
-interface FollowEvent {
-    type: "follow";
-    success: boolean;
-}
-
-/**
- * Subscribe event. {@param streak} contains the number of continuous months
- * for which the subscription has occurred.
- *
- * @interface SubscribeEvent
- */
-interface SubscribeEvent {
-    type: "subscribe";
-    streak: number;
-}
-
-/**
- * Host event. {@param success} is true for a host and false for an unhost.
- *
- * @interface HostEvent
- */
-interface HostEvent {
-    type: "host";
-    success: boolean;
-}
-
-/**
- * Join event. {@param success} is true for a join and false for a leave.
- *
- * @interface JoinEvent
- */
-interface JoinEvent {
-    type: "join";
-    success: boolean;
-}
-
-/**
- * Events. Events are follows, subs, etc
- *
- * @interface CactusEventPacket
- */
-interface CactusEventPacket {
-    type: "event";
-    kind: CactusEvent;
-}
-
 type Channel = string;
 type User = string;
 type Service = string;
@@ -171,3 +107,26 @@ interface ReverseEmojis {
     [name: string]: string;
 }
 
+interface ProxyMessage {
+    botInfo: {
+        botId: number;
+        username: string;
+    };
+
+    channel: string;
+    meta: any;
+    parts: string[];
+    service: string;
+    source: string;
+}
+
+interface ProxyResponse {
+    channel: string;
+    message: string;
+    service: string;
+
+    meta: {
+        action: boolean;
+        target?: string;
+    }
+}

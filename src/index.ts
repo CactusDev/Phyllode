@@ -1,18 +1,23 @@
-import { Logger } from "./logger";
-Logger.setup();
+import { Logger } from "cactus-stl";
 
 import "reflect-metadata";
 
 import { ReflectiveInjector } from "@angular/core";
 import { Core } from "./core";
-import { ServiceHandler } from "./service";
+import { RabbitHandler } from "./rabbit";
+import { Cereus } from "./cereus";
 
 import * as nconf from "config";
 import { Config } from "./config";
 
 import { RedisController } from "cactus-stl";
+import { HandlerController } from "./handlers/handler";
+import { HANDLERS } from "./handlers";
 
-const injector = ReflectiveInjector.resolveAndCreate([
+// HACK: For some reason, if I put handlers into the main injector, they don't work.
+// But, if I add them as a child, they work just fine.
+const hackyFix = ReflectiveInjector.resolve(HANDLERS);
+export const injector = ReflectiveInjector.resolveAndCreate([
     {
         provide: Config,
         useValue: nconf
@@ -21,20 +26,34 @@ const injector = ReflectiveInjector.resolveAndCreate([
         provide: RedisController,
         deps: [Config],
         useFactory: (config: Config) => {
-            const redisController = new RedisController(config.core.redis);
+            const redisController = new RedisController(config.redis);
             return redisController;
         }
     },
     {
-        provide: ServiceHandler,
-        deps: [Config, RedisController],
-        useFactory: (config: Config, redis: RedisController) => {
-            const serviceHandler = new ServiceHandler(config, redis);
-            return serviceHandler;
+        provide: RabbitHandler,
+        deps: [Config],
+        useFactory: (config: Config) => {
+            const rabbit = new RabbitHandler(config);
+            return rabbit;
+        }
+    },
+    {
+        provide: Cereus,
+        deps: [Config],
+        useFactory: (config: Config) => {
+            return new Cereus(`${config.core.cereus.url}/${config.core.cereus.response_endpoint}`);
+        }
+    },
+    {
+        provide: HandlerController,
+        deps: [RabbitHandler],
+        useFactory: (rabbit: RabbitHandler) => {
+            return new HandlerController(rabbit);
         }
     },
     Core
-]);
+]).createChildFromResolved(hackyFix);
 
 const core: Core = injector.get(Core);
 core.start()

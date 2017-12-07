@@ -1,5 +1,5 @@
 
-import { Logger } from "../logger";
+import { Logger } from "cactus-stl";
 
 import { Subject } from "rxjs";
 import { eatSpaces } from "../util";
@@ -98,6 +98,6 @@ export class Cereus {
             return null;
         }
         const message: CactusContext[] = !!response.data ? response.data : null;
-        return !message || message.length ? null : message;
+        return !message || message.length === 0 ? null : message;
     }
 }
