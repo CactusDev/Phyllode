@@ -20,11 +20,6 @@ export class MessageHandler {
         this.twitchParser = new TwitchParser();
         this.mixerParser = new MixerParser();
     }
-
-    @Event("*")
-    public async test(data: EventData) {
-        return new StopResponse();
-    }
     
     @Event("service:channel:message")
     public async onServiceMessage(data: EventData) {
