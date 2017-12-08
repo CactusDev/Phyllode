@@ -60,9 +60,9 @@ export class MixerParser extends AbstractServiceParser {
                 data: segmentData
             });
         }
-        console.log(role);
 
         const context: CactusContext = {
+            user: message.source,
             channel: message.channel,
             packet: {
                 "type": "message",
