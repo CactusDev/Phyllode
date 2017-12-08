@@ -3,6 +3,21 @@ import test from "ava";
 
 import { TwitchParser } from "../src/parsers";
 
+const fewEmoji: Emojis = {
+	":)": {
+        standard: "simple_smile",
+        alternatives: ["smile", "smiley", "grin", "grinning"]
+    },
+    ":(": {
+        standard: "sob"
+    }
+}
+
+const reversedEmoji: ReverseEmojis = {
+	simple_smile: ":)",
+	sob: ":("
+}
+
 const proxyChatMessage: ProxyMessage = {
 	botInfo: {
 		username: "cactusbotdev",
@@ -26,7 +41,9 @@ const proxyChatMessage: ProxyMessage = {
 		"message-type": "chat"
 	},
 	parts: [
-		"Test"
+		"Test",
+		"",
+		"https://google.com"
 	],
 	service: "Twitch",
 	source: "0x01"
@@ -39,6 +56,10 @@ const cactusChatMessage: CactusContext = {
 			{
 				type: "text",
 				data: "Test"
+			},
+			{
+				type: "url",
+				data: "https://google.com"
 			}
 		],
 		action: false
@@ -52,7 +73,7 @@ const cactusChatMessage: CactusContext = {
 
 const proxyResponse: ProxyResponse = {
 	channel: "0x01",
-	message: "Test",
+	message: "Test https://google.com",
 	meta: {
 		action: false,
 		target: undefined
@@ -60,27 +81,44 @@ const proxyResponse: ProxyResponse = {
 	service: "Twitch"
 }
 
+const parser = new TwitchParser();
+
 test("parser shouldn't give anything if it was given nothing", async t => {
-	const parser = new TwitchParser();
 	t.is(await parser.parse(null), null);
 });
 
 test("parser should properly parse proxy messages into CactusFormat", async t => {
-	const parser = new TwitchParser();
 	t.deepEqual(await parser.parse(proxyChatMessage), cactusChatMessage);
 });
 
 test("parser should convert cactus packet into a proxy response", async t => {
-	const parser = new TwitchParser();
 	t.deepEqual(await parser.synthesize([cactusChatMessage]), [proxyResponse]);
 });
 
 test("parser should convert smile to :)", async t => {
-	const parser = new TwitchParser();
 	t.is(await parser.getEmoji("smile"), ":)"); // XXX: This can probably break easily
 });
 
 test("parser should convert .sarcasm to :mappa", async t => {
-	const parser = new TwitchParser();
 	t.is(await parser.getEmoji(".sarcasm"), "Kappa");
 });
+
+test("parser should properly reverse emoji", async t => {
+	t.deepEqual(await (<any> parser).reverseEmojis(fewEmoji), reversedEmoji);
+});
+
+test("parser should give nothing if it's missing the meta", async t => {
+	t.is(await parser.parse({
+		botInfo: {
+			username: "cactusbotdev",
+			botId: 123
+		},
+		channel: "0x01",
+		meta: null,
+		parts: [
+			"Test"
+		],
+		service: "Twitch",
+		source: "0x01"
+	}), null);
+})

@@ -26,12 +26,12 @@ export class MessageHandler {
         const parser = await this.getParser(data.service);
         if (!parser) {
             Logger.error("Message Handler", `No parser for service '${data.service}' exists.`);
-            return;
+            return null;
         }
         const result = await parser.parse(data.data);
         const response = await this.cereus.handle(await this.cereus.parseServiceMessage(result));
         if (!response) {
-            return;
+            return response;
         }
         const ready = await parser.synthesize(response);
         ready.forEach(async part => await this.rabbit.queueResponse(part));

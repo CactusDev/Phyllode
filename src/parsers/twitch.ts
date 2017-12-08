@@ -47,6 +47,7 @@ export class TwitchParser extends AbstractServiceParser {
             isSub = state.subscriber;
         }
         let role: Role = "user";
+        /* istanbul skip next */
         if (isMod) {
             role = "moderator";
         } else if (isSub) {
@@ -106,6 +107,7 @@ export class TwitchParser extends AbstractServiceParser {
             if (message.packet.type === "message") {
                 let packet = <CactusMessagePacket> message.packet;
                 for (let msg of packet.text) {
+                    /* istanbul skip next */
                     if (!msg) {
                         continue;
                     }
