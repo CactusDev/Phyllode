@@ -61,4 +61,14 @@ test("parser should properly parse proxy messages into CactusFormat", async t =>
 test("parser should convert cactus packet into a proxy response", async t => {
 	const parser = new MixerParser();
 	t.deepEqual(await parser.synthesize([cactusChatMessage]), [proxyResponse]);
-})
+});
+
+test("parser should convert :smile: to :]", async t => {
+	const parser = new MixerParser();
+	t.is(await parser.getEmoji("smile"), ":]");
+});
+
+test("parser should convert .sarcasm to :mappa", async t => {
+	const parser = new MixerParser();
+	t.is(await parser.getEmoji(".sarcasm"), ":mappa");
+});
