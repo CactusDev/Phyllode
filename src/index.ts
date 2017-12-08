@@ -55,6 +55,8 @@ export const injector = ReflectiveInjector.resolveAndCreate([
     Core
 ]).createChildFromResolved(hackyFix);
 
+injector.get(ReflectiveInjector).provideInjector(injector);
+
 const core: Core = injector.get(Core);
 core.start()
     .catch(err => Logger.error("Core", err));

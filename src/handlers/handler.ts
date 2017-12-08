@@ -5,8 +5,9 @@ import { RabbitHandler } from "../rabbit";
 import { title } from "../util";
 import { EventHandler, HANDLERS, HANDLED_EVENT_METADATA_KEY, MessageHandler } from "."
 
-import { injector } from "..";
 import { StopResponse, EventExecutor } from "./responses"
+
+import { ReflectiveInjector } from "@angular/core";
 
 interface RegisteredHandlers {
     [event: string]: {
@@ -20,7 +21,11 @@ const MESSAGE_HANDLER = "service:channel:message";
 export class HandlerController {
     private registeredHandlers: RegisteredHandlers = {};
 
-    constructor(private rabbit: RabbitHandler) {
+    constructor(private rabbit: RabbitHandler, private injector: ReflectiveInjector = null) {
+    }
+
+    public provideInjector(injector: ReflectiveInjector) {
+        this.injector = injector;
     }
 
     public async setup(handlers: any[] = HANDLERS) {
@@ -39,12 +44,23 @@ export class HandlerController {
             }
         }
 
+        if (!this.rabbit) {
+            return;
+        }
+
+        // @CLEANUP: Duplicated code in here, make it not duplicated
+        // @CLEANUP: Duplicated code in here, make it not duplicated
+        // @CLEANUP: Duplicated code in here, make it not duplicated
+        // @CLEANUP: Duplicated code in here, make it not duplicated
+        // @CLEANUP: Duplicated code in here, make it not duplicated
+        // @CLEANUP: Duplicated code in here, make it not duplicated
+
         this.rabbit.on("service:message", async (message: ProxyMessage) => {
             const registered = this.registeredHandlers[MESSAGE_HANDLER] || [];
             registered.push(...this.registeredHandlers["*"] || []);
 
             registered.forEach(async executor => {
-                const hackityHack = injector.get(executor.owner);
+                const hackityHack = this.injector.get(executor.owner);
                 if (!hackityHack) {
                     console.error("Hey Innectic remember when you told yourself that hack wouldn't break?")
                     console.error("Guess what broke.", hackityHack);
@@ -65,5 +81,34 @@ export class HandlerController {
                 }
             });
         });
+    }
+
+    public async push(event: string, data: any): Promise<any[]> {
+        const registered = [...this.registeredHandlers[event] || [], ...this.registeredHandlers["*"] || []];
+
+        let results: any = [];
+
+        registered.forEach(async executor => {
+            const hackityHack = this.injector.get(executor.owner);
+            if (!hackityHack) {
+                console.error("Hey Innectic remember when you told yourself that hack wouldn't break?")
+                console.error("Guess what broke.", hackityHack);
+                return null;
+            }
+
+            const result = await hackityHack[executor.function.name]({
+                event,
+                service: data.service,
+                channel: data.channel,
+                data
+            });
+            if (result) {
+                if (result instanceof StopResponse) {
+                    return;
+                }
+                results.push(result);
+            }
+        });
+        return results;
     }
 }

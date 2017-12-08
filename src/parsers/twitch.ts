@@ -30,6 +30,9 @@ export class TwitchParser extends AbstractServiceParser {
     }
 
     public async parse(message: ProxyMessage): Promise<CactusContext> {
+        if (!message) {
+            return null;
+        }
         const state = message.meta;
         if (!state) {
             return null;
@@ -44,6 +47,7 @@ export class TwitchParser extends AbstractServiceParser {
             isSub = state.subscriber;
         }
         let role: Role = "user";
+        /* istanbul skip next */
         if (isMod) {
             role = "moderator";
         } else if (isSub) {
@@ -83,11 +87,10 @@ export class TwitchParser extends AbstractServiceParser {
             },
             channel: message.channel,
             user: state["display-name"],
-            role: role,
+            role: role || "user",
             service: message.service,
             target: !!target ? target : undefined
         };
-
         return context;
     }
 
@@ -104,6 +107,7 @@ export class TwitchParser extends AbstractServiceParser {
             if (message.packet.type === "message") {
                 let packet = <CactusMessagePacket> message.packet;
                 for (let msg of packet.text) {
+                    /* istanbul skip next */
                     if (!msg) {
                         continue;
                     }

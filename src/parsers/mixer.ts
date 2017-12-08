@@ -30,6 +30,13 @@ export class MixerParser extends AbstractServiceParser {
     }
 
     public async parse(message: ProxyMessage): Promise<CactusContext> {
+        if (!message) {
+            return null;
+        }
+        if (!message.meta) {
+            return null;
+        }
+
         let role: Role = "user";
         if (message.meta.role === "mod") {
             role = "moderator";
@@ -58,6 +65,7 @@ export class MixerParser extends AbstractServiceParser {
         }
 
         const context: CactusContext = {
+            user: message.source,
             channel: message.channel,
             packet: {
                 "type": "message",
