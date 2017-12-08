@@ -2,6 +2,7 @@ language: node_js
 node_js:
   - '6.10'
   - '7.10'
+  - '8.9.1'
 before_install:
   - npm install -g typescript
 script:
@@ -9,5 +10,7 @@ script:
 branches:
   only:
     - master
+    - staging
+    - develop
 after_success:
   - "./node_modules/.bin/nyc report --reporter=text-lcov | ./node_modules/.bin/coveralls"

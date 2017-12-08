@@ -30,6 +30,9 @@ export class TwitchParser extends AbstractServiceParser {
     }
 
     public async parse(message: ProxyMessage): Promise<CactusContext> {
+        if (!message) {
+            return null;
+        }
         const state = message.meta;
         if (!state) {
             return null;
@@ -83,11 +86,10 @@ export class TwitchParser extends AbstractServiceParser {
             },
             channel: message.channel,
             user: state["display-name"],
-            role: role,
+            role: role || "user",
             service: message.service,
             target: !!target ? target : undefined
         };
-
         return context;
     }
 
