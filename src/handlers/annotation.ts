@@ -1,8 +1,9 @@
 
 import { Logger } from "cactus-stl";
 import { HANDLERS } from "."
+import { Injectable } from "@angular/core";
 
-import { reflectAnnotations, createAnnotationFactory } from "reflect-annotations";
+import { reflectAnnotations, createAnnotationFactory, setAnnotations } from "reflect-annotations";
 
 export const HANDLED_EVENT_METADATA_KEY = "handler:event:handled";
 
@@ -11,7 +12,7 @@ class EventAnnotation {
 }
 export const Event = createAnnotationFactory(EventAnnotation);
 
-export function EventController() {
+export function EventController(injects?: boolean) {
     return (target: Function) => {
         let events: any[] = [];
 
@@ -49,7 +50,12 @@ export function EventController() {
                         });
 
                         Reflect.defineMetadata(HANDLED_EVENT_METADATA_KEY, events, target);
-                        HANDLERS.push(target);
+                        if (injects) {
+                            const currentAnnotations = component.classAnnotations;
+                            currentAnnotations.push(Injectable);
+                            setAnnotations(target, null, currentAnnotations);
+                            HANDLERS.push(target);
+                        }
 
                         Logger.info("Core", `Registered handler for event ${name}.`);
                     }

@@ -38,8 +38,7 @@ EventHandlers fully support having dependencies that are in the main injector.
 
 ```typescript
 
-@EventHandler()
-@Injectable()
+@EventHandler(true) // To have injection, just add true to the parameters.
 export class AnotherEventHandler {
 
     constructor(private rabbit: RabbitHandler) {
@@ -54,5 +53,3 @@ export class AnotherEventHandler {
 }
 
 ```
-
-Currently, handlers that take dependencies must be marked `@Injectable`, but that is only temporary

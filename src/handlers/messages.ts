@@ -9,8 +9,7 @@ import { Logger } from "cactus-stl";
 
 import { StopResponse } from "./responses"
 
-@EventController()
-@Injectable()
+@EventController(true)
 export class MessageHandler {
 
     private twitchParser: TwitchParser;
@@ -21,11 +20,6 @@ export class MessageHandler {
         this.mixerParser = new MixerParser();
     }
 
-    @Event("*")
-    public async test(data: EventData) {
-        return new StopResponse();
-    }
-    
     @Event("service:channel:message")
     public async onServiceMessage(data: EventData) {
         const parser = await this.getParser(data.service);
