@@ -1,7 +1,6 @@
 
 import { Logger } from "cactus-stl";
 import { HANDLERS } from "."
-import { Injectable } from "@angular/core";
 
 import { reflectAnnotations, createAnnotationFactory, setAnnotations } from "reflect-annotations";
 
@@ -51,9 +50,6 @@ export function EventController(injects?: boolean) {
 
                         Reflect.defineMetadata(HANDLED_EVENT_METADATA_KEY, events, target);
                         if (injects) {
-                            const currentAnnotations = component.classAnnotations;
-                            currentAnnotations.push(Injectable);
-                            setAnnotations(target, undefined, currentAnnotations);
                             HANDLERS.push(target);
                         }
 

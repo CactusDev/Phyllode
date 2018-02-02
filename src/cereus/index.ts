@@ -1,11 +1,8 @@
 
 import { Logger } from "cactus-stl";
 
-import { Subject } from "rxjs";
 import { eatSpaces } from "../util";
 import { default as axios } from "axios";
-
-export const messages: Subject<CactusMessagePacket> = new Subject();
 
 const validVariables: string[] = ["COUNT", "CHANNEL", "USER"];
 
@@ -90,13 +87,14 @@ export class Cereus {
      * @returns {Promise<CactusContext[]>} the response from Cereus
      * @memberof Cereus
      */
-    public async handle(packet: CactusContext): Promise<CactusContext[]> {
+    public async handle(packet: CactusContext): Promise<CactusContext[] | null> {
         const data = JSON.stringify(packet);
         const response = await axios.get(this.responseUrl, { data });
         if (response.status === 404) {
             Logger.error("Cereus", "Invalid packet sent: '" + JSON.stringify(packet) + "'");
             return null;
         }
+        // TODO: wtf is this
         const message: CactusContext[] = !!response.data ? response.data : null;
         return !message || message.length === 0 ? null : message;
     }

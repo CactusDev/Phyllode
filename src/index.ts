@@ -2,7 +2,8 @@ import { Logger } from "cactus-stl";
 
 import "reflect-metadata";
 
-import { ReflectiveInjector } from "@angular/core";
+import { Injector } from "dependy";
+
 import { Core } from "./core";
 import { RabbitHandler } from "./rabbit";
 import { Cereus } from "./cereus";
@@ -14,46 +15,38 @@ import { RedisController } from "cactus-stl";
 import { HandlerController } from "./handlers/handler";
 import { HANDLERS } from "./handlers";
 
-// HACK: For some reason, if I put handlers into the main injector, they don't work.
-// But, if I add them as a child, they work just fine.
-const hackyFix = ReflectiveInjector.resolve(HANDLERS);
-export const injector = ReflectiveInjector.resolveAndCreate([
+export const injector = new Injector(
     {
-        provide: Config,
-        useValue: nconf
+        injects: Config,
+        value: nconf
     },
     {
-        provide: RedisController,
-        deps: [Config],
-        useFactory: (config: Config) => {
-            const redisController = new RedisController(config.redis);
-            return redisController;
+        injects: RedisController,
+        depends: [Config],
+        create: (config: Config) => {
+            return new RedisController(config.redis);
         }
     },
     {
-        provide: RabbitHandler,
-        deps: [Config],
-        useFactory: (config: Config) => {
-            const rabbit = new RabbitHandler(config);
-            return rabbit;
-        }
+        injects: RabbitHandler,
+        depends: [Config]
     },
     {
-        provide: Cereus,
-        deps: [Config],
-        useFactory: (config: Config) => {
+        injects: Cereus,
+        depends: [Config],
+        create: (config: Config) => {
             return new Cereus(`${config.core.cereus.url}/${config.core.cereus.response_endpoint}`);
         }
     },
     {
-        provide: HandlerController,
-        deps: [RabbitHandler],
-        useFactory: (rabbit: RabbitHandler) => {
-            return new HandlerController(rabbit);
-        }
+        injects: HandlerController,
+        depends: [RabbitHandler]
     },
-    Core
-]).createChildFromResolved(hackyFix);
+    {
+        injects: Core,
+        depends: [RedisController, RabbitHandler, Cereus, HandlerController]
+    }
+)
 
 const core: Core = injector.get(Core);
 core.start()

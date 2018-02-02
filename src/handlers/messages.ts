@@ -1,6 +1,5 @@
 
 import { Event, EventController } from ".";
-import { Injectable } from "@angular/core";
 
 import { TwitchParser, MixerParser, AbstractServiceParser } from "../parsers";
 import { RabbitHandler } from "../rabbit";
@@ -28,6 +27,9 @@ export class MessageHandler {
             return;
         }
         const result = await parser.parse(data.data);
+        if (!result) {
+            return;
+        }
         const response = await this.cereus.handle(await this.cereus.parseServiceMessage(result));
         if (!response) {
             return;
