@@ -20,7 +20,7 @@ export class MixerParser extends AbstractServiceParser {
 
         Object.keys(emojis).forEach(k => reversed[emojis[k].standard] = k);
         Object.keys(emojis).filter(k => !!emojis[k].alternatives).forEach(k =>
-            emojis[k].alternatives.filter(alt => !!reversed[alt]).forEach(alt => reversed[alt] = k));
+            (emojis[k].alternatives || []).filter(alt => !!reversed[alt]).forEach(alt => reversed[alt] = k));
 
         return reversed;
     }
@@ -29,7 +29,7 @@ export class MixerParser extends AbstractServiceParser {
         return this.reversedEmojis[name] || `:${name}:`;
     }
 
-    public async parse(message: ProxyMessage): Promise<CactusContext> {
+    public async parse(message: ProxyMessage): Promise<CactusContext | null> {
         let role: Role = "user";
         if (message.meta.role === "mod") {
             role = "moderator";
@@ -75,7 +75,7 @@ export class MixerParser extends AbstractServiceParser {
         let action = false;
         let channel = "";
         let service = "";
-        let target = "";
+        let target: string | undefined = "";
 
         let responses: ProxyResponse[] = [];
 

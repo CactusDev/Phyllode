@@ -36,7 +36,7 @@ export class MessageHandler {
         ready.forEach(async part => await this.rabbit.queueResponse(part));
     }
 
-    private async getParser(service: string): Promise<AbstractServiceParser> {
+    private async getParser(service: string): Promise<AbstractServiceParser | null> {
         switch (service.toLowerCase()) {
             case "mixer":
                 return this.mixerParser;

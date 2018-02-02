@@ -5,10 +5,10 @@ import { EventEmitter } from "events";
 import * as Amqp from "amqp-ts";
 
 export class RabbitHandler extends EventEmitter {
-    private connection: Amqp.Connection;
-    private proxyExchange: Amqp.Exchange;
-    private messageQueue: Amqp.Queue;
-    private outgoingQueue: Amqp.Queue;
+    private connection!: Amqp.Connection;
+    private proxyExchange!: Amqp.Exchange;
+    private messageQueue!: Amqp.Queue;
+    private outgoingQueue!: Amqp.Queue;
 
     constructor(private config: Config) {
         super();

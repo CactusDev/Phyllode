@@ -53,7 +53,7 @@ export function EventController(injects?: boolean) {
                         if (injects) {
                             const currentAnnotations = component.classAnnotations;
                             currentAnnotations.push(Injectable);
-                            setAnnotations(target, null, currentAnnotations);
+                            setAnnotations(target, undefined, currentAnnotations);
                             HANDLERS.push(target);
                         }
 

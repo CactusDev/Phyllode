@@ -1,7 +1,7 @@
 
 export class Config {
 
-    public core: {
+    public core!: {
         api_url: string;
         cereus: {
             url: string;
@@ -9,14 +9,14 @@ export class Config {
         };
     }
 
-    public redis: {
+    public redis!: {
         db: number;
         host: string;
         port: number;
         password: string;
     };
 
-    public rabbitmq: {
+    public rabbitmq!: {
         host: string;
         port: number;
         username: string;
