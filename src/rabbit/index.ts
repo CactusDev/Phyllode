@@ -15,7 +15,7 @@ export class RabbitHandler extends EventEmitter {
     }
 
     public async connect() {
-        this.connection = new Amqp.Connection(`amqp://localhost`);
+        this.connection = new Amqp.Connection(`amqp://${this.config.rabbitmq.host}:${this.config.rabbitmq.port}`);
         this.proxyExchange = this.connection.declareExchange("proxy");
         
         this.messageQueue = this.connection.declareQueue(this.config.rabbitmq.queues.messages);

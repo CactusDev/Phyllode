@@ -11,12 +11,13 @@ class EventAnnotation {
 }
 export const Event = createAnnotationFactory(EventAnnotation);
 
-export function EventController() {
+export function EventController(data: any = {}) {
     return (target: Function) => {
+        let depends = data.depends || [];
 
         const presentAnnotatedComponents = reflectAnnotations(target);
         for (let component of presentAnnotatedComponents) {
-            let events: any[] = [];
+            let events: any[] = Reflect.getOwnMetadata(HANDLED_EVENT_METADATA_KEY, target) || [];
             // Figure out what decorators are on this component.
             // If it has @Event, then we want to turn this component
             // into a real event handler
@@ -49,14 +50,13 @@ export function EventController() {
                             event: name,
                             owner: target
                         });
-
                         Logger.info("Core", `Registered handler for event ${name}.`);
                     }
                     Reflect.defineMetadata("used:handler", true, eventHandler);
                 }
             }
             Reflect.defineMetadata(HANDLED_EVENT_METADATA_KEY, events, target);
-            HANDLERS.push(target);
         }
+        HANDLERS.push({ target, depends });
     }
 }

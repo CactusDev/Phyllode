@@ -1,6 +1,5 @@
 
 import { Event, EventController } from ".";
-import { Injectable } from "@angular/core";
 
 import { TwitchParser, MixerParser, AbstractServiceParser } from "../parsers";
 import { RabbitHandler } from "../rabbit";
@@ -9,8 +8,7 @@ import { Logger } from "cactus-stl";
 
 import { StopResponse } from "./responses"
 
-@EventController()
-@Injectable()
+@EventController({ depends: [Cereus, RabbitHandler] })
 export class MessageHandler {
 
     private twitchParser: TwitchParser;

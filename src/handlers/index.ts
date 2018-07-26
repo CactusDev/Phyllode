@@ -1,5 +1,10 @@
 
-export let HANDLERS: any[] = [];
+export interface HandlerType {
+	target: any,
+	depends: any[]
+};
+
+export let HANDLERS: HandlerType[] = [];
 
 export * from "./annotation";
 

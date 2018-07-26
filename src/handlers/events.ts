@@ -1,11 +1,9 @@
 
-import { Injectable } from "@angular/core";
 import { Event, EventController } from ".";
 
 import { RedisController, Logger } from "cactus-stl";
 
 @EventController()
-@Injectable()
 export class EventHandler {
 
 	constructor(private redis: RedisController) {

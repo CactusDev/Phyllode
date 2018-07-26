@@ -1,4 +1,3 @@
-import { Injectable } from "@angular/core";
 
 import { Logger } from "cactus-stl";
 import { RedisController } from "cactus-stl";
@@ -13,7 +12,6 @@ import { HandlerController } from "./handlers/handler";
  * @export
  * @class Core
  */
-@Injectable()
 export class Core {
 
     constructor(private redis: RedisController, private rabbit: RabbitHandler, private cereus: Cereus, private handlerController: HandlerController) {
