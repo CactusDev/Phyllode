@@ -29,15 +29,16 @@ export class Cereus {
             return context;
         }
 
+        let packets: Component[] = [];
         for (let packet of context.packet.text) {
             // We only care about components that can contain a variable, the text type.
             if (packet.type !== "text") {
+                packets.push(packet);
                 continue;
             }
             const message = packet.data;
 
             let current = "";
-            let packets: Component[] = [];
 
             for (let pos = 0; pos < message.length; pos++) {
                 const char = message[pos];
@@ -59,8 +60,8 @@ export class Cereus {
                 }
             }
             // Now that we're done, set all the packets to the new ones.
-            (<CactusMessagePacket> context.packet).text = packets;
         };
+        (<CactusMessagePacket> context.packet).text = packets;
         return context;
     }
 

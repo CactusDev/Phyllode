@@ -54,7 +54,7 @@ export class MixerParser extends AbstractServiceParser {
 
             if (mixerEmojis[segment]) {
                 segmentType = "emoji";
-                segmentData = mixerEmojis[segment];
+                segmentData = mixerEmojis[segment].standard;
             } else if (isUrl(segment)) {
                 segmentType = "url";
             }
@@ -63,6 +63,7 @@ export class MixerParser extends AbstractServiceParser {
                 data: segmentData
             });
         }
+        console.log(components);
 
         const context: CactusContext = {
             user: message.source,

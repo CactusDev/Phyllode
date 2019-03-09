@@ -28,7 +28,7 @@ export class MessageHandler {
         }
         const result = await parser.parse(data.data);
         let thingy = await this.cereus.parseServiceMessage(result);
-        console.log(thingy)
+        console.log(thingy);
         const response = await this.cereus.handle(thingy);
         console.log(response);
         if (!response) {
