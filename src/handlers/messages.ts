@@ -27,11 +27,15 @@ export class MessageHandler {
             return null;
         }
         const result = await parser.parse(data.data);
-        const response = await this.cereus.handle(await this.cereus.parseServiceMessage(result));
+        let thingy = await this.cereus.parseServiceMessage(result);
+        console.log(thingy)
+        const response = await this.cereus.handle(thingy);
+        console.log(response);
         if (!response) {
             return response;
         }
         const ready = await parser.synthesize(response);
+        console.log(ready);
         ready.forEach(async part => await this.rabbit.queueResponse(part));
     }
 

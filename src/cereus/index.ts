@@ -29,12 +29,6 @@ export class Cereus {
             return context;
         }
 
-        // Does this packet-set actually need to be parsed?
-        // Packets that don't contain a variable don't need to be parsed twice.
-        if (!components.some(e => e.data.includes("%"))) {
-            return context;
-        }
-
         for (let packet of context.packet.text) {
             // We only care about components that can contain a variable, the text type.
             if (packet.type !== "text") {
@@ -43,36 +37,23 @@ export class Cereus {
             const message = packet.data;
 
             let current = "";
-            let inVariable = false;
             let packets: Component[] = [];
 
             for (let pos = 0; pos < message.length; pos++) {
                 const char = message[pos];
                 if (char === " ") {
-                    inVariable = false;
-                    current += " ";
-                } else if (char === "%") {
-                    if (inVariable) {
-                        inVariable = false;
-                        packets.push({
-                            type: "variable",
-                            data: await eatSpaces(current)
-                        });
-                        current = "";
-                    } else {
-                        inVariable = true;
-                        packets.push({
-                            type: "text",
-                            data: await eatSpaces(current)
-                        });
-                        current = "";
-                    }
+                    packets.push({
+                        type: "text",
+                        data: current
+                    });
+
+                    current = "";
                 } else {
                     current += char;
                     if (pos === message.length - 1) {
                         packets.push({
                             type: "text",
-                            data: await eatSpaces(current)
+                            data: current
                         });
                     }
                 }
