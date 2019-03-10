@@ -38,7 +38,7 @@ export class MixerParser extends AbstractServiceParser {
         }
 
         let role: Role = "user";
-        if (message.meta.role === "mod") {
+        if (message.meta.role === "Mod") {
             role = "moderator";
         } else {
             role = message.meta.role;
