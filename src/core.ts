@@ -4,7 +4,6 @@ import { RedisController } from "cactus-stl";
 import { RabbitHandler } from "./rabbit";
 
 import { Cereus } from "./cereus";
-import { HandlerController } from "./handlers/handler";
 
 /**
  * Start all the Core services.
@@ -14,7 +13,7 @@ import { HandlerController } from "./handlers/handler";
  */
 export class Core {
 
-    constructor(private redis: RedisController, private rabbit: RabbitHandler, private cereus: Cereus, private handlerController: HandlerController) {
+    constructor(private redis: RedisController, private rabbit: RabbitHandler, private cereus: Cereus) {
     }
 
     /**
@@ -24,10 +23,6 @@ export class Core {
      */
     public async start() {
         try {
-            Logger.info("Core", "Setting up handler controller...");
-            await this.handlerController.setup();
-            Logger.info("Core", "Done!");
-
             Logger.info("Core", "Connecting to Redis...");
             await this.redis.connect();
             Logger.info("Core", "Connected to Redis!");

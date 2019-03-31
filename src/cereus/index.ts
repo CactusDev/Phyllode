@@ -7,8 +7,6 @@ import { default as axios } from "axios";
 
 export const messages: Subject<CactusMessagePacket> = new Subject();
 
-const validVariables: string[] = ["COUNT", "CHANNEL", "USER"];
-
 /**
  * The CactusBot Cereus handler system.
  *
