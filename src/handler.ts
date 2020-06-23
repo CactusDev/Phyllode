@@ -5,12 +5,13 @@ import { TwitchParser, MixerParser, AbstractServiceParser } from "./parsers";
 
 export class PacketHandler {
 
-    private twitchParser: TwitchParser;
-    private mixerParser: MixerParser;
+    private serviceParsers: {[name: string]: AbstractServiceParser};
 
     constructor(private cereus: Cereus, private rabbit: RabbitHandler) {
-        this.twitchParser = new TwitchParser();
-        this.mixerParser = new MixerParser();
+        this.serviceParsers = {
+            "mixer": new MixerParser(),
+            "twitch": new TwitchParser()
+        };
     }
 
     public async handleData(message: ProxyMessage | ServiceEvent) {
@@ -63,13 +64,6 @@ export class PacketHandler {
     }
 
     private getParser(service: string): AbstractServiceParser {
-        switch (service.toLowerCase()) {
-            case "mixer":
-                return this.mixerParser;
-            case "twitch":
-                return this.twitchParser;
-            default:
-                return null;
-        }
+        return this.serviceParsers[service.toLowerCase()];
     }
 }
