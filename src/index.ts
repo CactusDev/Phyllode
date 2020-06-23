@@ -5,6 +5,7 @@ import { Logger } from "cactus-stl";
 import { Core } from "./core";
 import { RabbitHandler } from "./rabbit";
 import { Cereus } from "./cereus";
+import { PacketHandler } from "./handler";
 
 import * as nconf from "config";
 import { Config } from "./config";
@@ -30,6 +31,10 @@ const injector = new Injector(
         depends: [Config]
     },
     {
+        injects: PacketHandler,
+        depends: [Cereus, RabbitHandler]
+    },
+    {
         injects: Cereus,
         depends: [Config],
         create: (config: Config) => {
@@ -38,7 +43,7 @@ const injector = new Injector(
     },
     {
         injects: Core,
-        depends: [RedisController, RabbitHandler, Cereus]
+        depends: [RedisController, RabbitHandler, Cereus, PacketHandler]
     }
 );
 

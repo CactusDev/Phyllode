@@ -2,6 +2,7 @@
 import { Logger } from "cactus-stl";
 import { RedisController } from "cactus-stl";
 import { RabbitHandler } from "./rabbit";
+import { PacketHandler } from "./handler";
 
 import { Cereus } from "./cereus";
 
@@ -13,7 +14,7 @@ import { Cereus } from "./cereus";
  */
 export class Core {
 
-    constructor(private redis: RedisController, private rabbit: RabbitHandler, private cereus: Cereus) {
+    constructor(private redis: RedisController, private rabbit: RabbitHandler, private cereus: Cereus, private handler: PacketHandler) {
     }
 
     /**
@@ -29,6 +30,7 @@ export class Core {
 
             Logger.info("Core", "Attempting to connect to RabbitMQ...");
             await this.rabbit.connect();
+            this.rabbit.on("service:message", async (msg: ProxyMessage | ServiceEvent) => this.handler.handleData(msg));
             Logger.info("Core", "Connected to RabbitMQ!");
         } catch (e) {
             Logger.error("Core", e);

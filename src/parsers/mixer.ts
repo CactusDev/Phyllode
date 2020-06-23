@@ -63,7 +63,6 @@ export class MixerParser extends AbstractServiceParser {
                 data: segmentData
             });
         }
-        console.log(components);
 
         const context: CactusContext = {
             user: message.source,
@@ -109,6 +108,7 @@ export class MixerParser extends AbstractServiceParser {
                     finished += " " + msg.data;
                 }
                 const response: ProxyResponse = {
+                    order: 0,
                     channel,
                     service,
                     meta: {

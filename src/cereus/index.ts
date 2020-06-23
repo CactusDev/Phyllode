@@ -72,12 +72,13 @@ export class Cereus {
      */
     public async handle(packet: CactusContext): Promise<CactusContext[]> {
         const data = JSON.stringify(packet);
+        console.log(data);
         const response = await axios.get(this.responseUrl, { data });
         if (response.status === 404) {
             Logger.error("Cereus", "Invalid packet sent: '" + JSON.stringify(packet) + "'");
             return null;
         }
-        const message: CactusContext[] = !!response.data ? response.data : null;
+        const message: CactusContext[] = response.data || null;
         return !message || message.length === 0 ? null : message;
     }
 }

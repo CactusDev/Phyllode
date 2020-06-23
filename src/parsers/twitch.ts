@@ -124,6 +124,7 @@ export class TwitchParser extends AbstractServiceParser {
                     finished += " " + msg.data;
                 }
                 const response: ProxyResponse = {
+                    order: 0,
                     channel,
                     service,
                     meta: {
