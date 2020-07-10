@@ -30,10 +30,7 @@ export class MixerParser extends AbstractServiceParser {
     }
 
     public async parse(message: ProxyMessage): Promise<CactusContext> {
-        if (!message) {
-            return null;
-        }
-        if (!message.meta) {
+        if (!message || !message.meta) {
             return null;
         }
 
@@ -101,7 +98,7 @@ export class MixerParser extends AbstractServiceParser {
                     target = message.target;
                     
                     if (msg.type === "emoji") {
-                        const emoji = await this.getEmoji(msg.data);
+                        const emoji = await this.getEmoji(<string>msg.data);
                         finished += ` ${emoji}`;
                         continue;
                     }

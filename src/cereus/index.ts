@@ -34,7 +34,7 @@ export class Cereus {
                 packets.push(packet);
                 continue;
             }
-            const message = packet.data;
+            const message = <string>packet.data;
 
             let current = "";
 

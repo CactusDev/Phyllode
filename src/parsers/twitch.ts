@@ -117,7 +117,7 @@ export class TwitchParser extends AbstractServiceParser {
                     target = message.target;
                     
                     if (msg.type === "emoji") {
-                        const emoji = await this.getEmoji(msg.data);
+                        const emoji = await this.getEmoji((<EmojiComponentData>msg.data).standard);  // TODO: This should lookup alternatives
                         finished += ` ${emoji}`;
                         continue;
                     }

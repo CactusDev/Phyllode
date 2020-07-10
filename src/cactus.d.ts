@@ -1,25 +1,34 @@
 
 type CactusPacket = CactusMessagePacket | CactusEventPacket | CactusBanPacket;
 
+interface EmojiComponentData {
+    standard: string;
+    alternatives: string[];
+}
+
 interface Component {
     type: "text" | "emoji" | "tag" | "url" | "variable";
-    data: string;
+    data: string|EmojiComponentData;
 }
 
 interface TextComponent extends Component {
     type: "text";
+    data: string;
 }
 
 interface EmojiComponent extends Component {
     type: "emoji";
+    data: EmojiComponentData;
 }
 
 interface TagComponent extends Component {
     type: "tag";
+    data: string;
 }
 
 interface URLComponent extends Component {
     type: "url";
+    data: string;
 }
 
 interface CactusMessagePacket {
