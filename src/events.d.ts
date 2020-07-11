@@ -1,5 +1,5 @@
 
-type CactusEvent = FollowEvent | SubscribeEvent | HostEvent | JoinEvent;
+type CactusEvent = FollowEvent | SubscribeEvent | HostEvent | JoinEvent | StartEvent;
 
 interface CactusBanPacket {
     type: "ban";
@@ -24,6 +24,11 @@ interface HostEvent {
 interface JoinEvent {
     type: "join";
     success: boolean;
+}
+
+interface StartEvent {
+    type: "start";
+    new: boolean;
 }
 
 interface CactusEventPacket {

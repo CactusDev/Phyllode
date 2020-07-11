@@ -7,8 +7,6 @@ import { default as axios } from "axios";
 
 export const messages: Subject<CactusMessagePacket> = new Subject();
 
-const validVariables: string[] = ["COUNT", "CHANNEL", "USER"];
-
 /**
  * The CactusBot Cereus handler system.
  *
@@ -36,7 +34,7 @@ export class Cereus {
                 packets.push(packet);
                 continue;
             }
-            const message = packet.data;
+            const message = <string>packet.data;
 
             let current = "";
 
@@ -74,12 +72,13 @@ export class Cereus {
      */
     public async handle(packet: CactusContext): Promise<CactusContext[]> {
         const data = JSON.stringify(packet);
+        console.log(data);
         const response = await axios.get(this.responseUrl, { data });
         if (response.status === 404) {
             Logger.error("Cereus", "Invalid packet sent: '" + JSON.stringify(packet) + "'");
             return null;
         }
-        const message: CactusContext[] = !!response.data ? response.data : null;
+        const message: CactusContext[] = response.data || null;
         return !message || message.length === 0 ? null : message;
     }
 }

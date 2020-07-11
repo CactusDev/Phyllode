@@ -19,6 +19,7 @@ const reversedEmoji: ReverseEmojis = {
 }
 
 const proxyChatMessage: ProxyMessage = {
+	type: "message",
 	botInfo: {
 		username: "cactusbotdev",
 		botId: 123
@@ -60,6 +61,7 @@ const cactusChatMessage: CactusContext = {
 };
 
 const proxyResponse: ProxyResponse = {
+	order: 0,
 	channel: "0x01",
 	message: "Test https://google.com",
 	meta: {
@@ -97,6 +99,7 @@ test("parser should properly reverse emoji", async t => {
 
 test("parser should give nothing if it's missing the meta", async t => {
 	t.is(await parser.parse({
+		type: "message",
 		botInfo: {
 			username: "cactusbotdev",
 			botId: 123

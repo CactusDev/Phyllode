@@ -24,10 +24,11 @@ export class RabbitHandler extends EventEmitter {
         this.messageQueue.bind(this.proxyExchange);
         this.outgoingQueue.bind(this.proxyExchange);
 
-        this.messageQueue.activateConsumer((messageRaw) => {
-            const message = JSON.parse(messageRaw.getContent());
+        this.messageQueue.activateConsumer((raw) => {
+            raw.ack();
+
+            const message = JSON.parse(raw.getContent());
             this.emit("service:message", message);
-            messageRaw.ack();
         });
 
         await this.connection.completeConfiguration();
@@ -37,7 +38,11 @@ export class RabbitHandler extends EventEmitter {
         await this.connection.close();
     }
 
-    public async queueResponse(message: ProxyResponse) {
+    public async queueResponse(message: ProxyResponse[]) {
+        for (let i = 0; i < message.length; i++) {
+            message[i].order = i;
+        }
+
         const stringed = JSON.stringify(message);
         await this.outgoingQueue.send(new Amqp.Message(stringed));
     }

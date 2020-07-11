@@ -5,18 +5,13 @@ import { Logger } from "cactus-stl";
 import { Core } from "./core";
 import { RabbitHandler } from "./rabbit";
 import { Cereus } from "./cereus";
+import { PacketHandler } from "./handler";
 
 import * as nconf from "config";
 import { Config } from "./config";
 
 import { RedisController } from "cactus-stl";
-import { HandlerController } from "./handlers/handler";
-import { HANDLERS } from "./handlers";
-
 import { Injector } from "dependy";
-
-let handlerInjection: any[] = [];
-HANDLERS.forEach(async handler => handlerInjection.push({ injects: handler.target, depends: handler.depends }));
 
 const injector = new Injector(
     {
@@ -36,6 +31,10 @@ const injector = new Injector(
         depends: [Config]
     },
     {
+        injects: PacketHandler,
+        depends: [Cereus, RabbitHandler]
+    },
+    {
         injects: Cereus,
         depends: [Config],
         create: (config: Config) => {
@@ -43,17 +42,10 @@ const injector = new Injector(
         }
     },
     {
-        injects: HandlerController,
-        depends: [RabbitHandler]
-    },
-    {
         injects: Core,
-        depends: [RedisController, RabbitHandler, Cereus, HandlerController]
-    },
-    ...handlerInjection
+        depends: [RedisController, RabbitHandler, Cereus, PacketHandler]
+    }
 );
-
-injector.get(HandlerController).provideInjector(injector);
 
 const core: Core = injector.get(Core);
 core.start()

@@ -1,7 +1,11 @@
 
-interface EventData {
-	event: string;
+type ServiceType = "Twitch" | "Mixer" | "Discord";
+
+interface ServiceEvent {
+    type: "event";
+    event: string;
+    target: string | null;
     channel: string;
-    service: string;
-    data: any;
+    service: ServiceType;
+    extra: any;
 }
