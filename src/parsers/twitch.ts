@@ -30,30 +30,26 @@ export class TwitchParser extends AbstractServiceParser {
     }
 
     public async parse(message: ProxyMessage): Promise<CactusContext> {
-        if (!message) {
+        if (!message || !message.meta) {
             return null;
         }
-        const state = message.meta;
-        if (!state) {
-            return null;
-        }
-        let isMod = false;
-        let isBroadcaster = false;
-        let isSub = false;
 
-        if (state.badges) {
-            isBroadcaster = state.badges.broadcaster && state.badges.broadcaster === "1";
-            isMod = state.mod;
-            isSub = state.subscriber;
-        }
+        const state = message.meta;
         let role: Role = "user";
-        /* istanbul skip next */
-        if (isMod) {
-            role = "moderator";
-        } else if (isSub) {
-            role = "subscriber"
-        } else if (isBroadcaster) {
-            role = "owner";
+
+        // TODO: Yuck?
+        if (state.badges) {
+            if (state.subscriber) {
+                role = "subscriber";
+            }
+
+            if (state.mod) {
+                role = "moderator"
+            }
+
+            if (state.badges.broadcaster && state.badges.broadcaster === "1") {
+                role = "owner";
+            }
         }
 
         let components: Component[] = [];
@@ -64,12 +60,14 @@ export class TwitchParser extends AbstractServiceParser {
 
             let segmentType: "text" | "emoji" | "url" = "text";
             let segmentData: any = segment;
+
             if (twitchEmojis[segment]) {
                 segmentType = "emoji";
                 segmentData = twitchEmojis[segment];
             } else if (isUrl(segment)) {
                 segmentType = "url";
             }
+
             components.push({
                 type: segmentType,
                 data: segmentData
@@ -89,35 +87,30 @@ export class TwitchParser extends AbstractServiceParser {
             user: state["display-name"],
             role: role || "user",
             service: message.service,
-            target: !!target ? target : undefined
+            target: target || undefined
         };
         return context;
     }
 
     public async synthesize(messages: CactusContext[]): Promise<ProxyResponse[]> {
-        let action = false;
-        let channel = "";
-        let service = "";
-        let target = "";
-
         let responses: ProxyResponse[] = [];
 
         for (let message of messages) {
             let finished = "";
             if (message.packet.type === "message") {
                 let packet = <CactusMessagePacket> message.packet;
+                
+                const action = packet.action;
+                let { channel, service, target}  = message;
+
                 for (let msg of packet.text) {
                     /* istanbul skip next */
                     if (!msg) {
                         continue;
                     }
-                    action = packet.action;
-                    channel = message.channel;
-                    service = message.service;
-                    target = message.target;
                     
                     if (msg.type === "emoji") {
-                        const emoji = await this.getEmoji((<EmojiComponentData>msg.data).standard);  // TODO: This should lookup alternatives
+                        const emoji = await this.getEmoji((<EmojiComponentData>msg.data).standard);
                         finished += ` ${emoji}`;
                         continue;
                     }
