@@ -1,7 +1,7 @@
 
 import { RabbitHandler } from "./rabbit";
 import { Cereus } from "./cereus";
-import { TwitchParser, MixerParser, AbstractServiceParser } from "./parsers";
+import { TwitchParser, AbstractServiceParser } from "./parsers";
 
 export class PacketHandler {
 
@@ -9,7 +9,6 @@ export class PacketHandler {
 
     constructor(private cereus: Cereus, private rabbit: RabbitHandler) {
         this.serviceParsers = {
-            "mixer": new MixerParser(),
             "twitch": new TwitchParser()
         };
     }
