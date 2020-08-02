@@ -14,7 +14,6 @@ export class PacketHandler {
     }
 
     public async handleData(message: ProxyMessage | ServiceEvent) {
-        console.log(message.channel);
         const parser = this.getParser(message.service);
         if (!parser) {
             console.error(`could not get parser for ${message.service}`);
@@ -36,15 +35,41 @@ export class PacketHandler {
         await this.rabbit.queueResponse(await parser.synthesize(result));
     }
 
+    private createEventData(event: ServiceEvent): CactusEvent | null {
+        switch (event.event) {
+            case "start":
+                return {
+                    type: "start",
+                    new: event.extra.new
+                }
+            case "follow":
+                return {
+                    type: "follow",
+                    success: true // TODO: Check with the event cache to make sure that this user didn't follow recently.
+                }
+            case "subscribe":
+                return {
+                    type: "subscribe",
+                    streak: 0
+                }
+            default:
+                return null
+        }
+    }
+
     private async handleEventData(message: ServiceEvent): Promise<CactusContext> {
         let data: CactusEvent = null;
 
-        if (message.event === "start") {
-            data = <StartEvent>{
-                type: "start",
-                new: message.extra.new
-            };
+        message.
+
+        switch (message.event) {
+            case "start":
+                data = <StartEvent>{
+                    type: "start",
+                    new: message.extra.new
+                };
         }
+
         if (!data) {
             console.error(`could not handle event type: ${message.event}`);
             return;

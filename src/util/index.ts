@@ -4,9 +4,9 @@
  *
  * @export
  * @param {string} original the string that needs to be cleaned
- * @returns {Promise<string>} cleaned string, with extra spaces removed
+ * @returns {string} cleaned string, with extra spaces removed
  */
-export async function eatSpaces(original: string): Promise<string> {
+export function eatSpaces(original: string): string {
     return original.trim().replace(/\s+/g, " ");
 }
 
