@@ -30,7 +30,10 @@ export class Core {
 
             Logger.info("Core", "Attempting to connect to RabbitMQ...");
             await this.rabbit.connect();
+            
             this.rabbit.on("service:message", async (msg: ProxyMessage | ServiceEvent) => this.handler.handleData(msg));
+            this.rabbit.on("service:repeat", async (msg: RepeatMessage) => this.handler.handleRepeat(msg))
+            
             Logger.info("Core", "Connected to RabbitMQ!");
         } catch (e) {
             Logger.error("Core", e);

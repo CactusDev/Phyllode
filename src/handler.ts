@@ -35,6 +35,23 @@ export class PacketHandler {
         await this.rabbit.queueResponse(await parser.synthesize(result));
     }
 
+    public async handleRepeat(data: RepeatMessage) {
+        const parser = this.getParser(data.service)
+        if (!parser) {
+            console.error(`could not get parser for ${data.service}`)
+            return
+        }
+
+        const response = await parser.synthesize([
+            {
+                packet: data.packet,
+                channel: data.channel,
+                service: data.service
+            }
+        ])
+        await this.rabbit.queueResponse(response)
+    }
+
     private createEventData(event: ServiceEvent): CactusEvent | null {
         switch (event.event) {
             case "start":
@@ -59,8 +76,6 @@ export class PacketHandler {
 
     private async handleEventData(message: ServiceEvent): Promise<CactusContext> {
         let data: CactusEvent = null;
-
-        message.
 
         switch (message.event) {
             case "start":

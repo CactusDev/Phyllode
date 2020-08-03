@@ -91,3 +91,9 @@ interface ProxyResponse {
         target?: string;
     }
 }
+
+interface RepeatMessage {
+    packet: CactusMessagePacket
+    channel: Channel
+    service: Service
+}

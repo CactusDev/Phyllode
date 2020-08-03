@@ -124,7 +124,7 @@ export class TwitchParser extends AbstractServiceParser {
                         action,
                         target
                     },
-                    message: await eatSpaces(finished)
+                    message: eatSpaces(finished)
                 };
                 responses.push(response);
             }
