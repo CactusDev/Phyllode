@@ -21,7 +21,7 @@
     "dependencies": {
         "@types/bluebird": "^3.5.26",
         "amqp-ts": "^1.4.0",
-        "axios": "^0.16.2",
+        "axios": "^0.21.1",
         "cactus-stl": "^1.0.10",
         "config": "^1.31.0",
         "dependy": "^1.0.2",
