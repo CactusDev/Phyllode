@@ -57,17 +57,17 @@ export class PacketHandler {
             case "start":
                 return {
                     type: "start",
-                    new: event.extra.new
+                    new: event.extra.new  // TODO: Check if this is the first join
                 }
             case "follow":
                 return {
                     type: "follow",
-                    success: true // TODO: Check with the event cache to make sure that this user didn't follow recently.
+                    success: true  // TODO: Check with the event cache to make sure that this user didn't follow recently.
                 }
             case "subscribe":
                 return {
                     type: "subscribe",
-                    streak: 0
+                    streak: 0  // TODO: Pull streak
                 }
             default:
                 return null

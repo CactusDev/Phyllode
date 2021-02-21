@@ -7,6 +7,7 @@ import * as Amqp from "amqp-ts"
 export class RabbitHandler extends EventEmitter {
     private connection: Amqp.Connection
     private proxyExchange: Amqp.Exchange
+
     private messageQueue: Amqp.Queue
     private repeatQueue: Amqp.Queue
     private outgoingQueue: Amqp.Queue
