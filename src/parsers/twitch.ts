@@ -39,7 +39,7 @@ export class TwitchParser extends AbstractServiceParser {
 
         // TODO: Yuck?
         if (state.badges) {
-            if (state.subscriber) {
+            if (state.subscriber || state.founder) {
                 role = "subscriber";
             }
 
