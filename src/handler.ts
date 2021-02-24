@@ -1,7 +1,7 @@
 
 import { RabbitHandler } from "./rabbit";
 import { Cereus } from "./cereus";
-import { TwitchParser, AbstractServiceParser } from "./parsers";
+import { TwitchParser, GlimeshParser, AbstractServiceParser } from "./parsers";
 
 export class PacketHandler {
 
@@ -9,7 +9,8 @@ export class PacketHandler {
 
     constructor(private cereus: Cereus, private rabbit: RabbitHandler) {
         this.serviceParsers = {
-            "twitch": new TwitchParser()
+            "twitch": new TwitchParser(),
+            "glimesh": new GlimeshParser()
         };
     }
 
